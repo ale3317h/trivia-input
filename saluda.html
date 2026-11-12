@@ -1264,7 +1264,7 @@ function showWin(code){
   view('<div class="card ok"><div style="font-size:3.4rem">🎉</div><h1 class="long">¡FELICIDADES!<br>¡COMPLETASTE EL DESAFÍO!</h1><p class="big">Acercate a un stand del stream para reclamar tu premio.</p><div class="qrbox">'+qrSvg(txt)+'</div><div class="code">'+esc(code)+'</div><p class="note">Mostrá este QR en el stand. Es de un solo uso.</p></div>');
   if(last!=="validated"){chime();confetti();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}}
 }
-function showErr(m){view('<div class="card bad"><div style="font-size:3.4rem">⚠️</div><h1>SIN CONEXIÓN</h1><p class="mut">'+esc(m)+'</p><button onclick="location.reload()">REINTENTAR</button></div>')}
+function showErr(m,t){view('<div class="card bad"><div style="font-size:3.4rem">⚠️</div><h1>'+(t||"SIN CONEXIÓN")+'</h1><p class="mut">'+esc(m)+'</p><button onclick="location.reload()">REINTENTAR</button></div>')}
 
 function loadCode(){
   db.ref("saludosCod/"+id).once("value").then(function(s){var v=s.val();
@@ -1293,7 +1293,7 @@ function start(){
     if(s.exists())return;
     return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP});
   }).then(function(){lss(id);ref.on("value",onStatus)})
-  .catch(function(e){showErr("No se pudo registrar tu saludo ("+(e&&e.code||"error")+").")});
+  .catch(function(e){var d=e&&e.code==="PERMISSION_DENIED";showErr(d?"El stand todavía no está habilitado. Avisale a producción y probá de nuevo en un rato.":"No se pudo registrar tu saludo ("+(e&&e.code||"error")+").",d?"CASI LISTO":null)});
 }
 try{firebase.database().ref(".info/connected").on("value",function(s){$("conn").classList.toggle("on",s.val()===false)})}catch(e){}
 start();
