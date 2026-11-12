@@ -110,6 +110,24 @@ body.app-on{padding-bottom:84px}
 .cfm.final .box{box-shadow:0 0 60px -6px var(--red)}
 .toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);z-index:70;background:#0f3a24;border:1px solid var(--grn);color:#fff;padding:12px 18px;border-radius:14px;font:700 14px system-ui,sans-serif;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;max-width:90%;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
+/* --- Ranking por persona, revertir y hoja de persona --- */
+.tabs button{margin:0 1px;font-size:10px}
+.pz .act{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+button.rv{padding:6px 10px;font-size:12px;margin:0}
+.pz.rk{cursor:pointer;display:flex;align-items:center;gap:12px}
+.pz.rk .mid{flex:1;min-width:0}.pz.rk .chs{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}.pz.rk .chs .st{margin:0}.pz.rk .em{width:42px;flex:none}
+.pz.rk .em{font:700 16px "JetBrains Mono","Courier New",monospace;color:var(--mut);text-align:center}
+.pz.rk .em.md{font-size:26px}
+.pz.rk .act{align-self:center;color:var(--mut);font-size:26px;line-height:1}
+.pz.hid{opacity:.55}
+.st{font:700 11px "JetBrains Mono","Courier New",monospace;padding:2px 8px;border-radius:8px;border:1px solid;margin-left:6px;white-space:nowrap;display:inline-block}
+.st.pe{color:var(--yel);border-color:#ffe14d66}.st.ok{color:var(--grn);border-color:#3dff8a66}.st.no{color:var(--mut);border-color:#ffffff33}.st.vd{color:var(--red);border-color:#ff4d7d66}
+.cfm.psh{z-index:55;align-items:flex-end}
+.cfm.psh .box{max-width:440px;max-height:90vh;overflow-y:auto;text-align:left;border-radius:20px 20px 0 0}
+.cfm.psh h3{font-size:24px;margin:2px 0 4px}
+.cfm.psh .pz{margin:8px 0 0;grid-template-columns:auto 1fr}
+.cfm.psh .st{margin-left:0}
+.cfm.psh .sc{font:700 11px "JetBrains Mono","Courier New",monospace;letter-spacing:2px;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -165,22 +183,27 @@ body.app-on{padding-bottom:84px}
       <h2 style="margin-top:6px">Reclamados <span class="small" id="pc2"></span></h2>
       <p class="small" style="margin-top:0">Premios de la trivia entregados y saludos canjeados, todo junto.</p>
       <div class="seg"><button id="ok-all" class="on" onclick="okFilter('all')">Todos<b id="of-all">0</b></button><button id="ok-tr" onclick="okFilter('tr')">Trivia<b id="of-tr">0</b></button><button id="ok-sa" onclick="okFilter('sa')">Saludos<b id="of-sa">0</b></button></div>
+      <input id="ok-q" placeholder="Buscar por nombre o código" oninput="renderOk()" autocomplete="off" style="margin-bottom:10px">
       <div id="l-ok">Cargando…</div>
       <div class="card" style="margin-top:14px"><label style="margin-top:0">Vaciar la lista (por separado)</label>
         <p class="small" style="margin:0 0 6px">No se borra nada: queda archivado. Reiniciar todo está en Ajustes → Reinicios.</p>
         <div class="row"><button class="r" onclick="resetClaimed()">REINICIAR RECLAMADOS</button><button class="r" onclick="resetRedeemed()">REINICIAR CANJEADOS</button></div></div>
     </div>
 
+    <div id="t-rk" class="pane hide">
+      <h2 style="margin-top:6px">Ranking <span class="small" id="rk-n"></span></h2>
+      <p class="small" style="margin-top:0">Tocá a una persona para reiniciarla (ranking, premio y QR), anular su premio o revertir lo reclamado.</p>
+      <div class="row" style="margin-bottom:8px"><div class="fix"><span class="badge" id="rkgen">—</span></div></div>
+      <input id="rk-q" placeholder="Buscar por nombre" oninput="renderRk()" autocomplete="off" style="margin-bottom:10px">
+      <div id="rk-list">Cargando…</div>
+    </div>
+
     <div id="t-set" class="pane hide">
       <p class="small" style="margin-top:0"><a href="index.html">Juego</a> · <a href="ranking.html" target="_blank">Ranking para OBS</a> · <span id="mode">comprobando base…</span></p>
     <h2>Ranking</h2>
     <div class="card">
-      <div class="row" style="margin-bottom:10px">
-        <div class="fix"><span class="badge" id="genb">—</span></div>
-        <div class="fix"><span class="badge" id="cntb">—</span></div>
-        <div class="fix"><button class="p" onclick="loadRank()">Actualizar</button></div>
-      </div>
-      <div id="tb" class="small">Cargando…</div>
+      <div class="row"><div class="fix"><span class="badge" id="genb">—</span></div>
+        <div class="fix"><button class="p" style="margin:0" onclick="tab('rk')">VER Y BUSCAR PERSONAS</button></div></div>
     </div>
 
     <h2 id="rsh">Reinicios</h2>
@@ -228,20 +251,22 @@ body.app-on{padding-bottom:84px}
       <button id="tb-pen" onclick="tab('pen')"><i>⏳</i>Pendientes<span class="bd hide" id="bd-pen">0</span></button>
       <button id="tb-sal" onclick="tab('sal')"><i>👋</i>Saludos<span class="bd hide" id="bd-sal">0</span></button>
       <button id="tb-ok" onclick="tab('ok')"><i>✅</i>Reclamados</button>
+      <button id="tb-rk" onclick="tab('rk')"><i>🏆</i>Ranking</button>
       <button id="tb-set" onclick="tab('set')"><i>⚙️</i>Ajustes</button>
     </nav>
     <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('sal');hideAlert()">VER</button></div>
     <div class="sheet" id="sheet"><div id="sbody"></div></div>
     <div class="cfm" id="cfm"><div class="box" id="cfm-b"></div></div>
+    <div class="cfm psh" id="psh"><div class="box" id="psh-b"></div></div>
     <div class="toast" id="toast"></div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
-<script src="fb-config.js?v=17"></script>
-<script src="questions.js?v=17"></script>
-<script src="fb.js?v=17"></script>
+<script src="fb-config.js?v=18"></script>
+<script src="questions.js?v=18"></script>
+<script src="fb.js?v=18"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -1665,7 +1690,7 @@ async function boot(){
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
   loadCfgUI();loadRank();watchRs();watchPr();watchSa();qs=await FB.loadQuestions();renderQs();
-  FB.watchCfg(function(){loadCfgUI();watchPr()});
+  FB.watchCfg(function(){loadCfgUI();watchPr();watchRank()});
 }
 
 /* ---------- config ---------- */
@@ -1692,10 +1717,10 @@ function watchPr(){
   $("mode2").textContent=FB.shared()?"Base conectada":"Sin base compartida";$("mode2").style.color=FB.shared()?"var(--grn)":"var(--red)";
   if(!FB.shared()){$("l-pen").textContent="Sin base compartida: no hay registro de premios.";return}
   if(pOff)return;   // una sola vez: ya no depende de la ronda del ranking
-  pOff=FB.watchAllPrizes(function(l){PR=l;renderLists()});
+  pOff=FB.watchAllPrizes(function(l){PRraw=l;PR=l.map(effP);renderLists();renderRk()});
 }
 function tab(n){
-  ["scan","pen","sal","ok","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
+  ["scan","pen","sal","ok","rk","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
   if(n!=="scan"){camStop();closeSheet()}window.scrollTo(0,0);
 }
 function hm(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
@@ -1703,38 +1728,51 @@ function row(x,done){
   var li=x.li|0,rd=(x.gen!=null&&String(x.gen)!==String(FB.cfg().gen))?' · ronda '+esc(x.gen):'';
   return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b>'+(done?'<span class="tg tr">TRIVIA</span>':'')+' <span class="small">· '+x.score+' pts'+rd+'</span></div>'+
     '<div class="small"><span style="color:'+PC[li]+';font-weight:700">'+esc(x.prize||"")+'</span> · <span class="cd">'+esc(x.code)+'</span></div>'+
-    '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x.claimedAt)+'</span>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button>')+'</div></div>';
+    '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x._t)+'</span><button class="p rv" onclick="revertPrize(\''+esc(x.id)+'\')">↩ REVERTIR</button>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button>')+'</div></div>';
 }
-function nz(s){return String(s).toUpperCase().replace(/[^A-Z0-9ÁÉÍÓÚÑ]/g,"")}
-/* ---------- reinicios: marcas de tiempo en cfg/rs (nada se borra; se archiva) ----------
-   rc  = último "reiniciar reclamados"   cj = último "reiniciar canjeados"
-   all = último "reiniciar todo" (hora del servidor)   allGen = ronda del ranking que arrancó con ese reinicio */
-var RS={rc:0,cj:0,all:0,allGen:0},rsOff=null,okF="all";
+function nz(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]/g,"")}   // sin acentos ni espacios: "López" == "lopez"
+/* ---------- estado efectivo y reinicios ----------
+   La base no deja modificar un premio ya reclamado ni un saludo ya canjeado, así que las correcciones se guardan aparte en cfg/
+   (nada se borra, se anota encima):
+   rs  = marcas de los reinicios: rc reclamados · cj canjeados · all todo (hora del servidor) · allGen ronda que arrancó con "todo"
+   ovp = premios: {s:'p'|'c', t}  revertido a pendiente / vuelto a reclamar
+   ovs = saludos: {s:'v'|'r', t}  revertido a validado / vuelto a canjear
+   pv  = premios y QR anulados: id -> hora        px = personas reiniciadas: uid -> hora */
+var RS={rc:0,cj:0,all:0,allGen:0},OVP={},OVS={},PV={},PX={},rsOff=null,okF="all",PRraw=[],SAraw=[];
+function effP(x){var o=OVP[x.id];x._v=!!PV[x.id];
+  if(o&&o.s==="p"){x._c=false;x._t=0}else if(o&&o.s==="c"){x._c=true;x._t=+o.t||0}else{x._c=!!x.claimed;x._t=+x.claimedAt||0}
+  return x}
+function effS(x){var o=OVS[x.id];x._s=x.status;x._t=+(x.status==="redeemed"?x.redeemedAt:x.rejectedAt)||0;
+  if(o&&o.s==="v"&&x.status==="redeemed"){x._s="validated";x._t=+x.validatedAt||0}
+  else if(o&&o.s==="r"&&(x.status==="redeemed"||x.status==="validated")){x._s="redeemed";x._t=+o.t||0}
+  return x}
+function rebuild(){PR=PRraw.map(effP);SA=SAraw.map(effS);renderLists();renderSa();renderResets();renderRk()}
 function watchRs(){
   var d=sdb();if(!d||rsOff)return;
-  var ref=d.ref("cfg/rs"),h=ref.on("value",function(s){var v=s.val()||{};RS={rc:+v.rc||0,cj:+v.cj||0,all:+v.all||0,allGen:+v.allGen||0};renderLists();renderSa();renderResets()},function(){});
+  var ref=d.ref("cfg"),h=ref.on("value",function(s){var v=s.val()||{},r=v.rs||{};
+    RS={rc:+r.rc||0,cj:+r.cj||0,all:+r.all||0,allGen:+r.allGen||0};OVP=v.ovp||{};OVS=v.ovs||{};PV=v.pv||{};PX=v.px||{};rebuild()},function(){});
   rsOff=function(){ref.off("value",h)};
 }
-function pAll(x){return (+x.gen||0)<RS.allGen}                                            // premio de antes del último "reiniciar todo"
-function pHid(x){return !!x.claimed&&(x.claimedAt||0)<=Math.max(RS.rc,RS.all)}             // reclamado antes del último reinicio
-function pView(){return PR.filter(function(x){return !pAll(x)&&!pHid(x)})}
-function sAll(x){return (x.ts||0)<=RS.all}                                                 // saludo de antes del último "reiniciar todo"
-function sHid(x){return x.status==="redeemed"&&(x.redeemedAt||0)<=Math.max(RS.cj,RS.all)}  // canjeado antes del último reinicio
+function pAll(x){return (+x.gen||0)<RS.allGen}                                             // premio de antes del último "reiniciar todo"
+function pHid(x){return !!x._c&&(x._t||0)<=Math.max(RS.rc,RS.all)}                          // reclamado antes del último reinicio
+function pView(){return PR.filter(function(x){return !x._v&&!pAll(x)&&!pHid(x)})}
+function sAll(x){return (x.ts||0)<=RS.all}                                                  // saludo de antes del último "reiniciar todo"
+function sHid(x){return x._s==="redeemed"&&(x._t||0)<=Math.max(RS.cj,RS.all)}                // canjeado antes del último reinicio
 function sView(){return SA.filter(function(x){return !sAll(x)&&!sHid(x)})}
 function okItems(){
-  var tr=pView().filter(function(x){return x.claimed}).map(function(x){return{k:"tr",t:x.claimedAt||0,x:x}}),
-      sa=sView().filter(function(x){return x.status==="redeemed"}).map(function(x){return{k:"sa",t:x.redeemedAt||0,x:x}});
+  var tr=pView().filter(function(x){return x._c}).map(function(x){return{k:"tr",t:x._t||0,x:x}}),
+      sa=sView().filter(function(x){return x._s==="redeemed"}).map(function(x){return{k:"sa",t:x._t||0,x:x}});
   return{tr:tr,sa:sa,all:tr.concat(sa).sort(function(a,b){return b.t-a.t})};
 }
-function saRow(x){return '<div class="pz done"><div class="em">🎁</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span></div><div class="act"><span class="badge ok">✓ '+hm(x.redeemedAt)+'</span></div></div>'}
+function saRow(x){return '<div class="pz done"><div class="em">🎁</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span></div><div class="act"><span class="badge ok">✓ '+hm(x._t)+'</span><button class="p rv" onclick="revertSa(\''+esc(x.id)+'\')">↩ REVERTIR</button></div></div>'}
 function okFilter(f){okF=f;renderOk()}
 function renderOk(){
-  var o=okItems();
+  var o=okItems(),q=nz(($("ok-q")||{}).value||"");
   $("pc2").textContent="("+o.all.length+")";$("of-all").textContent=o.all.length;$("of-tr").textContent=o.tr.length;$("of-sa").textContent=o.sa.length;
   ["all","tr","sa"].forEach(function(k){$("ok-"+k).classList.toggle("on",k===okF)});
-  var L=o[okF];
+  var L=o[okF].filter(function(it){return !q||nz((it.x.name||"")+" "+(it.x.code||"")+" "+it.x.id).indexOf(q)>=0});
   $("l-ok").innerHTML=L.length?L.map(function(it){return it.k==="tr"?row(it.x,true):saRow(it.x)}).join(""):
-    (okF==="sa"?"Todavía no se canjeó ningún saludo.":okF==="tr"?"Todavía no se entregó ningún premio de la trivia.":"Todavía no se entregó ni canjeó nada.");
+    (q?"Nada coincide con la búsqueda.":okF==="sa"?"Todavía no se canjeó ningún saludo.":okF==="tr"?"Todavía no se entregó ningún premio de la trivia.":"Todavía no se entregó ni canjeó nada.");
   renderResets();
 }
 function renderResets(){
@@ -1744,9 +1782,9 @@ function renderResets(){
 }
 function renderLists(){
   var V=pView(),
-      pen=V.filter(function(x){return !x.claimed}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}),
-      ok=V.filter(function(x){return x.claimed}),
-      cj=sView().filter(function(x){return x.status==="redeemed"}).length;
+      pen=V.filter(function(x){return !x._c}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}),
+      ok=V.filter(function(x){return x._c}),
+      cj=sView().filter(function(x){return x._s==="redeemed"}).length;
   $("tot").textContent=V.length+" jugaron";$("pc1").textContent="("+pen.length+")";
   var bd=$("bd-pen");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
   $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+cj+'</b><span class="small">saludos canjeados</span></div>'+
@@ -1755,17 +1793,102 @@ function renderLists(){
   $("l-pen").innerHTML=f.length?f.map(function(x){return row(x,false)}).join(""):(pen.length?"Ningún pendiente coincide.":(V.length?"🎉 No hay pendientes: todos retiraron su premio.":"Todavía no hay jugadores."));
   renderOk();
 }
+
+/* ---------- ranking por persona ---------- */
+var RK=[],rkOff=null,rkGen=null,personOpen=null;
+function watchRank(){
+  var d=sdb();if(!d)return;
+  var g=FB.cfg().gen;if(rkGen===g&&rkOff)return;
+  if(rkOff)rkOff();rkGen=g;
+  var ref=d.ref("scores/"+g).orderByChild("score").limitToLast(400),
+      h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,lvl:v.lvl||1,ts:v.ts||0})});
+        o.sort(function(a,b){return b.score-a.score||a.ts-b.ts});RK=o;renderRk()},
+        function(e){var l=$("rk-list");if(l)l.textContent="No se pudo leer el ranking: "+(e&&e.message)});
+  rkOff=function(){ref.off("value",h)};
+}
+async function loadRank(){watchRank();renderRk()}
+function prizesOf(p){var g=String(FB.cfg().gen);return PR.filter(function(x){return String(x.gen)===g&&(x.uid?x.uid===p.uid:nz(x.name)===nz(p.name))})}
+function prizeState(x){return x._v?{c:"vd",t:"✖ anulado"}:(x._c?{c:"ok",t:"✓ entregado"}:{c:"pe",t:"⏳ pendiente"})}
+function renderRk(){
+  var l=$("rk-list");if(!l)return;
+  $("rkgen").textContent="Ranking #"+FB.cfg().gen;
+  var pos=0,hid=0;
+  RK.forEach(function(p){p._h=!!PX[p.uid];if(p._h){hid++;p._pos=0}else p._pos=++pos});
+  $("rk-n").textContent="("+pos+(hid?" + "+hid+" reiniciados":"")+")";
+  var q=nz($("rk-q").value),L=RK.filter(function(p){return !q||nz(p.name).indexOf(q)>=0});
+  if(!RK.length)l.textContent="Todavía no hay puntajes.";
+  else if(!L.length)l.textContent="Nadie se llama así.";
+  else l.innerHTML=L.map(function(p){
+    var pr=prizesOf(p),st=pr.length?pr.map(function(x){var s=prizeState(x);return '<span class="st '+s.c+'">'+s.t+'</span>'}).join(""):'<span class="st no">sin premio</span>';
+    var em=p._h?'<div class="em md">⟲</div>':(p._pos<=3?'<div class="em md">'+["🥇","🥈","🥉"][p._pos-1]+'</div>':'<div class="em">#'+p._pos+'</div>');
+    return '<div class="pz rk'+(p._h?' hid':'')+'" onclick="openPerson(\''+esc(p.uid)+'\')">'+em+'<div class="mid"><b>'+esc(p.name)+'</b>'+(p._h?'<span class="tg sa">REINICIADO</span>':'')+'<div class="small">'+p.score+' pts · nivel '+p.lvl+'</div><div class="chs">'+st+'</div></div><div class="act">›</div></div>';
+  }).join("");
+  if(personOpen)openPerson(personOpen);
+}
+function openPerson(uid){
+  var p=RK.filter(function(x){return x.uid===uid})[0];if(!p){closePerson();return}
+  personOpen=uid;
+  var pr=prizesOf(p),h=!!PX[uid],b='<div class="sc">PERSONA</div><h3>'+esc(p.name)+'</h3><p class="small" style="margin:0 0 6px">'+(h?'<b style="color:var(--red)">REINICIADA</b> · ':'Puesto <b>#'+p._pos+'</b> · ')+p.score+' pts · nivel '+p.lvl+(p.ts?' · '+hm(p.ts):'')+'</p>';
+  if(!pr.length)b+='<div class="small" style="margin:8px 0">Todavía no tiene premio ni QR.</div>';
+  pr.forEach(function(x){var s=prizeState(x),li=x.li|0,id=esc(x.id);
+    b+='<div class="pz"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.prize||"")+'</b> <span class="st '+s.c+'">'+s.t+'</span><div class="small"><span class="cd">'+esc(x.code)+'</span></div></div></div>';
+    if(x._v)b+='<button class="p" onclick="pvRestore(\''+id+'\')">RESTAURAR PREMIO Y QR</button>';
+    else{
+      b+=x._c?'<button class="g" onclick="revertPrize(\''+id+'\')">↩ REVERTIR RECLAMADO</button>':'<button class="g" onclick="claimRow(\''+id+'\')">MARCAR COMO RECLAMADO</button>';
+      b+='<button class="r" onclick="voidPrize(\''+id+'\')">ANULAR PREMIO Y QR</button>';
+    }
+  });
+  var u=esc(uid);
+  if(!h)b+='<button class="r" onclick="resetFromRank(\''+u+'\')" style="margin-top:12px">SACAR DEL RANKING Y DEJAR JUGAR</button>';
+  b+='<button class="r" onclick="resetPerson(\''+u+'\')">REINICIAR PERSONA (todo)</button><button class="p" onclick="closePerson()">CERRAR</button>';
+  $("psh-b").innerHTML=b;$("psh").className="cfm psh on";
+}
+function closePerson(){personOpen=null;$("psh").className="cfm psh"}
+
 async function claimRow(id){
-  var x=PR.filter(function(p){return p.id===id})[0];if(!x||x.claimed)return;
-  if(!confirm("¿Confirmás que "+x.name+" retiró su premio ("+x.prize+")?\n\nNo se puede deshacer."))return;
+  var x=PR.filter(function(p){return p.id===id})[0];if(!x||x._c||x._v)return;
+  if(!await askSteps([{icon:"✓",title:"¿Marcar como entregado?",text:"<b>"+esc(x.name)+"</b> retiró su premio ("+esc(x.prize||"")+"). Después podés revertirlo desde Reclamados.",ok:"MARCAR ENTREGADO"}]))return;
   var r=await doClaim(id,"manual");if(!r.ok)alert(r.msg);
 }
 async function doClaim(id,via){
   var x=PR.filter(function(p){return p.id===id})[0];
   if(!x)return{ok:false,msg:"No encontré ese premio."};
-  if(x.claimed)return{ok:false,dup:true,msg:"Ya estaba reclamado."};
-  try{await FB.claimPrize(x.gen,id,via);return{ok:true}}
-  catch(e){var d=/permission/i.test(e&&(e.code||e.message));return{ok:false,dup:d,msg:d?"Otro dispositivo ya lo marcó como reclamado.":"No se pudo guardar: "+(e&&e.message)}}
+  if(x._v)return{ok:false,dup:true,msg:"Este premio fue anulado."};
+  if(x._c)return{ok:false,dup:true,msg:"Ya estaba reclamado."};
+  try{
+    if(x.claimed||OVP[id]){   // la base ya lo tiene como reclamado (o hubo una reversión): la nueva entrega se anota aparte
+      var r=await sdb().ref("cfg/ovp/"+id).transaction(function(c){if(c&&c.s==="c")return;return{s:"c",t:firebase.database.ServerValue.TIMESTAMP,via:via||"manual"}});
+      if(!r.committed)return{ok:false,dup:true,msg:"Otro dispositivo ya lo marcó como reclamado."};
+    }else await FB.claimPrize(x.gen,id,via);
+    return{ok:true}
+  }catch(e){var d=/permission/i.test(e&&(e.code||e.message));return{ok:false,dup:d,msg:d?"Otro dispositivo ya lo marcó como reclamado.":"No se pudo guardar: "+(e&&e.message)}}
+}
+async function revertPrize(id){
+  var x=PR.filter(function(p){return p.id===id})[0];if(!x||!x._c)return;
+  if(!await askSteps([{icon:"↩️",title:"¿Revertir este premio?",text:"<b>"+esc(x.name)+"</b> ("+esc(x.prize||"")+") vuelve a <b>Pendientes</b> y su QR vale de nuevo. Queda anotado que se revirtió.",ok:"REVERTIR RECLAMADO",danger:true}]))return;
+  try{await sdb().ref("cfg/ovp/"+id).set({s:"p",t:firebase.database.ServerValue.TIMESTAMP});toast("Premio de "+x.name+" vuelto a pendiente ✓")}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
+}
+async function voidPrize(id){
+  var x=PR.filter(function(p){return p.id===id})[0];if(!x)return;
+  if(!await askSteps([{icon:"✖️",title:"¿Anular premio y QR?",text:"El QR de <b>"+esc(x.name)+"</b> deja de valer (aunque ya esté reclamado), desaparece de las listas y de su celular. Se puede restaurar desde su ficha.",ok:"ANULAR PREMIO Y QR",danger:true}]))return;
+  try{await sdb().ref("cfg/pv/"+id).set(firebase.database.ServerValue.TIMESTAMP);toast("Premio y QR anulados ✓")}catch(e){alert("No se pudo anular: "+(e&&e.message))}
+}
+async function pvRestore(id){
+  var x=PR.filter(function(p){return p.id===id})[0];if(!x)return;
+  if(!await askSteps([{icon:"♻️",title:"¿Restaurar premio y QR?",text:"El premio de <b>"+esc(x.name)+"</b> vuelve a la lista y su QR vuelve a valer en el stand. (En su celular el QR no reaparece solo: se lo buscás por nombre.)",ok:"RESTAURAR"}]))return;
+  try{await sdb().ref("cfg/pv/"+id).remove();toast("Premio restaurado ✓")}catch(e){alert("No se pudo restaurar: "+(e&&e.message))}
+}
+async function resetFromRank(uid){
+  var p=RK.filter(function(x){return x.uid===uid})[0];if(!p)return;
+  if(!await askSteps([{icon:"🏆",title:"¿Sacar a "+esc(p.name)+" del ranking?",text:"Desaparece de la tabla (y del OBS) y en su celular se borra la partida: <b>puede volver a jugar</b>. Su premio y su QR no se tocan.",ok:"SACAR DEL RANKING",danger:true}]))return;
+  try{await sdb().ref("cfg/px/"+uid).set(firebase.database.ServerValue.TIMESTAMP);toast(p.name+" sacado del ranking ✓")}catch(e){alert("No se pudo: "+(e&&e.message))}
+}
+async function resetPerson(uid){
+  var p=RK.filter(function(x){return x.uid===uid})[0];if(!p)return;
+  var pr=prizesOf(p).filter(function(x){return !x._v});
+  if(!await askSteps([{icon:"⚠️",title:"¿Reiniciar a "+esc(p.name)+"?",text:"Se saca del <b>ranking</b>"+(pr.length?", se anulan su <b>premio y QR</b> ("+pr.length+")":"")+" y en su celular se borra todo: <b>vuelve a empezar desde cero</b>.",ok:"SÍ, REINICIAR PERSONA",danger:true}]))return;
+  try{var u={};u["cfg/px/"+uid]=firebase.database.ServerValue.TIMESTAMP;pr.forEach(function(x){u["cfg/pv/"+x.id]=firebase.database.ServerValue.TIMESTAMP});
+    await sdb().ref().update(u);closePerson();toast(p.name+" reiniciado ✓")}catch(e){alert("No se pudo: "+(e&&e.message))}
 }
 
 /* --- hoja de resultado --- */
@@ -1779,12 +1902,13 @@ function resolve(code,qrText){
   if(!FB.shared())return badSheet("SIN BASE","No hay conexión con la base de datos.");
   var id=code.slice(0,9),x=PR.filter(function(p){return p.id===id})[0];
   if(!x)return resolveSa(code);
-  if(!x.claimed&&pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
+  if(x._v)return badSheet("QR ANULADO","Producción anuló este premio y este QR. No entregar.");
+  if(!x._c&&pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
   var warn="";
   if(x.code!==code)warn='<div class="warn">ℹ Este QR es de una versión anterior del jugador. Vale lo que figura en la base.</div>';
   else if(qrText){var m=String(qrText).match(/Premio:\s*([^\n\r]+)/i);if(m&&x.prize&&nz(m[1])!==nz(x.prize))warn='<div class="warn">⚠ El QR dice «'+esc(m[1].trim())+'» pero la base dice «'+esc(x.prize)+'». Vale lo de la base.</div>'}
   cur=x.id;
-  if(x.claimed)return showSheet("dup",'<div class="tt">YA FUE RECLAMADO · '+hm(x.claimedAt)+'</div>'+card(x)+warn+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+  if(x._c)return showSheet("dup",'<div class="tt">YA FUE RECLAMADO · '+hm(x._t)+'</div>'+card(x)+warn+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
   showSheet("pend",'<div class="tt">PREMIO PENDIENTE</div>'+card(x)+warn+'<button class="g" id="cbtn" onclick="confirmClaim()">ENTREGADO · MARCAR RECLAMADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
 }
 async function confirmClaim(){
@@ -1808,7 +1932,7 @@ function watchSa(){
     var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});
     var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]&&!sAll(x)});
     o.forEach(function(x){saSeen[x.id]=1});
-    SA=o;renderSa();
+    SAraw=o;SA=o.map(effS);renderSa();renderOk();
     if(saInit&&fresh.length)saAlert(fresh.length);
     saInit=true;
   },function(e){$("sa-pen").textContent="No se pudo leer la base: "+(e&&e.message)});
@@ -1826,17 +1950,21 @@ function saAlert(n){
 function hideAlert(){$("salert").classList.remove("on")}
 function renderSa(){
   var SV=sView();
-  var pen=SV.filter(function(x){return x.status==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
-      val=SV.filter(function(x){return x.status==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),
-      his=SV.filter(function(x){return x.status==="redeemed"||x.status==="rejected"}).sort(function(a,b){return (b.redeemedAt||b.rejectedAt||0)-(a.redeemedAt||a.rejectedAt||0)});
-  var red=SV.filter(function(x){return x.status==="redeemed"}).length;
+  var pen=SV.filter(function(x){return x._s==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
+      val=SV.filter(function(x){return x._s==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),
+      his=SV.filter(function(x){return x._s==="redeemed"||x._s==="rejected"}).sort(function(a,b){return (b._t||0)-(a._t||0)});
+  var red=SV.filter(function(x){return x._s==="redeemed"}).length;
   $("sc1").textContent="("+pen.length+")";
   var bd=$("bd-sal");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
   $("sachips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">en espera</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+val.length+'</b><span class="small">sin canjear</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+red+'</b><span class="small">canjeados</span></div>';
   $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa'+(i===0?' new':'')+'"><div class="top"><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR del stand aparece acá, con sonido.";
   $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div></div>'}).join(""):"Ninguno.";
-  $("sa-his").innerHTML=his.length?his.map(function(x){var r=x.status==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x.redeemedAt):'rechazado '+hms(x.rejectedAt))+'</div></div>'}).join(""):"Sin movimientos todavía.";
-  renderOk();   // Reclamados también incluye los saludos canjeados
+  $("sa-his").innerHTML=his.length?his.map(function(x){var r=x._s==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x._t):'rechazado '+hms(x._t))+'</div>'+(r?'<div class="act"><button class="p rv" onclick="revertSa(\''+esc(x.id)+'\')">↩ REVERTIR</button></div>':'')+'</div>'}).join(""):"Sin movimientos todavía.";
+}
+async function revertSa(id){
+  var x=SA.filter(function(p){return p.id===id})[0];if(!x||x._s!=="redeemed")return;
+  if(!await askSteps([{icon:"↩️",title:"¿Revertir este canje?",text:"El saludo de la persona <b>"+esc(id)+"</b> vuelve a <b>validado, esperando canje</b> y su QR vale de nuevo (a ella le reaparece en el celular). Queda anotado que se revirtió.",ok:"REVERTIR CANJE",danger:true}]))return;
+  try{await sdb().ref("cfg/ovs/"+id).set({s:"v",t:firebase.database.ServerValue.TIMESTAMP});toast("Canje revertido ✓")}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
 }
 function saBusy(b){if(b){b.disabled=true;b.style.opacity=".5"}}
 async function saValidate(id,b){
@@ -1857,14 +1985,18 @@ async function resolveSa(code){
   var real=cs.val()&&cs.val().code;
   if(!real||real!==code)return badSheet("QR NO VÁLIDO","El código no coincide con ninguno validado: no entregar premio.");
   x=Object.assign({},x,{code:code});curSa=id;
-  if(x.status!=="redeemed"&&sAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este saludo es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
-  if(x.status==="redeemed")return showSheet("dup",'<div class="tt">YA FUE USADO · '+hms(x.redeemedAt)+'</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
-  if(x.status!=="validated")return badSheet("TODAVÍA NO VALIDADO","Producción aún no validó este desafío ("+esc(x.status)+").");
+  if(x._s!=="redeemed"&&sAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este saludo es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
+  if(x._s==="redeemed")return showSheet("dup",'<div class="tt">YA FUE USADO · '+hms(x._t)+'</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+  if(x._s!=="validated")return badSheet("TODAVÍA NO VALIDADO","Producción aún no validó este desafío ("+esc(x._s)+").");
   showSheet("pend",'<div class="tt">SALUDO VALIDADO · PREMIO PENDIENTE</div>'+saCard(x)+'<button class="g" id="cbtn" onclick="saRedeem()">ENTREGADO · MARCAR USADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
 }
 async function saRedeem(){
   var b=$("cbtn");b.disabled=true;b.textContent="Guardando…";var id=curSa,d=sdb(),x=SA.filter(function(p){return p.id===id})[0]||{id:id};
-  try{await d.ref("saludos/"+id).update({status:"redeemed",redeemedAt:firebase.database.ServerValue.TIMESTAMP});
+  try{
+    if(x.status==="redeemed"||OVS[id]){   // la base ya lo tiene como canjeado (o hubo una reversión): el nuevo canje se anota aparte
+      var r=await d.ref("cfg/ovs/"+id).transaction(function(c){if(c&&c.s==="r")return;return{s:"r",t:firebase.database.ServerValue.TIMESTAMP}});
+      if(!r.committed)throw{code:"permission-denied"};
+    }else await d.ref("saludos/"+id).update({status:"redeemed",redeemedAt:firebase.database.ServerValue.TIMESTAMP});
     showSheet("ok",'<div class="tt">✓ CANJEADO</div>'+saCard(x)+'<button class="g" onclick="closeSheet()">SEGUIR ESCANEANDO</button>')}
   catch(e){var dn=/permission/i.test(e&&(e.code||e.message));
     if(dn)showSheet("dup",'<div class="tt">YA FUE USADO: otro dispositivo lo canjeó</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
@@ -1924,18 +2056,6 @@ async function readPhoto(inp){
   catch(e){camMsg("No pude leer esa imagen.")}inp.value="";
 }
 
-/* ---------- ranking ---------- */
-async function loadRank(){
-  var l=await FB.listScores();
-  $("cntb").textContent=l.length+(l.length===1?" jugador":" jugadores");
-  $("genb").textContent="Ranking #"+FB.cfg().gen;
-  if(!l.length){$("tb").textContent="Todavía no hay puntajes.";return}
-  var h="<table><tr><th>#</th><th>Jugador</th><th>Niv</th><th>Pts</th><th>Hora</th></tr>";
-  l.forEach(function(r,i){
-    h+="<tr><td>"+(i+1)+"</td><td>"+esc(r.name)+"</td><td>"+r.lvl+"</td><td class='s'>"+r.score+"</td><td class='small'>"+(r.ts?new Date(r.ts).toLocaleTimeString("es-AR"):"—")+"</td></tr>";
-  });
-  $("tb").innerHTML=h+"</table>";
-}
 /* ---------- confirmaciones y reinicios ---------- */
 var toastT=null;
 function toast(m){var t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("on")},3200)}

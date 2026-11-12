@@ -23,7 +23,9 @@ var FB = (function () {
       t: typeof v.t === "number" ? v.t : DEF.t,
       n: (v.n && v.n.length === 3) ? v.n : DEF.n,
       showRank: v.showRank === undefined ? true : !!v.showRank,
-      gen: typeof v.gen === "number" ? v.gen : DEF.gen
+      gen: typeof v.gen === "number" ? v.gen : DEF.gen,
+      px: (v.px && typeof v.px === "object") ? v.px : {},   // personas que producción reinició: uid -> hora
+      pv: (v.pv && typeof v.pv === "object") ? v.pv : {}    // premios/QR anulados: id -> hora
     };
   }
 
@@ -107,6 +109,7 @@ var FB = (function () {
   function fromSnap(s) {
     var out = [];
     s.forEach(function (c) {
+      if (cfg.px && cfg.px[c.key]) return;   // reiniciada por producción
       var v = c.val() || {};
       out.push({ id: c.key, uid: c.key, name: v.name || "?", score: v.score | 0, lvl: v.lvl || 1, ts: v.ts || 0 });
     });
@@ -129,7 +132,9 @@ var FB = (function () {
   function watchScores(cb) {
     if (!db) { cb(localScores()); return; }
     readCfg().then(function (c) {
-      query(c.gen).on("value", function (s) { cb(fromSnap(s)); }, function (e) { lastError = e.message; });
+      var last = null;
+      query(c.gen).on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
+      db.ref("cfg/px").on("value", function (s) { cfg.px = s.val() || {}; if (last) cb(fromSnap(last)); });
     });
   }
 
