@@ -451,10 +451,10 @@ button{font-weight:800}
 .clock b.low{color:var(--red);text-shadow:0 0 18px #ff4d7d99}
 .clock small{color:var(--mut);font-weight:700;letter-spacing:.1em}
 /* Pregunta + respuestas centradas en la tarjeta; en experto, opciones grandes (se achican solo si no entran) */
-#qcard{justify-content:center}
+#qcard{justify-content:flex-start}
 body.exp:not(.xs):not(.xxs) #opts{gap:clamp(6px,1.2vh,10px)}
 body.exp #qcard{display:flex;flex-direction:column}
-body.exp:not(.xs):not(.xxs) #opts{flex:1 1 auto;justify-content:center;min-height:0}
+body.exp:not(.xs):not(.xxs) #opts{flex:1 1 auto;justify-content:flex-start;min-height:0}
 body.exp:not(.xs):not(.xxs) .opt{flex:1 1 0;min-height:40px;max-height:64px;padding:8px 12px;font-size:var(--ofs,1rem)}
 body.exp:not(.xs):not(.xxs) .opt b{width:30px;height:30px;font-size:.85rem}
 body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 0 12px}
@@ -483,6 +483,15 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 #end-d .st{padding:10px 4px}
 #qr-ovc{max-width:360px}
 #qr-ovc>button:last-child{background:#ffffff0d;color:var(--tx);box-shadow:none;border:1.5px solid var(--line)}
+/* Desplazamiento: la página solo se mueve si hace falta, sin rebote del celular */
+html,body{overscroll-behavior:none}
+body{min-height:100vh;min-height:100dvh}
+#home-rk{margin:0 0 6px}
+.scb{position:fixed;right:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:6;width:48px;height:48px;padding:0;margin:0;border-radius:50%;display:grid;place-items:center;background:#130b23e6;color:var(--yel);border:1.5px solid #ffe14d99;box-shadow:0 0 18px -4px #ffe14dcc,0 6px 18px -6px #000;backdrop-filter:blur(6px);opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .25s,transform .35s var(--spring)}
+.scb.on{opacity:1;transform:none;pointer-events:auto}
+.scb svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s var(--ease)}
+.scb.up svg{transform:rotate(180deg)}
+.scb:active{transform:scale(.92)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -499,6 +508,7 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 <div class="card y c qrc hide" id="played-qr"></div>
 <button class="hide" id="contbtn" onclick="resume()">CONTINUAR PARA AVANZAR EN EL RANKING →</button>
 <div class="card y" id="form"><label>TU NOMBRE</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Cómo te anotamos"><button onclick="start()">ENTRAR →</button><small id="err" class="red"></small></div>
+<button class="p" id="home-rk" onclick="showRank()">VER RANKING</button>
 <div id="rankpub"><h2>TOP 3</h2><div class="pod" id="pod"></div>
 <h2>TOP 10</h2><div class="card"><div id="tb" class="scr"></div></div><div id="rkst" class="c"></div></div>
 </section>
@@ -566,9 +576,10 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 <section id="s-rank" class="hide">
 <h2>RANKING</h2><div class="live"><i></i><span id="rk-note"></span></div>
 <div class="pod" id="pod2"></div><div class="rlist" id="tb2">Cargando...</div>
-<button onclick="show('s-end')">VOLVER</button>
+<button onclick="rankBack()">VOLVER</button>
 </section>
 </div>
+<button id="scb" class="scb" type="button" aria-label="Bajar" onclick="scrollStep()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
 <div class="ov hide" id="qr-ov" onclick="if(event.target===this)qrClose()"><div class="card y c qrc" id="qr-ovc"></div></div>
 <div class="ov hide" id="adm"><div class="card y"><label>CLAVE</label><input id="pw" type="password" autocomplete="off"><button onclick="adm()">OK</button><button class="p" onclick="$('adm').classList.add('hide')">CANCELAR</button><small id="pe" class="red"></small><a href="admin.html" style="display:block;text-align:center;margin-top:12px;font-size:.9rem">Panel admin completo →</a></div></div>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
@@ -1831,7 +1842,7 @@ var SFX={
 };
 function playSonido(k){var f=SFX[k];if(f)f()}
 var $=function(i){return document.getElementById(i)};
-function show(id){if(id!=="s-how")ringDemo(false);["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(qi)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();window.scrollTo(0,0)}
+function show(id){if(id!=="s-how")ringDemo(false);["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(qi)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();try{window.scrollTo({top:0,left:0,behavior:"instant"})}catch(e){window.scrollTo(0,0)}scrollSoon()}
 // Con 1 sola vida el corazón late y el fondo pulsa en rojo.
 function danger(){
   var last=hp<=1&&hp>0;
@@ -1958,7 +1969,7 @@ function podium(id){
 function hasPlayed(){return !test&&ls("played")===String(FB.cfg().gen)}
 function renderStart(){
   podium();tbl("tb");status();
-  $("rankpub").classList.toggle("hide",!rankVisible());
+  $("rankpub").classList.toggle("hide",!rankVisible());$("home-rk").classList.toggle("hide",!rankVisible());
   var p=hasPlayed(),i=mineIdx();
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
   if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.";
@@ -1976,7 +1987,29 @@ async function init(){
   FB.watchScores(function(l){cache=l;loaded=true;repaint()});
 }
 async function go(){show("s-name");cache=await getList();loaded=true;renderStart()}
-async function showRank(){delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
+var rankFrom="s-end";
+function rankBack(){if(rankFrom==="s-name")go();else show(rankFrom)}
+/* Botón propio para bajar/subir: aparece solo cuando la pantalla tiene más contenido
+   del que entra. Baja de a una pantalla con desplazamiento suave; al llegar al final
+   se da vuelta y sube de una. */
+function scrollState(){
+  var b=$("scb");if(!b)return;
+  var de=document.documentElement,max=de.scrollHeight-de.clientHeight,y=window.scrollY||de.scrollTop;
+  var real=document.querySelector(".wrap").offsetHeight-de.clientHeight;
+  var need=real>24&&max>24&&$("qr-ov").classList.contains("hide");
+  b.classList.toggle("on",need);
+  var atEnd=y>=max-24;b.classList.toggle("up",need&&atEnd);
+  b.setAttribute("aria-label",atEnd?"Subir":"Bajar");
+}
+var scT=null;function scrollSoon(){clearTimeout(scT);scT=setTimeout(scrollState,120)}
+function scrollStep(){
+  var de=document.documentElement,max=de.scrollHeight-de.clientHeight,y=window.scrollY||de.scrollTop;
+  if(y>=max-24)window.scrollTo({top:0,behavior:"smooth"});
+  else window.scrollBy({top:Math.round(de.clientHeight*.75),behavior:"smooth"});
+}
+window.addEventListener("scroll",scrollSoon,{passive:true});document.addEventListener("animationend",scrollSoon,true);window.addEventListener("resize",scrollSoon);
+try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catch(e){setInterval(scrollState,1000)}
+async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
 function merged(){
   var l=cache.filter(function(x){return !isMe(x)});l.push({name:name,score:score,id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
