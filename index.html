@@ -457,6 +457,29 @@ body.exp:not(.xs):not(.xxs) .opt b{width:30px;height:30px;font-size:.85rem}
 body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 0 12px}
 @media (max-height:620px){.hero{padding:14px;gap:8px}.hearts-big{font-size:2.3rem}.clock{width:104px}.steps i{padding:5px}.bulbs{margin-top:8px}.rqt{margin:10px 0 6px}.rqi{padding:7px 10px}.app{width:40px;height:40px}.rqp div{padding:6px 4px}.rqp em{font-size:1.5rem}.rqf{padding-top:8px}}
 @media (max-height:420px){.hero{padding:10px 12px;gap:6px}.hearts-big{font-size:1.9rem}.clock{width:84px}.slide .t{font-size:1.3rem}.steps{margin-bottom:6px}.hi{margin-bottom:4px}.chip{padding:4px 10px}}
+/* Pantalla final: título + ticket del premio con QR */
+.endh{text-align:center;margin:4px 0 14px;animation:up .5s var(--ease) both}
+.endh .big{font:italic 900 clamp(2.2rem,11vw,3.2rem)/1.05 var(--disp);margin:0}
+.endh p{margin:6px 0 0;font-weight:700;color:var(--mut)}
+.endh.ok p{color:var(--tx)}
+.qrc{padding:0;background:none;border:0;box-shadow:none;margin:0 0 14px}
+.qrc>button{margin-top:10px}
+.tk{--c:var(--yel);position:relative;border-radius:22px;padding:18px 18px 16px;text-align:center;background:linear-gradient(180deg,color-mix(in srgb,var(--c) 20%,#170d2a),#130b23 55%);border:1.5px solid color-mix(in srgb,var(--c) 65%,transparent);box-shadow:0 0 34px -10px var(--c);animation:pop .6s var(--spring) .15s both}
+.tk-top{display:flex;align-items:center;justify-content:center;gap:14px;text-align:left}
+.tk-top em{font-style:normal;font-size:clamp(2.4rem,11vw,3rem);line-height:1;filter:drop-shadow(0 0 12px var(--c))}
+.tk-top small{display:block;font:800 .66rem var(--disp);letter-spacing:.22em;color:var(--mut)}
+.tk-top b{display:block;font:900 clamp(1.3rem,6vw,1.6rem)/1.1 var(--disp);color:var(--c);letter-spacing:.04em;text-shadow:0 0 14px color-mix(in srgb,var(--c) 60%,transparent)}
+.tk-top span{display:block;font-weight:700;color:var(--tx)}
+.tk-cut{position:relative;margin:16px -18px 14px;border-top:2px dashed #ffffff2a}
+.tk-cut::before,.tk-cut::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--bg);border:1.5px solid color-mix(in srgb,var(--c) 65%,transparent)}
+.tk-cut::before{left:-12px;clip-path:inset(0 0 0 50%)}.tk-cut::after{right:-12px;clip-path:inset(0 50% 0 0)}
+.tk .qrbox{width:min(56vw,220px);margin:0 auto 10px;animation:none}
+.tk .qrid{font:800 clamp(1.05rem,5.4vw,1.35rem) var(--disp);letter-spacing:.14em;color:var(--yel)}
+.tk-note{margin:8px auto 0;max-width:260px;font-size:.85rem;color:var(--mut)}
+#end-d{padding:12px;margin:0 0 4px}
+#end-d .st{padding:10px 4px}
+#qr-ovc{max-width:360px}
+#qr-ovc>button:last-child{background:#ffffff0d;color:var(--tx);box-shadow:none;border:1.5px solid var(--line)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
@@ -513,13 +536,13 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 <button id="next" class="off" disabled onclick="nextQ()">SIGUIENTE →</button>
 </section>
 <section id="s-end" class="hide">
-<div class="card r" id="end-c"><div class="big red" id="end-t"></div><div class="pk2" style="margin:10px 0 0">TU PREMIO · MOSTRALO EN EL PUESTO</div><div class="pbadge" id="end-badge" style="margin-top:8px"></div><p class="c yel note">Acercate a retirar tu premio en el puesto del streaming</p></div>
+<div class="endh" id="end-c"><div class="big" id="end-t"></div><p id="end-pz"></p><div class="hide" id="end-badge"></div></div>
+<div class="card y c qrc hide" id="end-qr"></div>
 <div class="card" id="end-d"><div class="stats"><div class="st" style="--c:#ffe14d"><small>PUNTOS</small><b id="st-pts">0</b></div><div class="st" style="--c:#b86bff"><small>PREGUNTA</small><b id="st-q">0</b></div><div class="st" id="st-pc" style="--c:#3dff8a"><small>POSICIÓN</small><b id="st-pos">–</b></div></div>
-<p class="c yel" style="font-weight:700;margin:14px 0 0" id="end-pz"></p><p class="hide" id="end-p"></p></div>
+<p class="hide" id="end-p"></p></div>
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
 <button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button></div>
-<div class="card y c qrc hide" id="end-qr"></div>
 </section>
 <section id="s-prize" class="hide">
 <div class="card y c pz1"><div class="em">🏆</div><div class="big yel">¡FELICIDADES!</div><p class="lead">Ganaste la recompensa máxima</p><p>Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" onclick="qrOpen()">VER MI QR</button></div>
@@ -2146,7 +2169,7 @@ function qrMat(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();return q
 function qrSvg(r){var q=qrMat(r.txt),n=q.getModuleCount(),m=4,s=n+2*m,p="",x,y;
   for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
   return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="Código QR"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
-function qrHTML(r){return '<div class="pk2">TU CÓDIGO · MOSTRALO AL PRODUCTOR</div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><div class="qrpz"><em>'+QPZ[r.li][0]+'</em><span><b style="color:'+LV[r.li][4]+'">'+LV[r.li][0]+'</b> · '+QPZ[r.li][1]+'</span></div><button class="p" onclick="qrSave()">GUARDAR EN EL CELULAR</button>'}
+function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+LV[r.li][0]+'</b><span>'+QPZ[r.li][1]+'</span></div></div><div class="tk-cut"></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
 function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}e.innerHTML=qrHTML(r);e.classList.remove("hide")}
 function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=qrHTML(r)+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
 function qrClose(){$("qr-ov").classList.add("hide")}
@@ -2169,7 +2192,7 @@ async function end(win){
   var early=!win&&qi<totalQ();
   var good=win||early;
   if(good)playSonido("tada");
-  $("end-c").className="card "+(good?"y":"r");
+  $("end-c").className="endh "+(good?"ok":"bad");
   $("end-t").textContent=win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER");$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
   $("end-pz").textContent=early?"Llegaste hasta la dificultad "+LV[lvOf(qi)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
