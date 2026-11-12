@@ -369,7 +369,8 @@ button.r{box-shadow:0 0 18px -8px var(--red)}
 .rqh{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .rqh b{font:700 clamp(1.05rem,5vw,1.35rem) var(--disp);letter-spacing:.14em;background:linear-gradient(90deg,#3de8ff,#7b8cff 50%,#c25bff);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px #5ab4ff77)}
 .rqh img{height:clamp(44px,7vh,60px);width:auto;filter:drop-shadow(0 0 10px #2b7bff99)}
-.rqt{margin:clamp(12px,2.6vh,22px) 0 clamp(8px,1.6vh,12px);text-align:center;font:700 clamp(1.2rem,5.6vw,1.5rem) var(--disp);letter-spacing:.2em;color:var(--yel);text-shadow:0 0 16px #ffe14d88}
+.rqt{margin:clamp(12px,2.6vh,22px) 0 clamp(8px,1.6vh,12px);text-align:center;font:900 clamp(1.25rem,5.8vw,1.6rem) var(--disp);letter-spacing:.2em;color:#fff6c4;text-shadow:0 0 2px #fff,0 0 6px #ffe14d,0 0 14px #ffd21f,0 0 28px #ffb21f,0 0 48px #ff9d3b99;animation:neonBreath 3.2s ease-in-out infinite}
+@keyframes neonBreath{0%,100%{text-shadow:0 0 2px #fff,0 0 6px #ffe14d,0 0 14px #ffd21f,0 0 28px #ffb21f,0 0 48px #ff9d3b99}50%{text-shadow:0 0 2px #fff,0 0 5px #ffe14d,0 0 10px #ffd21f,0 0 20px #ffb21f99,0 0 34px #ff9d3b66}}
 .rq{display:flex;flex-direction:column;gap:clamp(8px,1.4vh,12px)}
 .rqi{--c:var(--pur);display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:12px;padding:clamp(9px,1.5vh,13px) 12px;border-radius:16px;border:1.5px solid var(--line);background:#ffffff08;color:var(--tx);text-decoration:none;transition:border-color .3s,box-shadow .3s,background .3s,transform .12s;animation:slin .55s var(--ease) both;animation-delay:calc(var(--i)*.1s + .1s)}
 .rqi:active{transform:scale(.98)}
@@ -401,14 +402,16 @@ body.exp .wrap{padding:max(8px,env(safe-area-inset-top)) 12px max(8px,env(safe-a
 h1{font-size:clamp(1.9rem,10.5vw,3.2rem);font-weight:900;font-style:italic;margin:.15em 74px 20px 0;letter-spacing:.04em;line-height:1.05;animation:neonOn 1.3s steps(1) both}
 button{font-weight:800}
 /* Requisitos */
-.rqh b{font:italic 900 clamp(1.15rem,5.4vw,1.6rem)/1.1 var(--disp);letter-spacing:.06em;background:linear-gradient(100deg,#3de8ff 0%,#7b8cff 30%,#ffffff 42%,#c25bff 54%,#ff4d7d 100%);background-size:260% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;color:transparent;animation:neonOn 1.4s steps(1) both,sweep 3.4s ease-in-out 1.4s infinite}
-@keyframes sweep{0%{background-position:100% 0}55%,100%{background-position:0 0}}
+.rqh b{font:italic 900 clamp(1.15rem,5.4vw,1.6rem)/1.1 var(--disp);letter-spacing:.06em;background:linear-gradient(90deg,#3de8ff 0%,#6fb6ff 25%,#9a8cff 50%,#c77dff 75%,#3de8ff 100%);background-size:300% 100%;background-position:0 0;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 6px #5ab4ff99) drop-shadow(0 0 18px #8a6bff55);animation:titleIn 1.1s var(--ease) both,drift 9s linear 1.1s infinite}
+@keyframes titleIn{from{opacity:0;filter:blur(8px) drop-shadow(0 0 0 transparent);transform:translateY(6px)}to{opacity:1;filter:drop-shadow(0 0 6px #5ab4ff99) drop-shadow(0 0 18px #8a6bff55);transform:none}}
+@keyframes drift{from{background-position:0 0}to{background-position:150% 0}}
+/* Tubo de neón bajo el título: línea fina que brilla y una luz que la recorre suave */
+.tube{position:relative;height:2px;margin:14px 0 0;border-radius:2px;background:linear-gradient(90deg,transparent,#3de8ff 18%,#9a8cff 50%,#ff4d7d 82%,transparent);box-shadow:0 0 8px #7b8cffaa,0 0 18px #7b8cff55;overflow:visible;animation:tubeOn 1.2s var(--ease) .3s both}
+.tube::after{content:"";position:absolute;top:-3px;left:0;width:70px;height:8px;border-radius:8px;background:radial-gradient(closest-side,#ffffffee,#ffffff00);filter:blur(1px);animation:streak 3.6s ease-in-out 1.4s infinite}
+@keyframes tubeOn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
+@keyframes streak{0%{left:-10%;opacity:0}15%{opacity:1}85%{opacity:1}100%{left:100%;opacity:0}}
 .rqh img{animation:logoIn .9s var(--spring) .25s both}
 @keyframes logoIn{from{opacity:0;transform:scale(.3) rotate(-14deg)}to{opacity:1;transform:none}}
-.bulbs{display:flex;justify-content:space-between;margin:12px 2px 0}
-.bulbs i{--bc:#ffe14d;width:7px;height:7px;border-radius:50%;background:var(--bc);opacity:.18;animation:bulb 1.6s linear infinite;animation-delay:calc(var(--k) * .1s)}
-.bulbs i:nth-child(3n+2){--bc:#3de8ff}.bulbs i:nth-child(3n){--bc:#ff4d7d}
-@keyframes bulb{0%,100%{opacity:.18;box-shadow:none}8%,22%{opacity:1;box-shadow:0 0 8px var(--bc),0 0 16px var(--bc)}}
 .rqi span u{display:inline-block;margin-top:3px;font:700 .78rem/1.3 var(--sans);color:var(--c);text-decoration:underline;text-underline-offset:3px;overflow-wrap:break-word}.nw{white-space:nowrap}
 .ext{width:.95em;height:.95em;margin-left:4px;vertical-align:-.12em;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 .rqi:not(.on){animation:slin .55s var(--ease) both,rqpulse 2.6s ease-in-out infinite;animation-delay:calc(var(--i) * .1s + .1s),calc(var(--i) * .35s + 1.2s)}
@@ -455,7 +458,7 @@ body.exp:not(.xs):not(.xxs) #opts{flex:1 1 auto;justify-content:center;min-heigh
 body.exp:not(.xs):not(.xxs) .opt{flex:1 1 0;min-height:40px;max-height:64px;padding:8px 12px;font-size:var(--ofs,1rem)}
 body.exp:not(.xs):not(.xxs) .opt b{width:30px;height:30px;font-size:.85rem}
 body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 0 12px}
-@media (max-height:620px){.hero{padding:14px;gap:8px}.hearts-big{font-size:2.3rem}.clock{width:104px}.steps i{padding:5px}.bulbs{margin-top:8px}.rqt{margin:10px 0 6px}.rqi{padding:7px 10px}.app{width:40px;height:40px}.rqp div{padding:6px 4px}.rqp em{font-size:1.5rem}.rqf{padding-top:8px}}
+@media (max-height:620px){.hero{padding:14px;gap:8px}.hearts-big{font-size:2.3rem}.clock{width:104px}.steps i{padding:5px}.tube{margin-top:10px}.rqt{margin:10px 0 6px}.rqi{padding:7px 10px}.app{width:40px;height:40px}.rqp div{padding:6px 4px}.rqp em{font-size:1.5rem}.rqf{padding-top:8px}}
 @media (max-height:420px){.hero{padding:10px 12px;gap:6px}.hearts-big{font-size:1.9rem}.clock{width:84px}.slide .t{font-size:1.3rem}.steps{margin-bottom:6px}.hi{margin-bottom:4px}.chip{padding:4px 10px}}
 /* Pantalla final: título + ticket del premio con QR */
 .endh{text-align:center;margin:4px 0 14px;animation:up .5s var(--ease) both}
@@ -516,7 +519,7 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 <div class="nav"><button class="p" id="how-b" onclick="howBack()">←</button><button id="how-n" onclick="howNext()">SIGUIENTE →</button></div>
 </section>
 <section id="s-req" class="hide">
-<div class="rqh"><b>STREAMING ROOM T3</b><img id="rq-logo" alt="ST3 ROOM"></div><div class="bulbs" aria-hidden="true"><i style="--k:0"></i><i style="--k:1"></i><i style="--k:2"></i><i style="--k:3"></i><i style="--k:4"></i><i style="--k:5"></i><i style="--k:6"></i><i style="--k:7"></i><i style="--k:8"></i><i style="--k:9"></i><i style="--k:10"></i><i style="--k:11"></i><i style="--k:12"></i><i style="--k:13"></i><i style="--k:14"></i><i style="--k:15"></i></div>
+<div class="rqh"><b>STREAMING ROOM T3</b><img id="rq-logo" alt="ST3 ROOM"></div><div class="tube" aria-hidden="true"></div>
 <div class="rqt">REQUISITOS</div>
 <div class="rq" id="rq">
 <a class="rqi" data-k="yt" style="--c:#ff4d4d;--i:0" href="https://www.youtube.com/@StreamingRoomT3" target="_blank" rel="noopener"><i class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span><b>Seguí al streaming en YouTube</b><u>www.youtube.com/<wbr><span class="nw">@StreamingRoomT3<svg class="ext" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></u></span><em class="app"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg></em></a>
