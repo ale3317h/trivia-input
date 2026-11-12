@@ -83,6 +83,33 @@ body.app-on{padding-bottom:84px}
 .salert{position:fixed;left:10px;right:10px;top:10px;z-index:50;max-width:540px;margin:0 auto;background:#2a2005;border:2px solid var(--yel);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 0 40px -6px var(--yel);transform:translateY(-130%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .salert.on{transform:none}.salert b{flex:1}.salert button{margin:0;background:var(--yel);color:#1a1000;border:0}
 .sheet .warn{background:#4a0d22;border:1px solid var(--red);border-radius:10px;padding:6px 10px;margin:8px 0;font-size:13px}
+/* --- Reclamados unificados, reinicios y confirmaciones --- */
+.seg{display:flex;gap:6px;margin:6px 0 12px}
+.seg button{flex:1;margin:0;padding:9px 6px;font-size:13px;background:#0e0620;border-color:#3a1a55}
+.seg button.on{background:#2d1050;border-color:var(--pur)}
+.seg button b{color:var(--yel);margin-left:6px}
+.pz .tg{font:700 10px "JetBrains Mono","Courier New",monospace;letter-spacing:1px;padding:2px 7px;border-radius:8px;border:1px solid;margin-left:8px;vertical-align:middle}
+.pz .tg.tr{color:var(--yel);border-color:#ffe14d66}.pz .tg.sa{color:var(--pur);border-color:#b86bff66}
+.rs{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #3a1a55}
+.rs:first-child{padding-top:0}.rs>div{flex:1;min-width:0}.rs button{margin:0;flex:0 0 auto}
+.rs b{display:block;font-size:15px}
+.dz{border:1.5px solid var(--red);background:#2a0612;border-radius:14px;padding:14px;margin-top:16px}
+.dz b{color:#ffb3c6;font-size:15px}
+.dz button{width:100%;padding:16px;font-size:16px;margin:12px 0 0;letter-spacing:.5px}
+.cfm{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;padding:18px;background:#000d}
+.cfm.on{display:flex}
+.cfm .box{width:100%;max-width:380px;background:var(--card);border:1.5px solid var(--c,var(--pur));border-radius:20px;padding:22px 18px 16px;text-align:center;box-shadow:0 0 40px -12px var(--c,var(--pur));animation:pin .25s ease both}
+.cfm .ic{font-size:44px;line-height:1}
+.cfm .st{font:700 11px "JetBrains Mono","Courier New",monospace;letter-spacing:2px;color:var(--c,var(--pur));margin-top:8px}
+.cfm h3{font:800 20px/1.2 system-ui,sans-serif;color:var(--tx);margin:8px 0 6px}
+.cfm p{margin:0 0 12px;color:var(--mut);font-size:14px;line-height:1.45}
+.cfm button{width:100%;padding:15px;font-size:15px;margin:8px 0 0}
+.cfm button:disabled{opacity:.45}
+.cfm.danger{--c:var(--red)}.cfm.danger h3{color:#ffb3c6}
+.cfm.final h3{font-size:27px;letter-spacing:.5px;color:var(--red)}
+.cfm.final .box{box-shadow:0 0 60px -6px var(--red)}
+.toast{position:fixed;left:50%;bottom:92px;transform:translateX(-50%) translateY(20px);z-index:70;background:#0f3a24;border:1px solid var(--grn);color:#fff;padding:12px 18px;border-radius:14px;font:700 14px system-ui,sans-serif;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;max-width:90%;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
 </style>
 </head>
 <body>
@@ -136,7 +163,12 @@ body.app-on{padding-bottom:84px}
 
     <div id="t-ok" class="pane hide">
       <h2 style="margin-top:6px">Reclamados <span class="small" id="pc2"></span></h2>
+      <p class="small" style="margin-top:0">Premios de la trivia entregados y saludos canjeados, todo junto.</p>
+      <div class="seg"><button id="ok-all" class="on" onclick="okFilter('all')">Todos<b id="of-all">0</b></button><button id="ok-tr" onclick="okFilter('tr')">Trivia<b id="of-tr">0</b></button><button id="ok-sa" onclick="okFilter('sa')">Saludos<b id="of-sa">0</b></button></div>
       <div id="l-ok">Cargando…</div>
+      <div class="card" style="margin-top:14px"><label style="margin-top:0">Vaciar la lista (por separado)</label>
+        <p class="small" style="margin:0 0 6px">No se borra nada: queda archivado. Reiniciar todo está en Ajustes → Reinicios.</p>
+        <div class="row"><button class="r" onclick="resetClaimed()">REINICIAR RECLAMADOS</button><button class="r" onclick="resetRedeemed()">REINICIAR CANJEADOS</button></div></div>
     </div>
 
     <div id="t-set" class="pane hide">
@@ -149,10 +181,16 @@ body.app-on{padding-bottom:84px}
         <div class="fix"><button class="p" onclick="loadRank()">Actualizar</button></div>
       </div>
       <div id="tb" class="small">Cargando…</div>
-      <div style="margin-top:12px">
-        <button class="r" onclick="resetRank()">REINICIAR RANKING</button>
-        <span class="small">Borra la tabla para todos y empieza de cero (los jugadores pueden volver a jugar).</span>
-      </div>
+    </div>
+
+    <h2 id="rsh">Reinicios</h2>
+    <div class="card" id="rsc">
+      <div class="rs"><div><b>Ranking</b><span class="small" id="rs-rk">Vacía la tabla; todos pueden volver a jugar. No toca premios ni saludos.</span></div><button class="r" onclick="resetRank()">REINICIAR</button></div>
+      <div class="rs"><div><b>Reclamados de trivia</b><span class="small" id="rs-tr">—</span></div><button class="r" onclick="resetClaimed()">REINICIAR</button></div>
+      <div class="rs" style="border-bottom:0;padding-bottom:0"><div><b>Saludos canjeados</b><span class="small" id="rs-sa">—</span></div><button class="r" onclick="resetRedeemed()">REINICIAR</button></div>
+      <div class="dz"><b>⚠ REINICIAR TODO</b>
+        <div class="small" style="margin-top:4px">Ranking, premios pendientes y reclamados, y saludos (en espera, validados y canjeados). Pide dos confirmaciones.</div>
+        <button class="r" onclick="resetAll()">REINICIAR TODO</button></div>
     </div>
 
     <h2>Configuración del juego</h2>
@@ -194,14 +232,16 @@ body.app-on{padding-bottom:84px}
     </nav>
     <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('sal');hideAlert()">VER</button></div>
     <div class="sheet" id="sheet"><div id="sbody"></div></div>
+    <div class="cfm" id="cfm"><div class="box" id="cfm-b"></div></div>
+    <div class="toast" id="toast"></div>
   </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=17"></script>
-<script src="questions.js?v=16"></script>
-<script src="fb.js?v=16"></script>
+<script src="questions.js?v=17"></script>
+<script src="fb.js?v=17"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -211,7 +251,11 @@ body.app-on{padding-bottom:84px}
   FB.watchPrizes=function(gen,cb){var d=db();if(!d){cb([]);return function(){}}
     var ref=d.ref("prizes/"+gen),h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});cb(o)});
     return function(){ref.off("value",h)}};
-  FB.claimPrize=function(gen,id,via){return db().ref("prizes/"+gen+"/"+id).update({claimed:true,claimedAt:Date.now(),via:via||"manual"})};
+  FB.watchAllPrizes=function(cb){var d=db();if(!d){cb([]);return function(){}}
+    var ref=d.ref("prizes"),h=ref.on("value",function(s){var o=[];s.forEach(function(g){g.forEach(function(c){var v=c.val()||{};v.id=c.key;v.gen=g.key;o.push(v)})});cb(o)});
+    return function(){ref.off("value",h)}};
+  // hora del servidor: así no depende del reloj de este teléfono al comparar con los reinicios
+  FB.claimPrize=function(gen,id,via){return db().ref("prizes/"+gen+"/"+id).update({claimed:true,claimedAt:firebase.database.ServerValue.TIMESTAMP,via:via||"manual"})};
 })();
 </script>
 <script>
@@ -1620,7 +1664,7 @@ async function boot(){
   await FB.readCfg();
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
-  loadCfgUI();loadRank();watchPr();watchSa();qs=await FB.loadQuestions();renderQs();
+  loadCfgUI();loadRank();watchRs();watchPr();watchSa();qs=await FB.loadQuestions();renderQs();
   FB.watchCfg(function(){loadCfgUI();watchPr()});
 }
 
@@ -1645,34 +1689,71 @@ async function saveCfg(){
 var PR=[],pG=null,pOff=null,PE=["🍬","🔑","🧊","🧊"],PC=["#3dff8a","#ffe600","#ff3b6b","#c25bff"];
 var cam={stream:null,run:false,det:null,busy:false,last:"",lastT:0},sheetOpen=false,cur=null;
 function watchPr(){
-  var g=FB.cfg().gen;if(pG===g)return;
-  if(pOff)pOff();pG=g;
   $("mode2").textContent=FB.shared()?"Base conectada":"Sin base compartida";$("mode2").style.color=FB.shared()?"var(--grn)":"var(--red)";
   if(!FB.shared()){$("l-pen").textContent="Sin base compartida: no hay registro de premios.";return}
-  pOff=FB.watchPrizes(g,function(l){PR=l;renderLists()});
+  if(pOff)return;   // una sola vez: ya no depende de la ronda del ranking
+  pOff=FB.watchAllPrizes(function(l){PR=l;renderLists()});
 }
 function tab(n){
   ["scan","pen","sal","ok","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
   if(n!=="scan"){camStop();closeSheet()}window.scrollTo(0,0);
 }
-function hm(t){return t?new Date(t).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}):""}
+function hm(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
 function row(x,done){
-  var li=x.li|0;
-  return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b> <span class="small">· '+x.score+' pts</span></div>'+
+  var li=x.li|0,rd=(x.gen!=null&&String(x.gen)!==String(FB.cfg().gen))?' · ronda '+esc(x.gen):'';
+  return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b>'+(done?'<span class="tg tr">TRIVIA</span>':'')+' <span class="small">· '+x.score+' pts'+rd+'</span></div>'+
     '<div class="small"><span style="color:'+PC[li]+';font-weight:700">'+esc(x.prize||"")+'</span> · <span class="cd">'+esc(x.code)+'</span></div>'+
     '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x.claimedAt)+'</span>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button>')+'</div></div>';
 }
 function nz(s){return String(s).toUpperCase().replace(/[^A-Z0-9ÁÉÍÓÚÑ]/g,"")}
+/* ---------- reinicios: marcas de tiempo en cfg/rs (nada se borra; se archiva) ----------
+   rc  = último "reiniciar reclamados"   cj = último "reiniciar canjeados"
+   all = último "reiniciar todo" (hora del servidor)   allGen = ronda del ranking que arrancó con ese reinicio */
+var RS={rc:0,cj:0,all:0,allGen:0},rsOff=null,okF="all";
+function watchRs(){
+  var d=sdb();if(!d||rsOff)return;
+  var ref=d.ref("cfg/rs"),h=ref.on("value",function(s){var v=s.val()||{};RS={rc:+v.rc||0,cj:+v.cj||0,all:+v.all||0,allGen:+v.allGen||0};renderLists();renderSa();renderResets()},function(){});
+  rsOff=function(){ref.off("value",h)};
+}
+function pAll(x){return (+x.gen||0)<RS.allGen}                                            // premio de antes del último "reiniciar todo"
+function pHid(x){return !!x.claimed&&(x.claimedAt||0)<=Math.max(RS.rc,RS.all)}             // reclamado antes del último reinicio
+function pView(){return PR.filter(function(x){return !pAll(x)&&!pHid(x)})}
+function sAll(x){return (x.ts||0)<=RS.all}                                                 // saludo de antes del último "reiniciar todo"
+function sHid(x){return x.status==="redeemed"&&(x.redeemedAt||0)<=Math.max(RS.cj,RS.all)}  // canjeado antes del último reinicio
+function sView(){return SA.filter(function(x){return !sAll(x)&&!sHid(x)})}
+function okItems(){
+  var tr=pView().filter(function(x){return x.claimed}).map(function(x){return{k:"tr",t:x.claimedAt||0,x:x}}),
+      sa=sView().filter(function(x){return x.status==="redeemed"}).map(function(x){return{k:"sa",t:x.redeemedAt||0,x:x}});
+  return{tr:tr,sa:sa,all:tr.concat(sa).sort(function(a,b){return b.t-a.t})};
+}
+function saRow(x){return '<div class="pz done"><div class="em">🎁</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span></div><div class="act"><span class="badge ok">✓ '+hm(x.redeemedAt)+'</span></div></div>'}
+function okFilter(f){okF=f;renderOk()}
+function renderOk(){
+  var o=okItems();
+  $("pc2").textContent="("+o.all.length+")";$("of-all").textContent=o.all.length;$("of-tr").textContent=o.tr.length;$("of-sa").textContent=o.sa.length;
+  ["all","tr","sa"].forEach(function(k){$("ok-"+k).classList.toggle("on",k===okF)});
+  var L=o[okF];
+  $("l-ok").innerHTML=L.length?L.map(function(it){return it.k==="tr"?row(it.x,true):saRow(it.x)}).join(""):
+    (okF==="sa"?"Todavía no se canjeó ningún saludo.":okF==="tr"?"Todavía no se entregó ningún premio de la trivia.":"Todavía no se entregó ni canjeó nada.");
+  renderResets();
+}
+function renderResets(){
+  var o=okItems(),st=function(t){return t?" · último reinicio "+hm(t):""};
+  if($("rs-tr"))$("rs-tr").textContent=o.tr.length+" en la lista"+st(RS.rc);
+  if($("rs-sa"))$("rs-sa").textContent=o.sa.length+" en la lista"+st(RS.cj);
+}
 function renderLists(){
-  var pen=PR.filter(function(x){return !x.claimed}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}),
-      ok=PR.filter(function(x){return x.claimed}).sort(function(a,b){return (b.claimedAt||0)-(a.claimedAt||0)});
-  $("tot").textContent=PR.length+" jugaron";$("pc1").textContent="("+pen.length+")";$("pc2").textContent="("+ok.length+")";
+  var V=pView(),
+      pen=V.filter(function(x){return !x.claimed}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}),
+      ok=V.filter(function(x){return x.claimed}),
+      cj=sView().filter(function(x){return x.status==="redeemed"}).length;
+  $("tot").textContent=V.length+" jugaron";$("pc1").textContent="("+pen.length+")";
   var bd=$("bd-pen");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
-  $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div>'+
-    '<div style="flex-basis:100%"><div class="prog"><i style="width:'+(PR.length?Math.round(ok.length/PR.length*100):0)+'%"></i></div></div>';
+  $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+cj+'</b><span class="small">saludos canjeados</span></div>'+
+    '<div style="flex-basis:100%"><div class="prog"><i style="width:'+(V.length?Math.round(ok.length/V.length*100):0)+'%"></i></div></div>';
   var q=nz($("p-q").value),f=pen.filter(function(x){return !q||nz(x.code+" "+x.name).indexOf(q)>=0});
-  $("l-pen").innerHTML=f.length?f.map(function(x){return row(x,false)}).join(""):(pen.length?"Ningún pendiente coincide.":(PR.length?"🎉 No hay pendientes: todos retiraron su premio.":"Todavía no hay jugadores."));
-  $("l-ok").innerHTML=ok.length?ok.map(function(x){return row(x,true)}).join(""):"Todavía no se entregó ningún premio.";
+  $("l-pen").innerHTML=f.length?f.map(function(x){return row(x,false)}).join(""):(pen.length?"Ningún pendiente coincide.":(V.length?"🎉 No hay pendientes: todos retiraron su premio.":"Todavía no hay jugadores."));
+  renderOk();
 }
 async function claimRow(id){
   var x=PR.filter(function(p){return p.id===id})[0];if(!x||x.claimed)return;
@@ -1683,7 +1764,7 @@ async function doClaim(id,via){
   var x=PR.filter(function(p){return p.id===id})[0];
   if(!x)return{ok:false,msg:"No encontré ese premio."};
   if(x.claimed)return{ok:false,dup:true,msg:"Ya estaba reclamado."};
-  try{await FB.claimPrize(pG,id,via);return{ok:true}}
+  try{await FB.claimPrize(x.gen,id,via);return{ok:true}}
   catch(e){var d=/permission/i.test(e&&(e.code||e.message));return{ok:false,dup:d,msg:d?"Otro dispositivo ya lo marcó como reclamado.":"No se pudo guardar: "+(e&&e.message)}}
 }
 
@@ -1698,6 +1779,7 @@ function resolve(code,qrText){
   if(!FB.shared())return badSheet("SIN BASE","No hay conexión con la base de datos.");
   var id=code.slice(0,9),x=PR.filter(function(p){return p.id===id})[0];
   if(!x)return resolveSa(code);
+  if(!x.claimed&&pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
   var warn="";
   if(x.code!==code)warn='<div class="warn">ℹ Este QR es de una versión anterior del jugador. Vale lo que figura en la base.</div>';
   else if(qrText){var m=String(qrText).match(/Premio:\s*([^\n\r]+)/i);if(m&&x.prize&&nz(m[1])!==nz(x.prize))warn='<div class="warn">⚠ El QR dice «'+esc(m[1].trim())+'» pero la base dice «'+esc(x.prize)+'». Vale lo de la base.</div>'}
@@ -1718,13 +1800,13 @@ async function confirmClaim(){
 var SA=[],saOff=null,saInit=false,saSeen={},curSa=null,saTitle=document.title,saFlash=null,saHide=null,SAKEY=/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/;
 function sdb(){return (window.firebase&&FB.shared())?firebase.database():null}
 function saRnd(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;try{crypto.getRandomValues(b)}catch(e){for(i=0;i<n;i++)b[i]=Math.random()*256}for(i=0;i<n;i++)o+=a.charAt(b[i]%32);return o}
-function hms(t){return t?new Date(t).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):""}
+function hms(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",second:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
 function ago(t){var s=Math.max(0,Math.round((Date.now()-t)/1000));return s<60?s+" s":Math.floor(s/60)+" min"}
 function watchSa(){
   var d=sdb();if(!d||saOff){if(!d)$("sa-pen").textContent="Sin base compartida.";return}
   var ref=d.ref("saludos"),h=ref.on("value",function(s){
     var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});
-    var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]});
+    var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]&&!sAll(x)});
     o.forEach(function(x){saSeen[x.id]=1});
     SA=o;renderSa();
     if(saInit&&fresh.length)saAlert(fresh.length);
@@ -1743,16 +1825,18 @@ function saAlert(n){
 }
 function hideAlert(){$("salert").classList.remove("on")}
 function renderSa(){
-  var pen=SA.filter(function(x){return x.status==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
-      val=SA.filter(function(x){return x.status==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),
-      his=SA.filter(function(x){return x.status==="redeemed"||x.status==="rejected"}).sort(function(a,b){return (b.redeemedAt||b.rejectedAt||0)-(a.redeemedAt||a.rejectedAt||0)});
-  var red=SA.filter(function(x){return x.status==="redeemed"}).length;
+  var SV=sView();
+  var pen=SV.filter(function(x){return x.status==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
+      val=SV.filter(function(x){return x.status==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),
+      his=SV.filter(function(x){return x.status==="redeemed"||x.status==="rejected"}).sort(function(a,b){return (b.redeemedAt||b.rejectedAt||0)-(a.redeemedAt||a.rejectedAt||0)});
+  var red=SV.filter(function(x){return x.status==="redeemed"}).length;
   $("sc1").textContent="("+pen.length+")";
   var bd=$("bd-sal");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
   $("sachips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">en espera</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+val.length+'</b><span class="small">sin canjear</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+red+'</b><span class="small">canjeados</span></div>';
   $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa'+(i===0?' new':'')+'"><div class="top"><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR del stand aparece acá, con sonido.";
   $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div></div>'}).join(""):"Ninguno.";
   $("sa-his").innerHTML=his.length?his.map(function(x){var r=x.status==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x.redeemedAt):'rechazado '+hms(x.rejectedAt))+'</div></div>'}).join(""):"Sin movimientos todavía.";
+  renderOk();   // Reclamados también incluye los saludos canjeados
 }
 function saBusy(b){if(b){b.disabled=true;b.style.opacity=".5"}}
 async function saValidate(id,b){
@@ -1773,6 +1857,7 @@ async function resolveSa(code){
   var real=cs.val()&&cs.val().code;
   if(!real||real!==code)return badSheet("QR NO VÁLIDO","El código no coincide con ninguno validado: no entregar premio.");
   x=Object.assign({},x,{code:code});curSa=id;
+  if(x.status!=="redeemed"&&sAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este saludo es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
   if(x.status==="redeemed")return showSheet("dup",'<div class="tt">YA FUE USADO · '+hms(x.redeemedAt)+'</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
   if(x.status!=="validated")return badSheet("TODAVÍA NO VALIDADO","Producción aún no validó este desafío ("+esc(x.status)+").");
   showSheet("pend",'<div class="tt">SALUDO VALIDADO · PREMIO PENDIENTE</div>'+saCard(x)+'<button class="g" id="cbtn" onclick="saRedeem()">ENTREGADO · MARCAR USADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
@@ -1851,10 +1936,56 @@ async function loadRank(){
   });
   $("tb").innerHTML=h+"</table>";
 }
+/* ---------- confirmaciones y reinicios ---------- */
+var toastT=null;
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("on")},3200)}
+// Muestra uno o varios pasos de confirmación. Devuelve true solo si se confirmaron todos.
+// Cada botón queda bloqueado un instante para que un toque doble no pase por dos pasos seguidos.
+function askSteps(steps){
+  return new Promise(function(res){
+    var i=0,tm=null;
+    function close(v){clearTimeout(tm);$("cfm").className="cfm";res(v)}
+    function paint(){
+      var p=steps[i],last=i===steps.length-1,many=steps.length>1;
+      $("cfm").className="cfm on"+(p.danger?" danger":"")+(last&&many?" final":"");
+      $("cfm-b").innerHTML='<div class="ic">'+(p.icon||"⚠️")+'</div>'+(many?'<div class="st">PASO '+(i+1)+' DE '+steps.length+'</div>':'')+'<h3>'+p.title+'</h3><p>'+p.text+'</p>'+
+        '<button class="'+(p.danger?'r':'g')+'" id="cfm-ok" disabled>'+p.ok+'</button><button class="p" id="cfm-no">CANCELAR</button>';
+      $("cfm-no").onclick=function(){close(false)};
+      $("cfm-ok").onclick=function(){if(i<steps.length-1){i++;paint()}else close(true)};
+      tm=setTimeout(function(){var b=$("cfm-ok");if(b)b.disabled=false},p.wait||1300);
+    }
+    paint();
+  });
+}
+async function stampReset(keys,extra){
+  var d=sdb();if(!d)throw new Error("Sin conexión con la base");
+  var u={},k;keys.forEach(function(x){u["cfg/rs/"+x]=firebase.database.ServerValue.TIMESTAMP});
+  for(k in (extra||{}))u[k]=extra[k];
+  await d.ref().update(u);
+}
 async function resetRank(){
-  if(!confirm("¿Reiniciar el ranking para todos? Los jugadores van a poder volver a jugar."))return;
-  await FB.resetRank();
-  await loadRank();
+  if(!await askSteps([{icon:"🏆",title:"¿Reiniciar el ranking?",text:"La tabla de posiciones queda vacía y todos los jugadores pueden volver a jugar. Los premios y los saludos <b>no</b> se tocan.",ok:"REINICIAR RANKING",danger:true}]))return;
+  try{await FB.resetRank();await loadRank();toast("Ranking reiniciado ✓")}catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
+}
+async function resetClaimed(){
+  var n=okItems().tr.length;
+  if(!await askSteps([{icon:"✅",title:"¿Reiniciar reclamados de trivia?",text:"Se vacía la lista de premios <b>ya entregados</b> ("+n+"). Los pendientes, el ranking y los saludos no se tocan. Un QR ya entregado sigue figurando como «ya reclamado» si alguien lo escanea.",ok:"REINICIAR RECLAMADOS",danger:true}]))return;
+  try{await stampReset(["rc"]);toast("Reclamados de trivia reiniciados ✓")}catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
+}
+async function resetRedeemed(){
+  var n=okItems().sa.length;
+  if(!await askSteps([{icon:"🎁",title:"¿Reiniciar saludos canjeados?",text:"Se vacía la lista de saludos <b>ya canjeados</b> ("+n+"). Los saludos en espera o validados, los premios de la trivia y el ranking no se tocan.",ok:"REINICIAR CANJEADOS",danger:true}]))return;
+  try{await stampReset(["cj"]);toast("Saludos canjeados reiniciados ✓")}catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
+}
+async function resetAll(){
+  if(!await askSteps([
+    {icon:"⚠️",title:"¿Estás seguro de resetear todo?",text:"Se archivan el <b>ranking</b>, los <b>premios pendientes y reclamados</b> de la trivia y todos los <b>saludos</b> (en espera, validados y canjeados). Los jugadores podrán volver a jugar desde cero.",ok:"SÍ, SEGUIR",danger:true},
+    {icon:"🛑",title:"NO HAY VUELTA ATRÁS",text:"Los QR de premios y de saludos anteriores <b>dejan de valer</b> en el stand y desaparecen de todas las listas. Esto no se puede deshacer desde el panel.",ok:"RESETEAR TODO",danger:true,wait:2200}]))return;
+  try{
+    var c=await FB.readCfg(),g=(c.gen|0)+1;
+    await stampReset(["rc","cj","all"],{"cfg/gen":g,"cfg/rs/allGen":g});
+    await loadRank();toast("Todo reiniciado ✓")
+  }catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
 }
 
 /* ---------- preguntas ---------- */
