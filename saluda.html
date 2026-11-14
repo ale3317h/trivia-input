@@ -1242,7 +1242,9 @@ module.exports = QRCode;
 
 </script>
 <script>
-var $=function(i){return document.getElementById(i)},KEY="saludo_id",memId=null;
+/* Cámara según el link: saluda.html → cámara 1; saluda.html?cam=2 → cámara 2 */
+var CAM=(function(){var c=parseInt(new URLSearchParams(location.search).get("cam"),10);return c===2?2:1})();
+var $=function(i){return document.getElementById(i)},KEY=CAM===2?"saludo_id_c2":"saludo_id",memId=null;
 function lsg(){try{return localStorage.getItem(KEY)}catch(e){return memId}}
 function lss(v){memId=v;try{if(v)localStorage.setItem(KEY,v);else localStorage.removeItem(KEY)}catch(e){}}
 function rnd(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
@@ -1306,7 +1308,7 @@ function start(){
     var ref=db.ref("saludos/"+id);cur=ref;
     return ref.once("value").then(function(s){
       if(s.exists())return;
-      return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP});
+      return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP,cam:CAM});
     }).then(function(){lss(id);ref.on("value",onStatus);db.ref("cfg/ovs/"+id).on("value",function(o){ovs=o.val();applySt()})});
   }).catch(function(e){var d=e&&e.code==="PERMISSION_DENIED";showErr(d?"El stand todavía no está habilitado. Avisale a producción y probá de nuevo en un rato.":"No se pudo registrar tu saludo ("+(e&&e.code||"error")+").",d?"CASI LISTO":null)});
 }

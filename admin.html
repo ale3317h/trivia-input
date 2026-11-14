@@ -80,6 +80,16 @@ body.app-on{padding-bottom:84px}
 .sa .top{display:flex;align-items:center;gap:10px;margin-bottom:8px}.sa .top .em{font-size:30px}
 .sa .top b{font:700 16px system-ui,sans-serif}.sa .btns{display:flex;gap:8px}.sa .btns button{margin:0;flex:1;padding:14px 8px}
 .sa .btns button.v{flex:2;font-size:16px}
+/* señal roja parpadeante para saludos en espera */
+@keyframes redblink{0%,100%{opacity:1}50%{opacity:.2}}
+@keyframes redglow{0%,100%{box-shadow:0 0 0 0 #ff4d7d00}50%{box-shadow:0 0 28px -2px var(--red)}}
+.sig{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--red);box-shadow:0 0 12px 3px var(--red);flex:none;animation:redblink .8s ease-in-out infinite}
+.sa.pend{border:2px solid var(--red);animation:pin .3s ease both,redglow 1.1s ease-in-out infinite}
+.sa.pend .top{position:relative}.sa.pend .top .sig{position:absolute;top:0;right:0}
+.sabanner{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:10px 12px;border-radius:14px;border:2px solid var(--red);background:#3a0614;color:#fff;font:800 15px system-ui,sans-serif;animation:redglow 1.1s ease-in-out infinite}
+.sabanner b{flex:1}.sabanner button{margin:0;width:auto;background:transparent;border:0;font-size:22px;padding:0 4px}
+.tabs .bd.blink{animation:redblink .8s ease-in-out infinite;box-shadow:0 0 10px 2px var(--red)}
+#tb-sal.pending i{animation:redblink .8s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--red))}
 .salert{position:fixed;left:10px;right:10px;top:10px;z-index:50;max-width:540px;margin:0 auto;background:#2a2005;border:2px solid var(--yel);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 0 40px -6px var(--yel);transform:translateY(-130%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .salert.on{transform:none}.salert b{flex:1}.salert button{margin:0;background:var(--yel);color:#1a1000;border:0}
 .sheet .warn{background:#4a0d22;border:1px solid var(--red);border-radius:10px;padding:6px 10px;margin:8px 0;font-size:13px}
@@ -170,7 +180,8 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
 
     <div id="t-sal" class="pane hide">
       <h2 style="margin-top:6px">👋 Saludá a la cámara <span class="small" id="sc1"></span></h2>
-      <p class="small" style="margin-top:0">Cada persona que escanea el QR del stand aparece acá. Enfocala con la cámara y, cuando salude, tocá <b>VALIDAR DESAFÍO</b>: en su celular le aparece el QR del premio. Para canjearlo usá la pestaña <b>Escanear</b> (o escribí el código).</p>
+      <p class="small" style="margin-top:0">Cada persona que escanea el QR de una cámara (cámara 1 o cámara 2) aparece acá, con su etiqueta. Enfocala con la cámara y, cuando salude, tocá <b>VALIDAR DESAFÍO</b>: en su celular le aparece el QR del premio. Para canjearlo usá la pestaña <b>Escanear</b> (o escribí el código).</p>
+      <div class="sabanner hide" id="sabanner"></div>
       <div class="row" id="sachips" style="margin-bottom:6px"></div>
       <div id="sa-pen" class="small">Conectando…</div>
       <h3 style="margin-top:18px">Validados, esperando canje</h3>
@@ -1933,21 +1944,31 @@ function watchSa(){
     var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]&&!sAll(x)});
     o.forEach(function(x){saSeen[x.id]=1});
     SAraw=o;SA=o.map(effS);renderSa();renderOk();
-    if(saInit&&fresh.length)saAlert(fresh.length);
+    if(saInit&&fresh.length)saAlert(fresh);
     saInit=true;
   },function(e){$("sa-pen").textContent="No se pudo leer la base: "+(e&&e.message)});
   saOff=function(){ref.off("value",h)};
   setInterval(function(){if(!$("t-sal").classList.contains("hide"))renderSa()},15000);
 }
-function saAlert(n){
+function camOf(x){return x.cam===2?2:1}
+function saAlert(list){
+  var n=list.length,cs=list.map(camOf).filter(function(c,i,a){return a.indexOf(c)===i});
   try{var A=snd.c||(snd.c=new (window.AudioContext||window.webkitAudioContext)());if(A.state==="suspended")A.resume();
     [880,1175,880,1175].forEach(function(f,i){var o=A.createOscillator(),g=A.createGain(),t=A.currentTime+i*.16;o.type="square";o.frequency.value=f;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.12,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.14);o.start(t);o.stop(t+.16)})}catch(e){}
   try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}
   var onTab=!$("t-sal").classList.contains("hide");
-  if(!onTab){$("salertt").textContent=n>1?n+" saludos nuevos":"Nuevo saludo: ¡enfocá la cámara!";$("salert").classList.add("on");clearTimeout(saHide);saHide=setTimeout(hideAlert,12000)}
+  if(!onTab){$("salertt").textContent=n>1?(cs.length===1?n+" saludos nuevos · cámara "+cs[0]:n+" saludos nuevos"):"Nuevo saludo · cámara "+cs[0]+": ¡enfocala!";$("salert").classList.add("on");clearTimeout(saHide);saHide=setTimeout(hideAlert,12000)}
   if(document.hidden){var k=0;clearInterval(saFlash);saFlash=setInterval(function(){document.title=(k++%2?saTitle:"👋 NUEVO SALUDO");if(!document.hidden){clearInterval(saFlash);document.title=saTitle}},900)}
 }
 function hideAlert(){$("salert").classList.remove("on")}
+/* recordatorio sonoro mientras haya saludos en espera (se puede silenciar con la campanita del aviso rojo) */
+var saPenN=0,saMuted=false;try{saMuted=localStorage.getItem("saMuted")==="1"}catch(e){}
+function saMute(){saMuted=!saMuted;try{localStorage.setItem("saMuted",saMuted?"1":"0")}catch(e){}renderSa()}
+function saBeep(){
+  try{var A=snd.c||(snd.c=new (window.AudioContext||window.webkitAudioContext)());if(A.state==="suspended")A.resume();
+    [988,740,988].forEach(function(f,i){var o=A.createOscillator(),g=A.createGain(),t=A.currentTime+i*.2;o.type="square";o.frequency.value=f;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.16);o.start(t);o.stop(t+.18)})}catch(e){}
+}
+setInterval(function(){if(saPenN>0&&!saMuted)saBeep()},8000);
 function renderSa(){
   var SV=sView();
   var pen=SV.filter(function(x){return x._s==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
@@ -1956,8 +1977,12 @@ function renderSa(){
   var red=SV.filter(function(x){return x._s==="redeemed"}).length;
   $("sc1").textContent="("+pen.length+")";
   var bd=$("bd-sal");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
+  saPenN=pen.length;bd.classList.toggle("blink",pen.length>0);$("tb-sal").classList.toggle("pending",pen.length>0);
+  var c1=pen.filter(function(x){return camOf(x)===1}).length,sb=$("sabanner");
+  sb.classList.toggle("hide",!pen.length);
+  sb.innerHTML=pen.length?'<span class="sig"></span><b>'+pen.length+' EN ESPERA · cámara 1: '+c1+' · cámara 2: '+(pen.length-c1)+'</b><button onclick="saMute()" title="'+(saMuted?"Activar sonido":"Silenciar recordatorio")+'">'+(saMuted?"🔕":"🔔")+'</button>':"";
   $("sachips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">en espera</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+val.length+'</b><span class="small">sin canjear</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+red+'</b><span class="small">canjeados</span></div>';
-  $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa'+(i===0?' new':'')+'"><div class="top"><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR del stand aparece acá, con sonido.";
+  $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa pend'+(i===0?' new':'')+'"><div class="top"><span class="sig"></span><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><span class="tg sa">CÁMARA '+camOf(x)+'</span><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR de la cámara 1 o de la cámara 2 aparece acá, con sonido.";
   $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div></div>'}).join(""):"Ninguno.";
   $("sa-his").innerHTML=his.length?his.map(function(x){var r=x._s==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x._t):'rechazado '+hms(x._t))+'</div>'+(r?'<div class="act"><button class="p rv" onclick="revertSa(\''+esc(x.id)+'\')">↩ REVERTIR</button></div>':'')+'</div>'}).join(""):"Sin movimientos todavía.";
 }
