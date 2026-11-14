@@ -582,12 +582,6 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
 <button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button></div>
-<div class="card y c hide" id="end-mail"><b class="yel">📬 ¿Querés enterarte si ganás?</b>
-<p class="mut" style="margin:6px 0 0">Colocá tu Gmail para que te avisemos si te llevás algún premio por quedar en un top alto.</p>
-<input id="mail-in" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="tunombre@gmail.com">
-<button id="mail-btn" onclick="mailSend()">AVISARME →</button>
-<small id="mail-msg" class="mut"></small>
-<small class="mut" style="display:block;margin-top:6px">Lo usamos solo para avisarte de este concurso.</small></div>
 </section>
 <section id="s-prize" class="hide">
 <div class="card y c pz1"><div class="em">🏆</div><div class="big yel">¡FELICIDADES!</div><p class="lead">Ganaste la recompensa máxima</p><p>Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" onclick="qrOpen()">VER MI QR</button></div>
@@ -629,9 +623,6 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
     var ref=d.ref("prizes/"+gen),h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});cb(o)});
     return function(){ref.off("value",h)}};
   FB.claimPrize=function(gen,id){return db().ref("prizes/"+gen+"/"+id).update({claimed:true,claimedAt:Date.now()})};
-  /* Mail de quien jugó el modo experto, para avisarle si gana un premio: emails/<uid> (el admin elige a quién escribirle). */
-  FB.saveMail=function(r){var d=db();if(!d)return Promise.reject(new Error("sin base"));
-    return d.ref("emails/"+r.uid).set({email:r.email,name:r.name,score:r.score|0,gen:r.gen,ts:Date.now()})};
 })();
 </script>
 <script>
@@ -1824,8 +1815,7 @@ function applyCfg(){
   LV=[["FÁCIL",0,n1,2,"#3dff8a"],["MEDIO",n1,n1+n2,3,"#ffe14d"],["DIFÍCIL",n1+n2,n1+n2+n3,4,"#ff4d7d"],["EXPERTO",n1+n2+n3,9999,6,"#b86bff"]];
 }
 function hh(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
-/* qi = preguntas ya hechas · cq = respuestas CORRECTAS: el nivel depende de cq, así los errores no gastan el cupo (16 correctas = 16 + errores preguntas en total) */
-var name="",order=[],qi=0,cq=0,lastGood=false,hp=MAXHP,score=0,t0=0,tm=null,locked=false,test=false,loaded=false,cache=[];
+var name="",order=[],qi=0,hp=MAXHP,score=0,t0=0,tm=null,locked=false,test=false,loaded=false,cache=[];
 var racha=0,expertHp=false,TT=15000,tictacPlayed=false,lastBeat=-1;
 
 /* ---------- Sonidos generados (sin archivos) ----------
@@ -1878,18 +1868,18 @@ var SFX={
 };
 function playSonido(k){var f=SFX[k];if(f)f()}
 var $=function(i){return document.getElementById(i)};
-function show(id){if(id!=="s-how")ringDemo(false);["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(cq)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();var sc=$("sc");if(sc)sc.scrollTop=0;scrollSoon()}
+function show(id){if(id!=="s-how")ringDemo(false);["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(qi)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();var sc=$("sc");if(sc)sc.scrollTop=0;scrollSoon()}
 // Con 1 sola vida el corazón late y el fondo pulsa en rojo.
 function danger(){
   var last=hp<=1&&hp>0;
   $("h-hp").classList.toggle("low",last);
   var inGame=!$("s-game").classList.contains("hide");
   $("danger").classList.toggle("on",last&&inGame);
-  $("danger").classList.toggle("soft",lvOf(cq)===3);
+  $("danger").classList.toggle("soft",lvOf(qi)===3);
 }
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 // En el nivel EXPERTO queda 1 sola vida, sin importar cuántas traía.
-function maxhpNow(){return lvOf(cq)===3?1:MAXHP}
+function maxhpNow(){return lvOf(qi)===3?1:MAXHP}
 function hearts(){var t=maxhpNow(),h="";for(var i=0;i<t;i++)h+=i<hp?"♥":"<s>♥</s>";return h}
 // Multiplicador por respuestas seguidas sin perder vida: x1.1, x1.2... tope x2.
 function mult(){return Math.min(1+racha*0.1,2)}
@@ -1964,7 +1954,8 @@ function getList(){return FB.listScores()}
 function saveScore(force){
   if(test)return Promise.resolve();
   if(score<=0&&!force)return Promise.resolve();
-  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now()});
+  var idx=order.length?Math.min(qi,order.length-1):0;
+  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(idx)+1,ts:Date.now()});
 }
 function status(){
   var e=$("rkst");if(!e)return;
@@ -2130,7 +2121,7 @@ function play(){
   if(!D.length){show("s-name");$("err").textContent="No se cargaron las preguntas. Recargá la página.";return}
   order=buildOrder();
   if(!order.length){show("s-name");$("err").textContent="Las preguntas están incompletas. Avisale al admin.";return}
-  qi=0;cq=0;lastGood=false;hp=MAXHP;score=0;racha=0;expertHp=false;
+  qi=0;hp=MAXHP;score=0;racha=0;expertHp=false;
   if(!test)ls("played",String(FB.cfg().gen));
   $("live").classList.toggle("hide",!rankVisible());
   saveScore().then(refresh);lvBanner(0,ask);
@@ -2158,7 +2149,7 @@ function fitExp(){
 var fitT=null;
 window.addEventListener("resize",function(){clearTimeout(fitT);fitT=setTimeout(function(){if(!$("s-game").classList.contains("hide"))fitExp()},200)});
 function ask(){
-  var d=order[qi],l=lvOf(cq),L=LV[l],n=L[3];locked=false;tictacPlayed=false;$("next").disabled=true;$("next").classList.add("off");$("next").textContent="SIGUIENTE →";
+  var d=order[qi],l=lvOf(qi),L=LV[l],n=L[3];locked=false;tictacPlayed=false;$("next").disabled=true;$("next").classList.add("off");$("next").textContent="SIGUIENTE →";
   TT=(l===3)?Math.max(3000,T-3000):T; // experto: 3 segundos menos
   // Al entrar al nivel EXPERTO (pregunta 17) queda 1 sola vida.
   if(l===3&&!expertHp){expertHp=true;if(hp>1)hp=1}
@@ -2167,7 +2158,7 @@ function ask(){
   var bad=shuf(d.bad).slice(0,n-1);
   var opts=shuf([d.ok].concat(bad));
   $("h-lv").textContent="NIVEL "+(l+1)+" · "+L[0];$("h-hp").innerHTML=hearts();
-  $("h-q").textContent="Pregunta "+(qi+1)+" de "+(l===3?order.length:Math.min(totalQ()+(qi-cq),order.length));scoreHud();
+  $("h-q").textContent="Pregunta "+(qi+1)+" de "+(l===3?order.length:Math.min(totalQ(),order.length));scoreHud();
   setQ(d.q);live();$("qcard").classList.remove("out");
   var o=$("opts");o.innerHTML="";o.classList.remove("done");
   opts.forEach(function(t,i){var b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+String.fromCharCode(65+i)+"</b><span>"+esc(t)+"</span>";b.dataset.ok=(t===d.ok)?"1":"0";b.onclick=function(){pick(b)};o.appendChild(b)});
@@ -2178,7 +2169,7 @@ function ask(){
 function pick(b){
   if(locked)return;locked=true;clearInterval(tm);
   var left=Math.max(0,TT-(Date.now()-t0));
-  if(b.dataset.ok==="1"){racha++;var g=Math.round((100+Math.round(left/100))*(lvOf(cq)+1)*mult());score+=g;flyPts(b,g);playSonido("correcto")}
+  if(b.dataset.ok==="1"){racha++;var g=Math.round((100+Math.round(left/100))*(lvOf(qi)+1)*mult());score+=g;flyPts(b,g);playSonido("correcto")}
   reveal(b);
 }
 function crack(){
@@ -2187,25 +2178,23 @@ function crack(){
   $("nv").appendChild(o);setTimeout(function(){o.remove()},1200);
 }
 function reveal(b){
-  var bs=$("opts").children,good=b&&b.dataset.ok==="1";lastGood=!!good;
+  var bs=$("opts").children,good=b&&b.dataset.ok==="1";
   for(var i=0;i<bs.length;i++)if(bs[i].dataset.ok==="1")bs[i].classList.add("ok");
   if(b&&!good)b.classList.add("bad");
   if(!good){hp--;racha=0;crack();playSonido(b?"incorrecto":"tiempo")}
   $("opts").classList.add("done");$("tsec").classList.remove("low");$("h-hp").innerHTML=hearts();scoreHud(good);live();danger();
-  saveScore().then(refresh);qrIssue(lvOf(cq),qi+1);
+  saveScore().then(refresh);qrIssue(lvOf(qi),qi+1);
   var nb=$("next");nb.disabled=false;nb.classList.remove("off");
   nb.textContent=(hp<=0||qi+1>=order.length)?"VER RESULTADO →":"SIGUIENTE →";
 }
 function nextQ(){
   var nb=$("next");if(nb.disabled)return;nb.disabled=true;nb.classList.add("off");
   if(hp<=0)return end(false);
-  var prev=lvOf(cq);
-  if(lastGood)cq++;          // solo las correctas hacen avanzar de nivel: un error suma una pregunta extra del mismo nivel
   qi++;
   if(qi>=order.length)return end(true);
-  if(lastGood&&cq===totalQ())return showPrize();
+  if(qi===totalQ())return showPrize();
   // sale la pregunta anterior; si cambia el nivel, aparece el cartel
-  var l=lvOf(cq),up=l!==prev;
+  var l=lvOf(qi),up=l!==lvOf(qi-1);
   $("qcard").classList.add("out");
   setTimeout(function(){if(up)lvBanner(l,ask);else ask()},RM?0:170);
 }
@@ -2213,7 +2202,7 @@ function nextQ(){
 function contClear(){try{localStorage.removeItem("cont")}catch(e){}}
 function contSave(){
   if(test)return;
-  ls("cont",JSON.stringify({gen:FB.cfg().gen,name:name,order:order.map(function(x){return x.q}),qi:qi,cq:cq,hp:hp,score:score,racha:racha}));
+  ls("cont",JSON.stringify({gen:FB.cfg().gen,name:name,order:order.map(function(x){return x.q}),qi:qi,hp:hp,score:score,racha:racha}));
 }
 function hasCont(){
   if(test)return false;
@@ -2233,7 +2222,7 @@ function resume(){
   var map={};D.forEach(function(x){if(isValid(x))map[x.q]=x});
   var o=c.order.map(function(q){return map[q]}).filter(Boolean);
   if(o.length!==c.order.length||c.qi>=o.length){contClear();go();return}
-  order=o;name=c.name||name;qi=c.qi;cq=(c.cq!=null?c.cq:c.qi);lastGood=false;hp=c.hp;score=c.score;racha=c.racha||0;expertHp=false;
+  order=o;name=c.name||name;qi=c.qi;hp=c.hp;score=c.score;racha=c.racha||0;expertHp=false;
   expIntro();
 }
 /* ---------- QR único, se genera y se lee sin internet ---------- */
@@ -2279,33 +2268,19 @@ function qrSave(){
   g.font="26px monospace";g.fillText(r.score+" pts · pregunta "+r.q,W/2,y0+S+236);
   c.toBlob(function(bl){var l=document.createElement("a");l.href=URL.createObjectURL(bl);l.download="st3room-"+r.code+".png";document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(l.href);l.remove()},1500)},"image/png");
 }
-/* Aviso por mail al final del modo experto */
-function mailBox(on){
-  var e=$("end-mail");if(!e)return;on=on&&!test;e.classList.toggle("hide",!on);if(!on)return;
-  $("mail-in").value=ls("mail")||"";$("mail-btn").disabled=false;$("mail-msg").textContent="";$("mail-msg").className="mut";
-}
-function mailSend(){
-  var v=($("mail-in").value||"").trim().toLowerCase(),m=$("mail-msg"),b=$("mail-btn");
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){m.textContent="Escribí un mail válido.";m.className="red";return}
-  b.disabled=true;m.textContent="Guardando…";m.className="mut";
-  FB.saveMail({uid:FB.uid(),email:v,name:name,score:score,gen:FB.cfg().gen}).then(function(){
-    ls("mail",v);m.textContent="✓ Listo: si te llevás un premio te avisamos a ese mail.";m.className="yel";b.textContent="GUARDADO ✓";
-  }).catch(function(){b.disabled=false;m.textContent="No se pudo guardar. Probá de nuevo en un rato.";m.className="red"});
-}
 async function end(win){
   clearInterval(tm);if(win)score+=hp*100;contClear();
-  var early=!win&&cq<totalQ();
+  var early=!win&&qi<totalQ();
   var good=win||early;
   if(good)playSonido("tada");
   $("end-c").className="endh "+(good?"ok":"bad");
   $("end-t").textContent=win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER");$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
-  $("end-pz").textContent=early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
+  $("end-pz").textContent=early?"Llegaste hasta la dificultad "+LV[lvOf(qi)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
-  var PZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","llavero 3D"],["🧊","llavero 3D"]],li=win?3:lvOf(cq),lc=LV[li][4];
+  var PZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","llavero 3D"],["🧊","llavero 3D"]],li=win?3:lvOf(qi),lc=LV[li][4];
   $("end-badge").innerHTML="<div class='pb' style='--c:"+lc+"'><em>"+PZ[li][0]+"</em><b>"+LV[li][0]+"</b><span>"+PZ[li][1]+"</span></div>";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
-  mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
   show("s-end");countTo($("st-pts"),score,true);if(good)confetti();
   await saveScore(true);await refresh();

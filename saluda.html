@@ -22,8 +22,6 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 #sc::-webkit-scrollbar{display:none;width:0;height:0}
 .wrap{max-width:460px;margin:0 auto;padding:22px 16px 40px;min-height:100%;overflow:clip;display:flex;flex-direction:column;justify-content:center}
 .brand{text-align:center;font:700 .72rem/1 var(--mono);letter-spacing:.22em;color:var(--mut);margin-bottom:18px;text-transform:uppercase}
-/* logo del encabezado: el archivo es 1920×1080 con mucho margen, se recorta al dibujo */
-.logo{width:min(58%,220px);aspect-ratio:865/840;margin:0 auto 8px;background:url(logo-st3room.webp) no-repeat;background-size:222% auto;background-position:50.2% 33.3%;filter:drop-shadow(0 8px 22px #0b1a5a88)}
 .card{background:linear-gradient(180deg,#1a0e30,var(--card));border:1px solid #ffffff22;border-radius:24px;padding:26px 18px;text-align:center;box-shadow:0 0 50px -18px var(--c,var(--pur));animation:pop .5s var(--spring) both}
 @keyframes pop{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
 h1{font:900 clamp(1.9rem,10.5vw,2.7rem)/1.05 var(--disp);margin:.2em 0 .3em;letter-spacing:.02em;color:var(--yel);text-shadow:0 0 24px #ffe14d66;overflow-wrap:break-word}
@@ -54,7 +52,6 @@ button:active{transform:scale(.98)}
 <body>
 <div class="conn" id="conn">Sin conexión… reconectando</div>
 <div id="sc"><div class="wrap">
-  <div class="logo" role="img" aria-label="ST3 Room"></div>
   <div class="brand">Streaming Room T3 · Desafío</div>
   <div id="view"></div>
 </div></div>
@@ -1245,9 +1242,7 @@ module.exports = QRCode;
 
 </script>
 <script>
-/* Cámara según el link: saluda.html → cámara 1; saluda.html?cam=2 → cámara 2 */
-var CAM=(function(){var c=parseInt(new URLSearchParams(location.search).get("cam"),10);return c===2?2:1})();
-var $=function(i){return document.getElementById(i)},KEY=CAM===2?"saludo_id_c2":"saludo_id",memId=null;
+var $=function(i){return document.getElementById(i)},KEY="saludo_id",memId=null;
 function lsg(){try{return localStorage.getItem(KEY)}catch(e){return memId}}
 function lss(v){memId=v;try{if(v)localStorage.setItem(KEY,v);else localStorage.removeItem(KEY)}catch(e){}}
 function rnd(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
@@ -1287,27 +1282,19 @@ function loadCode(){
 /* Producción puede revertir un canje (cfg/ovs/<id>): ahí manda la anotación nueva sobre el estado guardado. */
 var rawSt=null,ovs=null;
 function effSt(){var st=rawSt;if(ovs&&st==="redeemed"&&ovs.s==="v")return "validated";if(ovs&&ovs.s==="r"&&(st==="redeemed"||st==="validated"))return "redeemed";return st}
-/* Si producción hace "Reiniciar todo" con esta pantalla abierta, arranca de cero con un código nuevo (sin recargar). */
-var myTs=0,rsAll=0,rsWatch=false,curO=null,wasVal=false;
-/* Reinicia esta pantalla: nueva persona (código nuevo) que tiene que saludar otra vez. */
-function restart(){try{cur&&cur.off()}catch(e){}try{curO&&curO.off()}catch(e){}lss(null);myTs=0;wasVal=false;start()}
-function watchReset(){if(rsWatch)return;rsWatch=true;db.ref("cfg/rs/all").on("value",function(s){rsAll=+s.val()||0;checkReset()})}
-function checkReset(){
-  if(!(id&&myTs&&myTs<=rsAll))return false;
-  restart();return true}
-function onStatus(s){var v=s.val()||{};rawSt=v.status||null;myTs=+v.ts||0;if(checkReset())return;applySt()}
+function onStatus(s){rawSt=(s.val()||{}).status||null;applySt()}
 function applySt(){
   var st=effSt();
   if(!st){showPending();last="pending";return}
   if(st===last)return;
   if(st==="pending"){showPending();last=st}
-  else if(st==="validated"){wasVal=true;loadCode()}
+  else if(st==="validated"){loadCode()}
   else if(st==="redeemed"){showUsed();last=st}
-  else if(st==="rejected"){if(wasVal){restart();return}showRejected();last=st}   // producción canceló un saludo ya validado: pantalla de cero, hay que saludar otra vez
+  else if(st==="rejected"){showRejected();last=st}
 }
 function start(){
   if(!window.firebase||!FB.shared()){showErr("No pudimos conectar con el stream. Revisá tu internet.");return}
-  db=firebase.database();last=null;codeTry=0;rawSt=null;ovs=null;myTs=0;wasVal=false;
+  db=firebase.database();last=null;codeTry=0;
   var idl=lsg();
   if(!idl||!/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(idl))idl=rnd(4)+"-"+rnd(4);
   showPending();
@@ -1319,8 +1306,8 @@ function start(){
     var ref=db.ref("saludos/"+id);cur=ref;
     return ref.once("value").then(function(s){
       if(s.exists())return;
-      return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP,cam:CAM});
-    }).then(function(){lss(id);ref.on("value",onStatus);curO=db.ref("cfg/ovs/"+id);curO.on("value",function(o){ovs=o.val();applySt()});watchReset()});
+      return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP});
+    }).then(function(){lss(id);ref.on("value",onStatus);db.ref("cfg/ovs/"+id).on("value",function(o){ovs=o.val();applySt()})});
   }).catch(function(e){var d=e&&e.code==="PERMISSION_DENIED";showErr(d?"El stand todavía no está habilitado. Avisale a producción y probá de nuevo en un rato.":"No se pudo registrar tu saludo ("+(e&&e.code||"error")+").",d?"CASI LISTO":null)});
 }
 try{firebase.database().ref(".info/connected").on("value",function(s){$("conn").classList.toggle("on",s.val()===false)})}catch(e){}
