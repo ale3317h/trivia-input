@@ -1284,19 +1284,27 @@ function loadCode(){
 /* Producción puede revertir un canje (cfg/ovs/<id>): ahí manda la anotación nueva sobre el estado guardado. */
 var rawSt=null,ovs=null;
 function effSt(){var st=rawSt;if(ovs&&st==="redeemed"&&ovs.s==="v")return "validated";if(ovs&&ovs.s==="r"&&(st==="redeemed"||st==="validated"))return "redeemed";return st}
-function onStatus(s){rawSt=(s.val()||{}).status||null;applySt()}
+/* Si producción hace "Reiniciar todo" con esta pantalla abierta, arranca de cero con un código nuevo (sin recargar). */
+var myTs=0,rsAll=0,rsWatch=false,curO=null,wasVal=false;
+/* Reinicia esta pantalla: nueva persona (código nuevo) que tiene que saludar otra vez. */
+function restart(){try{cur&&cur.off()}catch(e){}try{curO&&curO.off()}catch(e){}lss(null);myTs=0;wasVal=false;start()}
+function watchReset(){if(rsWatch)return;rsWatch=true;db.ref("cfg/rs/all").on("value",function(s){rsAll=+s.val()||0;checkReset()})}
+function checkReset(){
+  if(!(id&&myTs&&myTs<=rsAll))return false;
+  restart();return true}
+function onStatus(s){var v=s.val()||{};rawSt=v.status||null;myTs=+v.ts||0;if(checkReset())return;applySt()}
 function applySt(){
   var st=effSt();
   if(!st){showPending();last="pending";return}
   if(st===last)return;
   if(st==="pending"){showPending();last=st}
-  else if(st==="validated"){loadCode()}
+  else if(st==="validated"){wasVal=true;loadCode()}
   else if(st==="redeemed"){showUsed();last=st}
-  else if(st==="rejected"){showRejected();last=st}
+  else if(st==="rejected"){if(wasVal){restart();return}showRejected();last=st}   // producción canceló un saludo ya validado: pantalla de cero, hay que saludar otra vez
 }
 function start(){
   if(!window.firebase||!FB.shared()){showErr("No pudimos conectar con el stream. Revisá tu internet.");return}
-  db=firebase.database();last=null;codeTry=0;
+  db=firebase.database();last=null;codeTry=0;rawSt=null;ovs=null;myTs=0;wasVal=false;
   var idl=lsg();
   if(!idl||!/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/.test(idl))idl=rnd(4)+"-"+rnd(4);
   showPending();
@@ -1309,7 +1317,7 @@ function start(){
     return ref.once("value").then(function(s){
       if(s.exists())return;
       return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP,cam:CAM});
-    }).then(function(){lss(id);ref.on("value",onStatus);db.ref("cfg/ovs/"+id).on("value",function(o){ovs=o.val();applySt()})});
+    }).then(function(){lss(id);ref.on("value",onStatus);curO=db.ref("cfg/ovs/"+id);curO.on("value",function(o){ovs=o.val();applySt()});watchReset()});
   }).catch(function(e){var d=e&&e.code==="PERMISSION_DENIED";showErr(d?"El stand todavía no está habilitado. Avisale a producción y probá de nuevo en un rato.":"No se pudo registrar tu saludo ("+(e&&e.code||"error")+").",d?"CASI LISTO":null)});
 }
 try{firebase.database().ref(".info/connected").on("value",function(s){$("conn").classList.toggle("on",s.val()===false)})}catch(e){}

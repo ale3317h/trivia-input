@@ -173,7 +173,7 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
 
     <div id="t-pen" class="pane hide">
       <h2 style="margin-top:6px">Pendientes <span class="small" id="pc1"></span></h2>
-      <p class="small" style="margin-top:0">Jugaron pero todavía no retiraron su premio.</p>
+      <p class="small" style="margin-top:0">Jugaron pero todavía no retiraron su premio. También figuran los saludos validados con QR que esperan canje.</p>
       <input id="p-q" placeholder="Buscar por nombre o código" oninput="renderLists()" autocomplete="off" style="margin-bottom:10px">
       <div id="l-pen">Cargando…</div>
     </div>
@@ -1795,13 +1795,16 @@ function renderLists(){
   var V=pView(),
       pen=V.filter(function(x){return !x._c}).sort(function(a,b){return (b.ts||0)-(a.ts||0)}),
       ok=V.filter(function(x){return x._c}),
-      cj=sView().filter(function(x){return x._s==="redeemed"}).length;
-  $("tot").textContent=V.length+" jugaron";$("pc1").textContent="("+pen.length+")";
-  var bd=$("bd-pen");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
-  $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+cj+'</b><span class="small">saludos canjeados</span></div>'+
+      cj=sView().filter(function(x){return x._s==="redeemed"}).length,
+      sv=sView().filter(function(x){return x._s==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),   // saludos validados con QR, esperando canje
+      npen=pen.length+sv.length;
+  $("tot").textContent=V.length+" jugaron";$("pc1").textContent="("+npen+")";
+  var bd=$("bd-pen");bd.textContent=npen;bd.classList.toggle("hide",!npen);
+  $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+npen+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+cj+'</b><span class="small">saludos canjeados</span></div>'+
     '<div style="flex-basis:100%"><div class="prog"><i style="width:'+(V.length?Math.round(ok.length/V.length*100):0)+'%"></i></div></div>';
   var q=nz($("p-q").value),f=pen.filter(function(x){return !q||nz(x.code+" "+x.name).indexOf(q)>=0});
-  $("l-pen").innerHTML=f.length?f.map(function(x){return row(x,false)}).join(""):(pen.length?"Ningún pendiente coincide.":(V.length?"🎉 No hay pendientes: todos retiraron su premio.":"Todavía no hay jugadores."));
+  var fs=sv.filter(function(x){return !q||nz("saludo camara "+x.id).indexOf(q)>=0}),rows=fs.map(saRowPen).concat(f.map(function(x){return row(x,false)}));
+  $("l-pen").innerHTML=rows.length?rows.join(""):(npen?"Ningún pendiente coincide.":(V.length?"🎉 No hay pendientes: todos retiraron su premio.":"Todavía no hay jugadores."));
   renderOk();
 }
 
@@ -1914,7 +1917,7 @@ function resolve(code,qrText){
   var id=code.slice(0,9),x=PR.filter(function(p){return p.id===id})[0];
   if(!x)return resolveSa(code);
   if(x._v)return badSheet("QR ANULADO","Producción anuló este premio y este QR. No entregar.");
-  if(!x._c&&pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
+  if(pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
   var warn="";
   if(x.code!==code)warn='<div class="warn">ℹ Este QR es de una versión anterior del jugador. Vale lo que figura en la base.</div>';
   else if(qrText){var m=String(qrText).match(/Premio:\s*([^\n\r]+)/i);if(m&&x.prize&&nz(m[1])!==nz(x.prize))warn='<div class="warn">⚠ El QR dice «'+esc(m[1].trim())+'» pero la base dice «'+esc(x.prize)+'». Vale lo de la base.</div>'}
@@ -1943,7 +1946,7 @@ function watchSa(){
     var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});
     var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]&&!sAll(x)});
     o.forEach(function(x){saSeen[x.id]=1});
-    SAraw=o;SA=o.map(effS);renderSa();renderOk();
+    SAraw=o;SA=o.map(effS);renderSa();renderLists();
     if(saInit&&fresh.length)saAlert(fresh);
     saInit=true;
   },function(e){$("sa-pen").textContent="No se pudo leer la base: "+(e&&e.message)});
@@ -1968,7 +1971,7 @@ function saBeep(){
   try{var A=snd.c||(snd.c=new (window.AudioContext||window.webkitAudioContext)());if(A.state==="suspended")A.resume();
     [988,740,988].forEach(function(f,i){var o=A.createOscillator(),g=A.createGain(),t=A.currentTime+i*.2;o.type="square";o.frequency.value=f;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.16);o.start(t);o.stop(t+.18)})}catch(e){}
 }
-setInterval(function(){if(saPenN>0&&!saMuted)saBeep()},8000);
+setInterval(function(){if(saPenN>0&&!saMuted)saBeep()},3500);
 function renderSa(){
   var SV=sView();
   var pen=SV.filter(function(x){return x._s==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
@@ -1983,7 +1986,7 @@ function renderSa(){
   sb.innerHTML=pen.length?'<span class="sig"></span><b>'+pen.length+' EN ESPERA · cámara 1: '+c1+' · cámara 2: '+(pen.length-c1)+'</b><button onclick="saMute()" title="'+(saMuted?"Activar sonido":"Silenciar recordatorio")+'">'+(saMuted?"🔕":"🔔")+'</button>':"";
   $("sachips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">en espera</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+val.length+'</b><span class="small">sin canjear</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+red+'</b><span class="small">canjeados</span></div>';
   $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa pend'+(i===0?' new':'')+'"><div class="top"><span class="sig"></span><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><span class="tg sa">CÁMARA '+camOf(x)+'</span><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR de la cámara 1 o de la cámara 2 aparece acá, con sonido.";
-  $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div></div>'}).join(""):"Ninguno.";
+  $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b><span class="tg sa">CÁMARA '+camOf(x)+'</span></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div><div class="act"><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}).join(""):"Ninguno.";
   $("sa-his").innerHTML=his.length?his.map(function(x){var r=x._s==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x._t):'rechazado '+hms(x._t))+'</div>'+(r?'<div class="act"><button class="p rv" onclick="revertSa(\''+esc(x.id)+'\')">↩ REVERTIR</button></div>':'')+'</div>'}).join(""):"Sin movimientos todavía.";
 }
 async function revertSa(id){
@@ -2002,6 +2005,25 @@ async function saReject(id,b){
   var d=sdb();if(!d)return;if(!confirm("¿Rechazar esta participación?"))return;saBusy(b);
   try{await d.ref("saludos/"+id).update({status:"rejected",rejectedAt:firebase.database.ServerValue.TIMESTAMP})}catch(e){alert("No se pudo rechazar: "+(e&&e.message));renderSa()}
 }
+/* Cancelar un saludo ya validado (esperando canje): su QR deja de valer y a la persona se le reinicia la pantalla, tiene que saludar de nuevo y recibe otro QR. */
+async function saCancel(id,b){
+  var d=sdb(),x=SA.filter(function(p){return p.id===id})[0];if(!d||!x)return;
+  if(x.status==="redeemed"){alert("No se puede cancelar: este saludo ya figura como canjeado en la base.");return}
+  if(!confirm("¿Cancelar este saludo validado?\nSu QR deja de valer y a la persona se le reinicia la pantalla: tiene que saludar de nuevo y recibe otro QR."))return;
+  saBusy(b);
+  try{await d.ref("saludos/"+id).update({status:"rejected",rejectedAt:firebase.database.ServerValue.TIMESTAMP});toast("Saludo cancelado ✓")}catch(e){alert("No se pudo cancelar: "+(e&&e.message));renderSa();renderLists()}
+}
+/* Marcar como canjeado desde la lista de pendientes (sin escanear). */
+async function saMarkRow(id){
+  var d=sdb(),x=SA.filter(function(p){return p.id===id})[0];if(!d||!x||x._s!=="validated")return;
+  if(!await askSteps([{icon:"🎁",title:"¿Marcar como canjeado?",text:"La persona <b>"+esc(id)+"</b> retiró su premio del saludo. Después podés revertirlo desde Reclamados.",ok:"MARCAR CANJEADO"}]))return;
+  try{
+    if(x.status==="redeemed"||OVS[id]){var r=await d.ref("cfg/ovs/"+id).transaction(function(c){if(c&&c.s==="r")return;return{s:"r",t:firebase.database.ServerValue.TIMESTAMP}});if(!r.committed)throw{code:"permission-denied"}}
+    else await d.ref("saludos/"+id).update({status:"redeemed",redeemedAt:firebase.database.ServerValue.TIMESTAMP});
+    toast("Saludo canjeado ✓")
+  }catch(e){alert("No se pudo marcar: "+((e&&(e.message||e.code))||"error"))}
+}
+function saRowPen(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span><span class="tg sa">CÁMARA '+camOf(x)+'</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span> · validado '+hms(x.validatedAt)+' · QR esperando canje</div><div class="act"><button class="g" onclick="saMarkRow(\''+esc(x.id)+'\')">MARCAR</button><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}
 function saCard(x){return '<div class="big">👋</div><div class="nm">Saludá a la cámara</div><div class="pr" style="color:var(--grn)">Desafío completado</div><div class="small">escaneó '+hms(x.ts)+' · <span class="mono" style="color:var(--yel)">'+esc(x.code||x.id)+'</span></div>'}
 async function resolveSa(code){
   var id=code.slice(0,9),x=SA.filter(function(p){return p.id===id})[0],d=sdb();
@@ -2010,8 +2032,9 @@ async function resolveSa(code){
   var real=cs.val()&&cs.val().code;
   if(!real||real!==code)return badSheet("QR NO VÁLIDO","El código no coincide con ninguno validado: no entregar premio.");
   x=Object.assign({},x,{code:code});curSa=id;
-  if(x._s!=="redeemed"&&sAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este saludo es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
+  if(sAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este saludo es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
   if(x._s==="redeemed")return showSheet("dup",'<div class="tt">YA FUE USADO · '+hms(x._t)+'</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+  if(x._s==="rejected")return badSheet("QR CANCELADO","Producción canceló este saludo: ya no vale. No entregar.");
   if(x._s!=="validated")return badSheet("TODAVÍA NO VALIDADO","Producción aún no validó este desafío ("+esc(x._s)+").");
   showSheet("pend",'<div class="tt">SALUDO VALIDADO · PREMIO PENDIENTE</div>'+saCard(x)+'<button class="g" id="cbtn" onclick="saRedeem()">ENTREGADO · MARCAR USADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
 }
