@@ -90,6 +90,8 @@ body.app-on{padding-bottom:84px}
 .sabanner b{flex:1}.sabanner button{margin:0;width:auto;background:transparent;border:0;font-size:22px;padding:0 4px}
 .tabs .bd.blink{animation:redblink .8s ease-in-out infinite;box-shadow:0 0 10px 2px var(--red)}
 #tb-sal.pending i{animation:redblink .8s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--red))}
+.mrow{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #ffffff14;cursor:pointer}
+.mrow input[type=checkbox]{width:22px;height:22px;flex:none;margin:0 12px 0 0;padding:0}
 .salert{position:fixed;left:10px;right:10px;top:10px;z-index:50;max-width:540px;margin:0 auto;background:#2a2005;border:2px solid var(--yel);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 0 40px -6px var(--yel);transform:translateY(-130%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
 .salert.on{transform:none}.salert b{flex:1}.salert button{margin:0;background:var(--yel);color:#1a1000;border:0}
 .sheet .warn{background:#4a0d22;border:1px solid var(--red);border-radius:10px;padding:6px 10px;margin:8px 0;font-size:13px}
@@ -207,6 +209,15 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="row" style="margin-bottom:8px"><div class="fix"><span class="badge" id="rkgen">—</span></div></div>
       <input id="rk-q" placeholder="Buscar por nombre" oninput="renderRk()" autocomplete="off" style="margin-bottom:10px">
       <div id="rk-list">Cargando…</div>
+      <div class="card" id="mail-card" style="margin-top:16px">
+        <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
+        <p class="small" style="margin-top:0">Personas que jugaron el modo experto y dejaron su mail. Marcá a quién avisarle: se abre Gmail con esas personas en copia oculta y el mensaje de abajo, listo para enviar (les llega a su celular).</p>
+        <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
+        <div id="mail-list" class="small">Cargando…</div>
+        <input id="mail-su" value="¡Quedaste en el ranking de la Trivia de Streaming Room T3!" style="margin-top:10px">
+        <textarea id="mail-bd" rows="4" style="margin-top:8px">¡Hola! Te escribimos de Streaming Room T3: quedaste en un puesto alto del ranking de la trivia y te llevás un premio. Acercate al stand para retirarlo. ¡Gracias por jugar!</textarea>
+        <div class="row"><button class="g" onclick="mailGo('gmail')">ENVIAR POR GMAIL</button><button class="p" onclick="mailGo('mailto')">OTRA APP DE MAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
+      </div>
     </div>
 
     <div id="t-set" class="pane hide">
@@ -1820,11 +1831,51 @@ function watchRank(){
         function(e){var l=$("rk-list");if(l)l.textContent="No se pudo leer el ranking: "+(e&&e.message)});
   rkOff=function(){ref.off("value",h)};
 }
-async function loadRank(){watchRank();renderRk()}
+async function loadRank(){watchRank();watchMails();renderRk()}
+/* ---------- avisos por mail: quienes jugaron el modo experto dejan su mail (emails/<uid>) ---------- */
+var MAILS=[],MAILL=[],mailSel={},mailOff=null;
+function watchMails(){
+  var d=sdb();if(!d||mailOff)return;
+  var ref=d.ref("emails"),h=ref.on("value",function(s){var o=[];
+    s.forEach(function(c){var v=c.val()||{};if(v.email)o.push({uid:c.key,email:String(v.email),name:v.name||"?",score:v.score|0,gen:v.gen,ts:v.ts||0})});
+    MAILS=o;renderMails()},
+    function(e){var l=$("mail-list");if(l)l.textContent="No se pudieron leer los mails: "+(e&&e.message)});
+  mailOff=function(){ref.off("value",h)};
+}
+function renderMails(){
+  var l=$("mail-list");if(!l)return;
+  var g=String(FB.cfg().gen),pos={},n=0;
+  RK.forEach(function(p){if(!PX[p.uid])pos[p.uid]={n:++n,s:p.score}});
+  MAILL=MAILS.filter(function(m){return String(m.gen)===g}).map(function(m){var p=pos[m.uid];m._pos=p?p.n:0;m._sc=p?p.s:m.score;return m})
+    .sort(function(a,b){return (a._pos||9999)-(b._pos||9999)||b._sc-a._sc});
+  $("mail-n").textContent="("+MAILL.length+")";
+  l.innerHTML=MAILL.length?MAILL.map(function(m){return '<label class="mrow"><input type="checkbox" '+(mailSel[m.uid]?'checked ':'')+'onchange="mailTog(\''+esc(m.uid)+'\',this.checked)"><span><b>'+(m._pos?'#'+m._pos+' ':'')+esc(m.name)+'</b> · '+m._sc+' pts<br><span class="cd">'+esc(m.email)+'</span></span></label>'}).join(""):"Todavía nadie dejó su mail.";
+}
+function mailTog(u,c){if(c)mailSel[u]=1;else delete mailSel[u]}
+function mailPick(k){
+  mailSel={};
+  MAILL.forEach(function(m){if(k==="all"||(k==="top3"&&m._pos>=1&&m._pos<=3)||(k==="top10"&&m._pos>=1&&m._pos<=10))mailSel[m.uid]=1});
+  renderMails();
+}
+function mailAddrs(){return MAILL.filter(function(m){return mailSel[m.uid]}).map(function(m){return m.email})}
+function mailGo(kind){
+  var a=mailAddrs();if(!a.length){alert("Marcá al menos una persona.");return}
+  var su=$("mail-su").value,bd=$("mail-bd").value,bcc=encodeURIComponent(a.join(","));
+  var url=kind==="gmail"?"https://mail.google.com/mail/?view=cm&fs=1&bcc="+bcc+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd)
+                        :"mailto:?bcc="+bcc+"&subject="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
+  if(url.length>1900&&!confirm("Son muchas personas ("+a.length+") y el link queda muy largo: puede que no se abra bien. ¿Probar igual?"))return;
+  if(kind==="gmail")window.open(url,"_blank");else location.href=url;
+}
+function mailCopy(){
+  var a=mailAddrs();if(!a.length){alert("Marcá al menos una persona.");return}
+  var t=a.join(", ");
+  (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast("Mails copiados ✓")},function(){prompt("Copiá los mails:",t)});
+}
 function prizesOf(p){var g=String(FB.cfg().gen);return PR.filter(function(x){return String(x.gen)===g&&(x.uid?x.uid===p.uid:nz(x.name)===nz(p.name))})}
 function prizeState(x){return x._v?{c:"vd",t:"✖ anulado"}:(x._c?{c:"ok",t:"✓ entregado"}:{c:"pe",t:"⏳ pendiente"})}
 function renderRk(){
   var l=$("rk-list");if(!l)return;
+  renderMails();
   $("rkgen").textContent="Ranking #"+FB.cfg().gen;
   var pos=0,hid=0;
   RK.forEach(function(p){p._h=!!PX[p.uid];if(p._h){hid++;p._pos=0}else p._pos=++pos});
@@ -1965,13 +2016,24 @@ function saAlert(list){
 }
 function hideAlert(){$("salert").classList.remove("on")}
 /* recordatorio sonoro mientras haya saludos en espera (se puede silenciar con la campanita del aviso rojo) */
-var saPenN=0,saMuted=false;try{saMuted=localStorage.getItem("saMuted")==="1"}catch(e){}
-function saMute(){saMuted=!saMuted;try{localStorage.setItem("saMuted",saMuted?"1":"0")}catch(e){}renderSa()}
-function saBeep(){
+var saPenN=0,saMuted=false;   // la campanita silencia solo hasta recargar la página (así nunca queda mudo sin querer)
+function saMute(){saMuted=!saMuted;renderSa()}
+/* ALARMA: sirena que se repite sin parar mientras haya saludos en espera; se corta al validar o rechazar al último (o con la campanita). */
+function saAlarm(){
   try{var A=snd.c||(snd.c=new (window.AudioContext||window.webkitAudioContext)());if(A.state==="suspended")A.resume();
-    [988,740,988].forEach(function(f,i){var o=A.createOscillator(),g=A.createGain(),t=A.currentTime+i*.2;o.type="square";o.frequency.value=f;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.1,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.16);o.start(t);o.stop(t+.18)})}catch(e){}
+    for(var i=0;i<8;i++){var o=A.createOscillator(),g=A.createGain(),t=A.currentTime+i*.22;o.type="square";o.frequency.value=i%2?760:1180;o.connect(g);g.connect(A.destination);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.2,t+.02);g.gain.setValueAtTime(.2,t+.18);g.gain.exponentialRampToValueAtTime(.0001,t+.21);o.start(t);o.stop(t+.22)}
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate([300,120,300,120,300])}catch(e){}
 }
-setInterval(function(){if(saPenN>0&&!saMuted)saBeep()},3500);
+var saLast=0,saTit=0;
+function saLoop(){
+  if(saPenN>0){
+    if(!saMuted&&Date.now()-saLast>=2000){saLast=Date.now();saAlarm()}
+    if(document.hidden)document.title=(saTit++%2?saTitle:"🔴 "+saPenN+" EN ESPERA");else if(saTit){saTit=0;document.title=saTitle}
+  }else if(saTit){saTit=0;document.title=saTitle}
+}
+// el reloj corre en un Worker: las pestañas en segundo plano frenan los setInterval normales, los de un Worker no
+(function(){try{var w=new Worker(URL.createObjectURL(new Blob(["setInterval(function(){postMessage(1)},500)"],{type:"text/javascript"})));w.onmessage=saLoop}catch(e){setInterval(saLoop,1000)}})();
 function renderSa(){
   var SV=sView();
   var pen=SV.filter(function(x){return x._s==="pending"}).sort(function(a,b){return (a.ts||0)-(b.ts||0)}),
