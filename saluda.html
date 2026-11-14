@@ -28,7 +28,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 @keyframes pop{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
 h1{font:900 clamp(1.9rem,10.5vw,2.7rem)/1.05 var(--disp);margin:.2em 0 .3em;letter-spacing:.02em;color:var(--yel);text-shadow:0 0 24px #ffe14d66;overflow-wrap:break-word}
 h1.long{font-size:clamp(1.45rem,8.2vw,2.2rem)}
-.hand{font-size:clamp(4.5rem,26vw,6.5rem);line-height:1;display:inline-block;transform-origin:70% 80%;animation:wave 1.6s ease-in-out infinite;text-shadow:0 0 22px #ffe14d88}
+.hand{line-height:0;display:inline-block;transform-origin:50% 92%;animation:wave 1.6s ease-in-out infinite;filter:drop-shadow(0 0 16px #ffe14d88)}
+.hand svg{display:block;width:clamp(5rem,28vw,7rem);height:auto}
 @keyframes wave{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(16deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(16deg)}40%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
 p{margin:.5em 0}.mut{color:var(--mut)}.big{font-size:1.12rem;font-weight:700}
 .wait{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:10px 16px;border-radius:99px;border:1px solid #ffffff22;background:#ffffff0d;font-weight:700;font-size:.95rem}
@@ -1246,7 +1247,7 @@ module.exports = QRCode;
 <script>
 /* Cámara según el link: saluda.html → cámara 1; saluda.html?cam=2 → cámara 2 */
 var CAM=(function(){var c=parseInt(new URLSearchParams(location.search).get("cam"),10);return c===2?2:1})();
-var $=function(i){return document.getElementById(i)},KEY=CAM===2?"saludo_id_c2":"saludo_id",memId=null;
+var $=function(i){return document.getElementById(i)},KEY="saludo_id",memId=null;   // una sola clave para las dos cámaras: cada celular tiene UN saludo y UN premio, escanee el QR que escanee
 function lsg(){try{return localStorage.getItem(KEY)}catch(e){return memId}}
 function lss(v){memId=v;try{if(v)localStorage.setItem(KEY,v);else localStorage.removeItem(KEY)}catch(e){}}
 function rnd(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
@@ -1265,7 +1266,7 @@ function confetti(){var d=document.createElement("div"),c=["#ffe14d","#3dff8a","
 
 var id=null,db=null,last=null,codeTry=0,cur=null;
 function view(h){$("view").innerHTML=h}
-function showPending(){view('<div class="card"><div class="hand">👋</div><h1>¡SALUDÁ A LA CÁMARA!</h1><p class="big">Mirá hacia la cámara del stream y saludá.</p><p class="mut">Producción te va a enfocar y, cuando confirme tu saludo, acá mismo te aparece tu premio. No hace falta que toques nada: dejá esta pantalla abierta.</p><div class="wait"><i></i>Esperando a producción…</div></div>')}
+function showPending(){view('<div class="card"><div class="hand" role="img" aria-label="Mano saludando"><svg viewBox="-10 0 140 120" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#3b8bff" stroke-width="4.5"><path d="M9 52q-7 11 0 22"/><path d="M0 46q-12 17 0 34"/><path d="M106 34q7 11 0 22"/><path d="M114 28q12 17 0 34"/></g><g stroke="#c98412" stroke-width="18"><path d="M36 82L20 62"/><path d="M42 62V30"/><path d="M57 62V20"/><path d="M72 62V26"/><path d="M87 64V38"/><rect x="33.75" y="57.75" width="62.5" height="46.5" rx="22.25" fill="#c98412" stroke="none"/></g><g stroke="#ffd34d" stroke-width="13.5"><path d="M36 82L22 64"/><path d="M42 62V30"/><path d="M57 62V20"/><path d="M72 62V26"/><path d="M87 64V38"/></g><rect x="36" y="60" width="58" height="42" rx="20" fill="#ffcc33"/><path d="M45 92q14 9 30 0" stroke="#ffe27a" stroke-width="3" opacity=".7"/></svg></div><h1>¡SALUDÁ A LA CÁMARA!</h1><p class="big">Mirá hacia la cámara del stream y saludá.</p><p class="mut">Producción te va a enfocar y, cuando confirme tu saludo, acá mismo te aparece tu premio. No hace falta que toques nada: dejá esta pantalla abierta.</p><div class="wait"><i></i>Esperando a producción…</div></div>')}
 function showRejected(){view('<div class="card bad"><div style="font-size:4rem">😕</div><h1>NO SE PUDO VALIDAR</h1><p class="mut">Producción no llegó a ver tu saludo. Podés volver a intentarlo cuando quieras.</p><button id="again">VOLVER A INTENTAR</button></div>');
   $("again").onclick=function(){if(cur){try{cur.off()}catch(e){}}lss(null);start()}}
 function showUsed(){view('<div class="card used"><div style="font-size:4rem">🎁</div><h1>PREMIO YA RECLAMADO</h1><p class="mut">Este código ya se usó en un stand. ¡Gracias por participar!</p></div>')}
@@ -1287,9 +1288,9 @@ function loadCode(){
 var rawSt=null,ovs=null;
 function effSt(){var st=rawSt;if(ovs&&st==="redeemed"&&ovs.s==="v")return "validated";if(ovs&&ovs.s==="r"&&(st==="redeemed"||st==="validated"))return "redeemed";return st}
 /* Si producción hace "Reiniciar todo" con esta pantalla abierta, arranca de cero con un código nuevo (sin recargar). */
-var myTs=0,rsAll=0,rsWatch=false,curO=null,wasVal=false;
+var myTs=0,rsAll=0,rsWatch=false,curO=null,curP=null,wasVal=false;
 /* Reinicia esta pantalla: nueva persona (código nuevo) que tiene que saludar otra vez. */
-function restart(){try{cur&&cur.off()}catch(e){}try{curO&&curO.off()}catch(e){}lss(null);myTs=0;wasVal=false;start()}
+function restart(){try{cur&&cur.off()}catch(e){}try{curO&&curO.off()}catch(e){}try{curP&&curP.off()}catch(e){}lss(null);myTs=0;wasVal=false;start()}
 function watchReset(){if(rsWatch)return;rsWatch=true;db.ref("cfg/rs/all").on("value",function(s){rsAll=+s.val()||0;checkReset()})}
 function checkReset(){
   if(!(id&&myTs&&myTs<=rsAll))return false;
@@ -1319,7 +1320,10 @@ function start(){
     return ref.once("value").then(function(s){
       if(s.exists())return;
       return ref.set({status:"pending",ts:firebase.database.ServerValue.TIMESTAMP,cam:CAM});
-    }).then(function(){lss(id);ref.on("value",onStatus);curO=db.ref("cfg/ovs/"+id);curO.on("value",function(o){ovs=o.val();applySt()});watchReset()});
+    }).then(function(){lss(id);ref.on("value",onStatus);curO=db.ref("cfg/ovs/"+id);curO.on("value",function(o){ovs=o.val();applySt()});
+      // producción canceló este saludo ya validado (cfg/pv/<id>): la pantalla se reinicia y hay que saludar otra vez
+      curP=db.ref("cfg/pv/"+id);curP.on("value",function(p){if(p.val())restart()});
+      watchReset()});
   }).catch(function(e){var d=e&&e.code==="PERMISSION_DENIED";showErr(d?"El stand todavía no está habilitado. Avisale a producción y probá de nuevo en un rato.":"No se pudo registrar tu saludo ("+(e&&e.code||"error")+").",d?"CASI LISTO":null)});
 }
 try{firebase.database().ref(".info/connected").on("value",function(s){$("conn").classList.toggle("on",s.val()===false)})}catch(e){}

@@ -88,7 +88,11 @@ body.app-on{padding-bottom:84px}
 .sig{display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--red);box-shadow:0 0 12px 3px var(--red);flex:none;animation:redblink .8s ease-in-out infinite}
 .sa.pend{border:2px solid var(--red);animation:pin .3s ease both,redglow 1.1s ease-in-out infinite}
 .sa.pend .top{position:relative}.sa.pend .top .sig{position:absolute;top:0;right:0}
-.sabanner{display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:10px 12px;border-radius:14px;border:2px solid var(--red);background:#3a0614;color:#fff;font:800 15px system-ui,sans-serif;animation:redglow 1.1s ease-in-out infinite}
+.sabanner{display:flex;align-items:center;gap:12px;margin-bottom:8px;padding:12px 14px;border-radius:14px;border:2px solid #ffc2d1;background:#ff5c85;color:#2a0010;font:900 18px system-ui,sans-serif;letter-spacing:.5px;animation:redglow 1.1s ease-in-out infinite}
+.sabanner .sig{background:#fff;box-shadow:0 0 10px 2px #fff}
+.sa .top .cam{margin-left:auto;margin-right:26px;white-space:nowrap}
+.sa .top .cam,.pz .act .cam{font:700 11px "JetBrains Mono","Courier New",monospace;letter-spacing:1px;padding:4px 9px;border-radius:8px;border:1px solid #b86bff88;color:var(--pur)}
+.pz .act .cam{margin:0 8px 0 0;display:inline-block}
 .sabanner b{flex:1}.sabanner button{margin:0;width:auto;background:transparent;border:0;font-size:22px;padding:0 4px}
 .tabs .bd.blink{animation:redblink .8s ease-in-out infinite;box-shadow:0 0 10px 2px var(--red)}
 #tb-sal.pending i{animation:redblink .8s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--red))}
@@ -1769,6 +1773,7 @@ function effP(x){var o=OVP[x.id];x._v=!!PV[x.id];
 function effS(x){var o=OVS[x.id];x._s=x.status;x._t=+(x.status==="redeemed"?x.redeemedAt:x.rejectedAt)||0;
   if(o&&o.s==="v"&&x.status==="redeemed"){x._s="validated";x._t=+x.validatedAt||0}
   else if(o&&o.s==="r"&&(x.status==="redeemed"||x.status==="validated")){x._s="redeemed";x._t=+o.t||0}
+  if(PV[x.id]&&x.status!=="redeemed"){x._s="rejected";x._t=+PV[x.id]||0}   // cancelado por producción (se anota en cfg/pv, la base no deja cambiar un saludo ya validado)
   return x}
 function rebuild(){PR=PRraw.map(effP);SA=SAraw.map(effS);renderLists();renderSa();renderResets();renderRk()}
 function watchRs(){
@@ -2039,10 +2044,10 @@ function renderSa(){
   saPenN=pen.length;bd.classList.toggle("blink",pen.length>0);$("tb-sal").classList.toggle("pending",pen.length>0);
   var c1=pen.filter(function(x){return camOf(x)===1}).length,sb=$("sabanner");
   sb.classList.toggle("hide",!pen.length);
-  sb.innerHTML=pen.length?'<span class="sig"></span><b>'+pen.length+' EN ESPERA · cámara 1: '+c1+' · cámara 2: '+(pen.length-c1)+'</b>':"";
+  sb.innerHTML=pen.length?'<span class="sig"></span><b>'+pen.length+' EN ESPERA</b>':"";
   $("sachips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+pen.length+'</b><span class="small">en espera</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+val.length+'</b><span class="small">sin canjear</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+red+'</b><span class="small">canjeados</span></div>';
-  $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa pend'+(i===0?' new':'')+'"><div class="top"><span class="sig"></span><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><span class="tg sa">CÁMARA '+camOf(x)+'</span><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR de la cámara 1 o de la cámara 2 aparece acá, con sonido.";
-  $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b><span class="tg sa">CÁMARA '+camOf(x)+'</span></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div><div class="act"><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}).join(""):"Ninguno.";
+  $("sa-pen").innerHTML=pen.length?pen.map(function(x,i){return '<div class="sa pend'+(i===0?' new':'')+'"><div class="top"><span class="sig"></span><div class="em">👋</div><div><b>Persona '+esc(x.id)+'</b><div class="small">Escaneó a las '+hms(x.ts)+' · hace '+ago(x.ts||Date.now())+'</div></div><span class="cam">CÁMARA '+camOf(x)+'</span></div><div class="btns"><button class="g v" onclick="saValidate(\''+esc(x.id)+'\',this)">VALIDAR DESAFÍO</button><button class="r" onclick="saReject(\''+esc(x.id)+'\',this)">RECHAZAR</button></div></div>'}).join(""):"Nadie esperando. Cuando alguien escanee el QR de la cámara 1 o de la cámara 2 aparece acá, con sonido.";
+  $("sa-val").innerHTML=val.length?val.map(function(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">validado '+hms(x.validatedAt)+' · esperando canje</div><div class="act"><span class="cam">CÁMARA '+camOf(x)+'</span><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}).join(""):"Ninguno.";
   $("sa-his").innerHTML=his.length?his.map(function(x){var r=x._s==="redeemed";return '<div class="pz'+(r?' done':'')+'"><div class="em">'+(r?'🎁':'✖️')+'</div><div><b>Persona '+esc(x.id)+'</b></div><div class="small">'+(r?'canjeado '+hms(x._t):'rechazado '+hms(x._t))+'</div>'+(r?'<div class="act"><button class="p rv" onclick="revertSa(\''+esc(x.id)+'\')">↩ REVERTIR</button></div>':'')+'</div>'}).join(""):"Sin movimientos todavía.";
 }
 async function revertSa(id){
@@ -2067,7 +2072,9 @@ async function saCancel(id,b){
   if(x.status==="redeemed"){alert("No se puede cancelar: este saludo ya figura como canjeado en la base.");return}
   if(!confirm("¿Cancelar este saludo validado?\nSu QR deja de valer y a la persona se le reinicia la pantalla: tiene que saludar de nuevo y recibe otro QR."))return;
   saBusy(b);
-  try{await d.ref("saludos/"+id).update({status:"rejected",rejectedAt:firebase.database.ServerValue.TIMESTAMP});toast("Saludo cancelado ✓")}catch(e){alert("No se pudo cancelar: "+(e&&e.message));renderSa();renderLists()}
+  // La base no deja pasar un saludo de "validado" a "rechazado" (PERMISSION_DENIED), así que la cancelación se anota aparte en cfg/pv/<id>
+  // (la misma marca que usa "anular premio"): el panel lo muestra como cancelado y el celular de la persona se reinicia solo.
+  try{await d.ref("cfg/pv/"+id).set(firebase.database.ServerValue.TIMESTAMP);toast("Saludo cancelado ✓")}catch(e){alert("No se pudo cancelar: "+(e&&e.message));renderSa();renderLists()}
 }
 /* Marcar como canjeado desde la lista de pendientes (sin escanear). */
 async function saMarkRow(id){
@@ -2079,7 +2086,7 @@ async function saMarkRow(id){
     toast("Saludo canjeado ✓")
   }catch(e){alert("No se pudo marcar: "+((e&&(e.message||e.code))||"error"))}
 }
-function saRowPen(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span><span class="tg sa">CÁMARA '+camOf(x)+'</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span> · validado '+hms(x.validatedAt)+' · QR esperando canje</div><div class="act"><button class="g" onclick="saMarkRow(\''+esc(x.id)+'\')">MARCAR</button><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}
+function saRowPen(x){return '<div class="pz"><div class="em">🎟️</div><div><b>Saludá a la cámara</b><span class="tg sa">SALUDO</span></div><div class="small">Persona <span class="cd">'+esc(x.id)+'</span> · validado '+hms(x.validatedAt)+' · QR esperando canje</div><div class="act"><span class="cam">CÁMARA '+camOf(x)+'</span><button class="g" onclick="saMarkRow(\''+esc(x.id)+'\')">MARCAR</button><button class="r" onclick="saCancel(\''+esc(x.id)+'\',this)">CANCELAR</button></div></div>'}
 function saCard(x){return '<div class="big">👋</div><div class="nm">Saludá a la cámara</div><div class="pr" style="color:var(--grn)">Desafío completado</div><div class="small">escaneó '+hms(x.ts)+' · <span class="mono" style="color:var(--yel)">'+esc(x.code||x.id)+'</span></div>'}
 async function resolveSa(code){
   var id=code.slice(0,9),x=SA.filter(function(p){return p.id===id})[0],d=sdb();
