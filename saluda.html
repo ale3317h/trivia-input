@@ -29,7 +29,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 h1{font:900 clamp(1.9rem,10.5vw,2.7rem)/1.05 var(--disp);margin:.2em 0 .3em;letter-spacing:.02em;color:var(--yel);text-shadow:0 0 24px #ffe14d66;overflow-wrap:break-word}
 h1.long{font-size:clamp(1.45rem,8.2vw,2.2rem)}
 .hand{line-height:0;display:inline-block;transform-origin:50% 92%;animation:wave 1.6s ease-in-out infinite;filter:drop-shadow(0 0 16px #ffe14d88)}
-.hand svg{display:block;width:clamp(5rem,28vw,7rem);height:auto}
+.hand img{display:block;width:clamp(4.5rem,24vw,6rem);height:auto}
 @keyframes wave{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(16deg)}20%{transform:rotate(-12deg)}30%{transform:rotate(16deg)}40%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
 p{margin:.5em 0}.mut{color:var(--mut)}.big{font-size:1.12rem;font-weight:700}
 .wait{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:10px 16px;border-radius:99px;border:1px solid #ffffff22;background:#ffffff0d;font-weight:700;font-size:.95rem}
@@ -1266,7 +1266,7 @@ function confetti(){var d=document.createElement("div"),c=["#ffe14d","#3dff8a","
 
 var id=null,db=null,last=null,codeTry=0,cur=null;
 function view(h){$("view").innerHTML=h}
-function showPending(){view('<div class="card"><div class="hand" role="img" aria-label="Mano saludando"><svg viewBox="-10 0 140 120" fill="none" stroke-linecap="round" stroke-linejoin="round"><g stroke="#3b8bff" stroke-width="4.5"><path d="M9 52q-7 11 0 22"/><path d="M0 46q-12 17 0 34"/><path d="M106 34q7 11 0 22"/><path d="M114 28q12 17 0 34"/></g><g stroke="#c98412" stroke-width="18"><path d="M36 82L20 62"/><path d="M42 62V30"/><path d="M57 62V20"/><path d="M72 62V26"/><path d="M87 64V38"/><rect x="33.75" y="57.75" width="62.5" height="46.5" rx="22.25" fill="#c98412" stroke="none"/></g><g stroke="#ffd34d" stroke-width="13.5"><path d="M36 82L22 64"/><path d="M42 62V30"/><path d="M57 62V20"/><path d="M72 62V26"/><path d="M87 64V38"/></g><rect x="36" y="60" width="58" height="42" rx="20" fill="#ffcc33"/><path d="M45 92q14 9 30 0" stroke="#ffe27a" stroke-width="3" opacity=".7"/></svg></div><h1>¡SALUDÁ A LA CÁMARA!</h1><p class="big">Mirá hacia la cámara del stream y saludá.</p><p class="mut">Producción te va a enfocar y, cuando confirme tu saludo, acá mismo te aparece tu premio. No hace falta que toques nada: dejá esta pantalla abierta.</p><div class="wait"><i></i>Esperando a producción…</div></div>')}
+function showPending(){view('<div class="card"><div class="hand"><img src="https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/svg/1f44b.svg" alt="👋" draggable="false"></div><h1>¡SALUDÁ A LA CÁMARA!</h1><p class="big">Mirá hacia la cámara del stream y saludá.</p><p class="mut">Producción te va a enfocar y, cuando confirme tu saludo, acá mismo te aparece tu premio. No hace falta que toques nada: dejá esta pantalla abierta.</p><div class="wait"><i></i>Esperando a producción…</div></div>')}
 function showRejected(){view('<div class="card bad"><div style="font-size:4rem">😕</div><h1>NO SE PUDO VALIDAR</h1><p class="mut">Producción no llegó a ver tu saludo. Podés volver a intentarlo cuando quieras.</p><button id="again">VOLVER A INTENTAR</button></div>');
   $("again").onclick=function(){if(cur){try{cur.off()}catch(e){}}lss(null);start()}}
 function showUsed(){view('<div class="card used"><div style="font-size:4rem">🎁</div><h1>PREMIO YA RECLAMADO</h1><p class="mut">Este código ya se usó en un stand. ¡Gracias por participar!</p></div>')}
