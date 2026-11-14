@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07030e">
+<title>Tu premio · Streaming Room T3</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@800;900&family=Manrope:wght@500;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07030e;--card:#130b23;--line:#ffffff1a;--tx:#f7f2ff;--mut:#b9a6d6;--yel:#ffe14d;--red:#ff4d7d;--grn:#3dff8a;
+  --mono:"JetBrains Mono",ui-monospace,"Courier New",monospace;--disp:"Exo 2","Manrope",system-ui,sans-serif;--sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--tx);font:1.0625rem/1.5 var(--sans)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(70% 45% at 0 0,#5b1a8a55,transparent 70%),radial-gradient(60% 40% at 100% 100%,#8a1a4a44,transparent 70%)}
+.wrap{max-width:460px;margin:0 auto;padding:22px 16px 40px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
+.brand{text-align:center;font:700 .72rem/1 var(--mono);letter-spacing:.22em;color:var(--mut);margin-bottom:18px;text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 20px;text-align:center;border-color:#ffe14d55;box-shadow:0 0 30px -10px #ffe14dbb}
+.card.bad{border-color:#ff4d7d66;box-shadow:0 0 30px -10px #ff4d7dbb}
+h1{font:900 clamp(1.6rem,8vw,2.2rem)/1.1 var(--disp);margin:.2em 0;color:var(--yel);text-shadow:0 0 22px #ffe14d55}
+.bad h1{color:var(--red);text-shadow:none}
+.pos{font:900 clamp(3rem,18vw,4.6rem)/1 var(--disp);color:var(--yel);margin:4px 0}
+.mut{color:var(--mut)}
+.qrbox{background:#fff;border-radius:20px;padding:10px;width:min(100%,280px);margin:16px auto 6px;box-shadow:0 0 40px -6px #ffe14d88}
+.qrbox svg{display:block;width:100%;height:auto}
+.code{font:700 clamp(1.1rem,6.5vw,1.5rem)/1.2 var(--mono);letter-spacing:.1em;color:var(--yel);margin:8px 0 2px}
+.note{font-size:.88rem;color:var(--mut);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Streaming Room T3 · Trivia</div>
+  <div id="view"><div class="card"><p class="mut">Cargando tu premio…</p></div></div>
+</div>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
+<script src="fb-config.js?v=18"></script>
+<script src="fb.js?v=18"></script>
+<script src="qr-lib.js"></script>
+<script>
+/* Premio por puesto del ranking: lo genera el panel admin y llega por mail.
+   El QR es de un solo uso: en el stand se escanea con el admin y queda marcado como reclamado. */
+var $=function(i){return document.getElementById(i)};
+var P=new URLSearchParams(location.search),G=String(P.get("g")||""),C=String(P.get("c")||"").toUpperCase(),ID=C.slice(0,9);
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function u8(s){try{return String.fromCharCode.apply(null,new TextEncoder().encode(s))}catch(e){return unescape(encodeURIComponent(s))}}
+function qrSvg(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();var n=q.getModuleCount(),m=4,s=n+2*m,p="",x,y;
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
+  return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="Código QR del premio"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
+function view(h){$("view").innerHTML=h}
+function bad(t,m){view('<div class="card bad"><div style="font-size:3.4rem">⚠️</div><h1>'+esc(t)+'</h1><p class="mut">'+esc(m)+'</p></div>')}
+var rec,pv=null,ovp=null,allGen=0,got=0;
+function paint(){
+  if(got<4)return;
+  if(!rec||rec.code!==C)return bad("QR NO VÁLIDO","Este link no corresponde a ningún premio. Revisá que lo hayas abierto completo desde el mail.");
+  if(pv)return bad("PREMIO ANULADO","Producción anuló este premio. Si creés que es un error, acercate al stand.");
+  if((+G||0)<allGen)return bad("YA NO VALE","Este premio es de una ronda anterior del ranking.");
+  var claimed=ovp&&ovp.s==="p"?false:(ovp&&ovp.s==="c"?true:!!rec.claimed);
+  var pos=(String(rec.prize||"").match(/#(\d+)/)||[])[1]||"?";
+  if(claimed)return view('<div class="card"><div style="font-size:3.4rem">🎁</div><h1>PREMIO YA RECLAMADO</h1><p class="mut">Ya retiraste el premio del puesto #'+esc(pos)+'. ¡Gracias por jugar!</p></div>');
+  var txt="ST3 ROOM · RANKING\nJugador: "+rec.name+"\nPremio: Puesto #"+pos+" del ranking\nCódigo: "+C;
+  view('<div class="card"><div style="font-size:3rem">🏆</div><p class="mut" style="margin:0">'+esc(rec.name)+', quedaste en el</p><div class="pos">PUESTO #'+esc(pos)+'</div><p class="mut" style="margin:0">del ranking de la trivia</p><div class="qrbox">'+qrSvg(txt)+'</div><div class="code">'+esc(C)+'</div><p class="note">Mostrá este QR en el stand del stream para retirar tu premio. Es de un solo uso.</p></div>');
+}
+(function(){
+  if(!/^\d+$/.test(G)||!/^[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[A-Z0-9]{4}$/.test(C))return bad("QR NO VÁLIDO","El link está incompleto. Abrilo de nuevo desde el mail.");
+  if(!window.firebase||!FB.shared())return bad("SIN CONEXIÓN","No pudimos conectar. Revisá tu internet y recargá la página.");
+  var d=firebase.database(),seen={},mark=function(k){seen[k]=1;got=Object.keys(seen).length;paint()};
+  d.ref("prizes/"+G+"/"+ID).on("value",function(s){rec=s.val();mark("r")},function(){bad("SIN CONEXIÓN","No pudimos leer tu premio. Recargá la página.")});
+  d.ref("cfg/pv/"+ID).on("value",function(s){pv=s.val();mark("p")},function(){mark("p")});
+  d.ref("cfg/ovp/"+ID).on("value",function(s){ovp=s.val();mark("o")},function(){mark("o")});
+  d.ref("cfg/rs/allGen").on("value",function(s){allGen=+s.val()||0;mark("g")},function(){mark("g")});
+})();
+</script>
+</body>
+</html>
