@@ -583,7 +583,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <p class="hide" id="end-p"></p></div>
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
-<button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button></div>
+<button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button>
+<button class="hide" id="end-menu" onclick="go()">VOLVER AL MENÚ PRINCIPAL</button></div>
 <div class="card y c hide" id="end-mail"><b class="yel">📬 ¿Querés enterarte si ganás?</b>
 <p class="mut" style="margin:6px 0 0">Colocá tu Gmail para que te avisemos si te llevás algún premio por quedar en un top alto.</p>
 <input id="mail-in" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="tunombre@gmail.com">
@@ -2283,6 +2284,7 @@ function qrSave(){
 }
 /* Aviso por mail al final del modo experto */
 function mailBox(on){
+  var mb=$("end-menu");if(mb)mb.classList.toggle("hide",!on);   // terminó el modo experto: botón para volver al menú principal
   var e=$("end-mail");if(!e)return;on=on&&!test;e.classList.toggle("hide",!on);if(!on)return;
   $("mail-in").value=ls("mail")||"";$("mail-btn").disabled=false;$("mail-msg").textContent="";$("mail-msg").className="mut";
 }
@@ -2292,7 +2294,8 @@ function mailSend(){
   b.disabled=true;m.textContent="Guardando…";m.className="mut";
   FB.saveMail({uid:FB.uid(),email:v,name:name,score:score,gen:FB.cfg().gen}).then(function(){
     ls("mail",v);m.textContent="✓ Listo: si te llevás un premio te avisamos a ese mail.";m.className="yel";b.textContent="GUARDADO ✓";
-  }).catch(function(){b.disabled=false;m.textContent="No se pudo guardar. Probá de nuevo en un rato.";m.className="red"});
+  }).catch(function(e){b.disabled=false;var den=/permission/i.test(e&&(e.code||e.message));
+    m.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";m.className="red"});
 }
 async function end(win){
   clearInterval(tm);if(win)score+=hp*100;contClear();
