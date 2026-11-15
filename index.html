@@ -386,10 +386,10 @@ button.r{box-shadow:0 0 18px -8px var(--red)}
 .app{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 16%,transparent);border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);box-shadow:0 0 16px -6px var(--c)}
 .app svg{width:26px;height:26px;fill:var(--c)}
 .rqp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.rqp div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:clamp(8px,1.6vh,14px) 6px;border-radius:16px;border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 20px -8px var(--c),inset 0 0 20px -14px var(--c);animation:xin .55s var(--ease) both;animation-delay:calc(var(--i)*.1s + .45s)}
-.rqp em{font-style:normal;font-size:clamp(1.6rem,4.4vh,2.3rem);line-height:1}
-.rqp b{font:700 .72rem var(--disp);letter-spacing:.14em;color:var(--c)}
-.rqp span{font-size:.74rem;line-height:1.2;color:var(--tx)}
+.rqp div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;padding:clamp(8px,1.4vh,12px) 6px clamp(10px,1.8vh,14px);min-height:clamp(108px,15vh,132px);border-radius:16px;border:1.5px solid color-mix(in srgb,var(--c) 55%,transparent);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 20px -8px var(--c),inset 0 0 20px -14px var(--c);animation:xin .55s var(--ease) both;animation-delay:calc(var(--i)*.1s + .45s)}
+.rqp em{font-style:normal;font-size:clamp(1.8rem,4.8vh,2.5rem);line-height:1;height:1.4em;width:100%;display:flex;align-items:center;justify-content:center;flex:none}
+.rqp b{font:700 .84rem var(--disp);letter-spacing:.14em;color:var(--c);padding-left:.14em}
+.rqp span{font-size:.9rem;line-height:1.2;font-weight:600;color:var(--tx);text-wrap:balance}
 .rqf{margin-top:auto;padding-top:14px}
 .rqf .nav{margin-top:0}.rqf #rq-b{width:64px;flex:none}.rqf #rq-go{flex:1}
 #rq-go.off{background:#ffffff0d;color:#ffffff40;box-shadow:none;pointer-events:none}
@@ -461,7 +461,8 @@ body.exp:not(.xs):not(.xxs) #opts{flex:1 1 auto;justify-content:flex-start;min-h
 body.exp:not(.xs):not(.xxs) .opt{flex:1 1 0;min-height:40px;max-height:64px;padding:8px 12px;font-size:var(--ofs,1rem)}
 body.exp:not(.xs):not(.xxs) .opt b{width:30px;height:30px;font-size:.85rem}
 body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 0 12px}
-@media (max-height:620px){.hero{padding:14px;gap:8px}.hearts-big{font-size:2.3rem}.clock{width:104px}.steps i{padding:5px}.tube{margin-top:10px}.rqt{margin:10px 0 6px}.rqi{padding:7px 10px}.app{width:40px;height:40px}.rqp div{padding:6px 4px}.rqp em{font-size:1.5rem}.rqf{padding-top:8px}}
+@media (max-height:720px){.rqp div{min-height:0;padding:6px 4px 7px;gap:3px}.rqp em{height:1.3em}.rqp b{font-size:.78rem}.rqp span{font-size:.82rem}}
+@media (max-height:620px){.hero{padding:14px;gap:8px}.hearts-big{font-size:2.3rem}.clock{width:104px}.steps i{padding:5px}.tube{margin-top:10px}.rqt{margin:10px 0 6px}.rqi{padding:7px 10px}.app{width:40px;height:40px}.rqp div{padding:8px 4px;min-height:104px}.rqp em{font-size:1.5rem}.rqf{padding-top:8px}}
 @media (max-height:420px){.hero{padding:10px 12px;gap:6px}.hearts-big{font-size:1.9rem}.clock{width:84px}.slide .t{font-size:1.3rem}.steps{margin-bottom:6px}.hi{margin-bottom:4px}.chip{padding:4px 10px}}
 /* Pantalla final: título + ticket del premio con QR */
 .endh{text-align:center;margin:4px 0 14px;animation:up .5s var(--ease) both}
@@ -549,7 +550,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="slide sl-prize"><div class="t">Subí de nivel, <b>ganá premios</b></div>
 <div class="prz"><div style="--c:#3dff8a;--i:0"><em>🍬</em><b>FÁCIL</b><span>sticker o caramelos</span></div>
 <div style="--c:#ffe14d;--i:1"><em>🔑</em><b>MEDIO</b><span>llavero plano</span></div>
-<div style="--c:#ff4d7d;--i:2"><em>🧊</em><b>DIFÍCIL</b><span>llavero 3D</span></div></div></div>
+<div style="--c:#ff4d7d;--i:2"><em>🧊</em><b>DIFÍCIL</b><span>logo grande</span></div></div></div>
 <div class="slide sl-time"><div class="hero" style="--c:#ffe14d"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
 <div class="t">Segundos por pregunta</div><div class="chips"><span class="chip" style="--c:#ffe14d">⚡ Más rápido, más puntos</span><span class="chip" style="--c:#ff4d7d">🔒 Se juega una sola vez</span></div>
 </div></div>
@@ -565,7 +566,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <a class="rqi" data-k="ig" style="--c:#ff5fb0;--i:2" href="https://www.instagram.com/streaming_roomt3/" target="_blank" rel="noopener"><i class="ck"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span><b>Seguí al streaming en Instagram</b><u>www.instagram.com/<wbr><span class="nw">streaming_roomt3<svg class="ext" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></span></u></span><em class="app"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3zm0 2A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19h9a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 16.5 5zM12 7.6a4.4 4.4 0 1 1 0 8.8 4.4 4.4 0 0 1 0-8.8zm0 2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM17 6a1.1 1.1 0 1 1 0 2.2A1.1 1.1 0 0 1 17 6z"/></svg></em></a>
 </div>
 <div class="rqt">PARTICIPÁ POR</div>
-<div class="rqp"><div style="--c:#3dff8a;--i:0"><em>🍬</em><b>FÁCIL</b><span>sticker o caramelos</span></div><div style="--c:#ffe14d;--i:1"><em>🔑</em><b>MEDIO</b><span>llavero plano</span></div><div style="--c:#ff4d7d;--i:2"><em>🧊</em><b>DIFÍCIL</b><span>llavero 3D</span></div></div>
+<div class="rqp"><div style="--c:#3dff8a;--i:0"><em>🍬</em><b>FÁCIL</b><span>sticker o caramelos</span></div><div style="--c:#ffe14d;--i:1"><em>🔑</em><b>MEDIO</b><span>llavero plano</span></div><div style="--c:#ff4d7d;--i:2"><em>🧊</em><b>DIFÍCIL</b><span>logo grande</span></div></div>
 <div class="rqf"><small id="rq-n"></small><div class="nav"><button id="rq-go" class="off" onclick="reqGo()">CONTINUAR →</button></div></div>
 </section>
 <section id="s-game" class="hide">
@@ -1835,7 +1836,7 @@ var racha=0,expertHp=false,TT=15000,tictacPlayed=false,lastBeat=-1;
    Todo se sintetiza con Web Audio en el momento: no hay nada que descargar y
    cada sonido sale justo con su animación. El celular solo deja sonar audio
    después de un toque, así que el primer toque enciende el audio. */
-var AC=null,OUT=null,NOISE=null,audioUnlocked=false;
+var AC=null,OUT=null,NOISE=null,audioUnlocked=false,AT=null,COLLECT=null;
 function unlockAudio(){
   try{
     if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;
@@ -1854,7 +1855,7 @@ function withAudio(fn){unlockAudio();if(AC&&AC.state==="suspended"){try{AC.resum
 // Nota con envolvente corta (f2: glissando hasta esa frecuencia).
 function tone(f,t,d,type,v,f2){
   if(!aOn())return;
-  try{var o=AC.createOscillator(),g=AC.createGain(),n=AC.currentTime+(t||0);
+  try{var o=AC.createOscillator(),g=AC.createGain(),n=(AT!==null?AT:AC.currentTime)+(t||0);if(COLLECT)COLLECT.push(o);
     o.type=type||"triangle";o.frequency.setValueAtTime(f,n);if(f2)o.frequency.exponentialRampToValueAtTime(f2,n+d);
     g.gain.setValueAtTime(.0001,n);g.gain.exponentialRampToValueAtTime(v||.12,n+.008);g.gain.exponentialRampToValueAtTime(.0001,n+d);
     o.connect(g);g.connect(OUT);o.start(n);o.stop(n+d+.05)}catch(e){}
@@ -1863,7 +1864,7 @@ function tone(f,t,d,type,v,f2){
 function knock(t,d,freq,q,v){
   if(!aOn())return;
   try{if(!NOISE){var len=AC.sampleRate*.2|0,ch;NOISE=AC.createBuffer(1,len,AC.sampleRate);ch=NOISE.getChannelData(0);for(var i=0;i<len;i++)ch[i]=Math.random()*2-1}
-    var sr=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain(),n=AC.currentTime+(t||0);
+    var sr=AC.createBufferSource(),bp=AC.createBiquadFilter(),g=AC.createGain(),n=(AT!==null?AT:AC.currentTime)+(t||0);if(COLLECT)COLLECT.push(sr);
     sr.buffer=NOISE;bp.type="bandpass";bp.frequency.value=freq;bp.Q.value=q||8;
     g.gain.setValueAtTime(v||.6,n);g.gain.exponentialRampToValueAtTime(.0001,n+d);
     sr.connect(bp);bp.connect(g);g.connect(OUT);sr.start(n);sr.stop(n+d+.02)}catch(e){}
@@ -1879,9 +1880,29 @@ var SFX={
   tada:function(){[523,659,784,1047].forEach(function(f,i){tone(f,i*.09,.22,"triangle",.14)});[523,659,784,1047].forEach(function(f){tone(f,.4,1.1,"sine",.06)});tone(2093,.4,.9,"sine",.03)},
   tilde:function(){tone(880,0,.08,"triangle",.12);tone(1320,.07,.14,"triangle",.12)}
 };
-function playSonido(k){var f=SFX[k];if(f)f()}
+function playSonido(k){var f=SFX[k];if(!f)return;if(AC&&AC.state!=="running"&&AC.state!=="closed"){try{AC.resume().then(f)}catch(e){}}else f()}
+/* Tic tac de la pregunta: en vez de dispararlos desde un setInterval (que en el celular se atrasa
+   y suena desparejo), se agendan todos juntos en el reloj del audio, que es exacto. Se adelantan
+   lo que tarda el celular en sacar el sonido (parlante/Bluetooth), así se oyen justo cuando cambia
+   el número. Al responder o salir se cancelan los que falten. */
+var BEATS=[];
+function stopT(){clearInterval(tm);beatsStop()}
+function beatsStop(){for(var i=0;i<BEATS.length;i++){try{BEATS[i].stop(0)}catch(e){}try{BEATS[i].disconnect()}catch(e){}}BEATS=[]}
+function beatsPlan(total,done){
+  beatsStop();if(!aOn())return;
+  var now=AC.currentTime,lat=Math.min(.3,(AC.outputLatency||0)+(AC.baseLatency||0));
+  COLLECT=BEATS;
+  try{for(var bt=0;bt*500<total;bt++){
+    var el=bt*500,left=total-el,k=null;
+    if(el<done-40)continue;              // ya pasó (por ejemplo, si el audio tardó en encender)
+    if(left<=3000)k="urge";else if(left<=5000)k=bt%2?"tac":"tic";else if(bt%2===0)k=(bt/2)%2?"tac":"tic";
+    if(!k)continue;
+    AT=Math.max(now,now+(el-done)/1000-lat);SFX[k]();
+  }}finally{AT=null;COLLECT=null}
+}
+function beatsSync(){if(!locked&&!$("s-game").classList.contains("hide")){var el=Date.now()-t0;if(el<TT)withAudio(function(){beatsPlan(TT,Date.now()-t0)})}}
 var $=function(i){return document.getElementById(i)};
-function show(id){if(id!=="s-how")ringDemo(false);["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(cq)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();var sc=$("sc");if(sc)sc.scrollTop=0;scrollSoon()}
+function show(id){if(id!=="s-how")ringDemo(false);if(id!=="s-game")beatsStop();["s-name","s-how","s-req","s-game","s-end","s-prize","s-exp","s-rank"].forEach(function(s){$(s).classList.toggle("hide",s!==id)});var b=document.body;b.classList.toggle("exp",id==="s-game"&&lvOf(cq)===3);b.classList.remove("xs","xxs");b.style.removeProperty("--ofs");danger();var sc=$("sc");if(sc)sc.scrollTop=0;scrollSoon()}
 // Con 1 sola vida el corazón late y el fondo pulsa en rojo.
 function danger(){
   var last=hp<=1&&hp>0;
@@ -2174,12 +2195,15 @@ function ask(){
   setQ(d.q);live();$("qcard").classList.remove("out");
   var o=$("opts");o.innerHTML="";o.classList.remove("done");
   opts.forEach(function(t,i){var b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+String.fromCharCode(65+i)+"</b><span>"+esc(t)+"</span>";b.dataset.ok=(t===d.ok)?"1":"0";b.onclick=function(){pick(b)};o.appendChild(b)});
-  show("s-game");t0=Date.now();clearInterval(tm);$("bar").style.transform="scaleX(1)";$("bar")._k=-1;$("bar").classList.remove("low");$("tsec").textContent=Math.ceil(TT/1000);$("tsec").classList.remove("low");
+  show("s-game");t0=Date.now();stopT();$("bar").style.transform="scaleX(1)";$("bar")._k=-1;$("bar").classList.remove("low");$("tsec").textContent=Math.ceil(TT/1000);$("tsec").classList.remove("low");
   fitExp();
-  lastBeat=-1;tm=setInterval(function(){var el=Date.now()-t0,left=TT-el,bar=$("bar");var bk=Math.floor(el/100);if(bk!==bar._k){bar._k=bk;bar.style.transform="scaleX("+Math.max(0,left/TT).toFixed(3)+")"}bar.classList.toggle("low",left<5000);var ts=$("tsec"),sec=Math.max(0,Math.ceil(left/1000));if(ts.textContent!==String(sec)){ts.textContent=sec;if(sec<=5&&sec>0){ts.classList.remove("low");void ts.offsetWidth;ts.classList.add("low")}}var bt=Math.floor(el/500);if(left>0&&bt!==lastBeat){lastBeat=bt;if(left<=3000)playSonido("urge");else if(left<=5000)playSonido(bt%2?"tac":"tic");else if(bt%2===0)playSonido((bt/2)%2?"tac":"tic")}if(left<=0){clearInterval(tm);if(!locked){locked=true;reveal(null)}}},50);
+  lastBeat=-1;var tid=t0;withAudio(function(){if(t0===tid&&!locked)beatsPlan(TT,Date.now()-t0)});
+  var draw=function(){var el=Date.now()-t0,left=TT-el,bar=$("bar");var bk=Math.floor(el/50);if(bk!==bar._k){bar._k=bk;bar.style.transform="scaleX("+Math.max(0,left/TT).toFixed(3)+")"}bar.classList.toggle("low",left<5000);var ts=$("tsec"),sec=Math.max(0,Math.ceil(left/1000));if(ts.textContent!==String(sec)){ts.textContent=sec;if(sec<=5&&sec>0){ts.classList.remove("low");void ts.offsetWidth;ts.classList.add("low")}}return left};
+  (function fr(){if(locked||t0!==tid)return;draw();requestAnimationFrame(fr)})();
+  tm=setInterval(function(){var left=draw();if(left<=0){stopT();if(!locked){locked=true;reveal(null)}}},100);
 }
 function pick(b){
-  if(locked)return;locked=true;clearInterval(tm);
+  if(locked)return;locked=true;stopT();
   var left=Math.max(0,TT-(Date.now()-t0));
   if(b.dataset.ok==="1"){racha++;var g=Math.round((100+Math.round(left/100))*(lvOf(cq)+1)*mult());score+=g;flyPts(b,g);playSonido("correcto")}
   reveal(b);
@@ -2222,7 +2246,7 @@ function hasCont(){
   if(test)return false;
   try{var c=JSON.parse(ls("cont")||"null");return !!(c&&String(c.gen)===String(FB.cfg().gen))}catch(e){return false}
 }
-function showPrize(){clearInterval(tm);contSave();qrIssue(2,qi);show("s-prize");playSonido("tada");confetti()}
+function showPrize(){stopT();contSave();qrIssue(2,qi);show("s-prize");playSonido("tada");confetti()}
 function prizeExit(){go()}
 function expIntro(){
   $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=qi+1;
@@ -2240,7 +2264,7 @@ function resume(){
   expIntro();
 }
 /* ---------- QR único, se genera y se lee sin internet ---------- */
-var QRSALT="st3room-2026",QRTEST=null,QPZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","llavero 3D"],["🧊","llavero 3D"]];
+var QRSALT="st3room-2026",QRTEST=null,QPZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","logo grande"],["🧊","logo grande"]];
 function qrRand(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
   try{crypto.getRandomValues(b)}catch(e){for(i=0;i<n;i++)b[i]=Math.random()*256}
   for(i=0;i<n;i++)o+=a.charAt(b[i]%32);return o}
@@ -2298,7 +2322,7 @@ function mailSend(){
     m.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";m.className="red"});
 }
 async function end(win){
-  clearInterval(tm);if(win)score+=hp*100;contClear();
+  stopT();if(win)score+=hp*100;contClear();
   var early=!win&&cq<totalQ();
   var good=win||early;
   if(good)playSonido("tada");
@@ -2307,7 +2331,7 @@ async function end(win){
   $("end-pz").className="c "+(good?"yel":"mut");
   $("end-pz").textContent=early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
-  var PZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","llavero 3D"],["🧊","llavero 3D"]],li=win?3:lvOf(cq),lc=LV[li][4];
+  var PZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","logo grande"],["🧊","logo grande"]],li=win?3:lvOf(cq),lc=LV[li][4];
   $("end-badge").innerHTML="<div class='pb' style='--c:"+lc+"'><em>"+PZ[li][0]+"</em><b>"+LV[li][0]+"</b><span>"+PZ[li][1]+"</span></div>";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
@@ -2337,6 +2361,7 @@ function adm(){if(hh($("pw").value)===PWH){test=true;$("adm").classList.add("hid
 })();
 (function(){var s=ls("name");if(s)$("nom").value=s})();
 ["pointerup","touchend","click","keydown"].forEach(function(ev){document.addEventListener(ev,unlockAudio,{capture:true,passive:true})});
+document.addEventListener("visibilitychange",function(){if(document.hidden){beatsStop();return}if(AC&&AC.state!=="running"&&AC.state!=="closed"){try{AC.resume().then(beatsSync)}catch(e){}}else beatsSync()});
 /* Medidor: entre el segundo 1,2 y el 5 mira cuántos cuadros por segundo da el celular; si va por
    debajo de ~30 fps prende el "modo liviano" (sin animaciones infinitas ni brillos pesados). */
 (function(){
