@@ -1277,11 +1277,25 @@ function showWin(code){
   view('<div class="card ok"><div style="font-size:3.4rem">🎉</div><h1 class="long">¡FELICIDADES!<br>¡COMPLETASTE EL DESAFÍO!</h1><p class="big">Acercate a un stand del stream para reclamar tu premio.</p><div class="qrbox">'+qrSvg(txt)+'</div><div class="code">'+esc(code)+'</div><p class="note">Mostrá este QR en el stand. Es de un solo uso.</p></div>');
   if(last!=="validated"){chime();confetti();try{navigator.vibrate&&navigator.vibrate([120,60,120])}catch(e){}}
 }
+/* Stock en vivo: si la bolsita Pequeño ya no tiene stock en el turno activo, en vez del QR va un "lo siento".
+   Se decide la primera vez que se ve el saludo validado; si ya se mostró el QR, no se lo sacamos. */
+function showSorry(){view('<div class="card bad"><div style="font-size:4rem">😢</div><h1>LO SIENTO</h1><p class="big">Nos quedamos sin stock de este premio en este turno.</p><p class="mut">¡Gracias por participar!</p></div>')}
+function stockGate(code){
+  var k="saw-"+id,v=null;try{v=localStorage.getItem(k)}catch(e){}
+  if(v==="ok"){showWin(code);return}
+  var wait=new Promise(function(r){setTimeout(r,2500)});
+  Promise.race([FB.readCfg().then(function(){return ST3Sheet.load()}),wait]).catch(function(){}).then(function(){
+    var t=(FB.cfg()&&FB.cfg().turno)||"manana";
+    if(ST3Sheet.agotado(t,"Pequeño")){showSorry();return}
+    try{localStorage.setItem(k,"ok")}catch(e){}
+    showWin(code);
+  });
+}
 function showErr(m,t){view('<div class="card bad"><div style="font-size:3.4rem">⚠️</div><h1>'+(t||"SIN CONEXIÓN")+'</h1><p class="mut">'+esc(m)+'</p><button onclick="location.reload()">REINTENTAR</button></div>')}
 
 function loadCode(){
   db.ref("saludosCod/"+id).once("value").then(function(s){var v=s.val();
-    if(v&&v.code){codeTry=0;showWin(v.code);last="validated"}
+    if(v&&v.code){codeTry=0;stockGate(v.code);last="validated"}
     else if(codeTry++<8)setTimeout(loadCode,1200);
     else showErr("No pudimos cargar tu código. Refrescá la página.")
   }).catch(function(){if(codeTry++<8)setTimeout(loadCode,1500)});

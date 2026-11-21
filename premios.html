@@ -1,0 +1,332 @@
+﻿<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Premios y stock en vivo · Streaming Room T3</title>
+<style>
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth;font-size:clamp(11px,1.1vw,19px)}
+body{min-height:100vh;background:#0f1b3d;font-family:'Segoe UI',Arial,sans-serif;color:#fff;padding:2.5rem 1.5rem 1.75rem;overflow-x:hidden}
+.deco{position:fixed;border-radius:50%;pointer-events:none;z-index:0}
+.d1{right:-11.25rem;top:-11.25rem;width:32.5rem;height:32.5rem;background:#1d3a8a;opacity:.55}
+.d2{left:-8.75rem;bottom:-12.5rem;width:27.5rem;height:27.5rem;background:#7c3aed;opacity:.35}
+.wrap{position:relative;z-index:2;max-width:92.5rem;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:0.875rem;margin-bottom:1.625rem}
+h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625rem}
+.sub{font-size:clamp(1rem,1.6vw,1.375rem);color:#b8c4ee;margin-top:0.375rem}
+.pill{background:#ffffff1f;border:0.125rem solid #ffffff40;border-radius:2.5rem;padding:0.625rem 1.5rem;font-size:1.25rem;font-weight:600}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(18.125rem,100%),1fr));gap:1.5rem;align-items:stretch;margin-bottom:2.125rem}
+.card{background:#fff;color:#16213e;border-radius:1.625rem;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1.25rem 2.5rem #0006;min-width:0}
+.head{padding:1.375rem 1.5rem 1.125rem;color:#fff;position:relative}
+.head h2{font-size:2.125rem;font-weight:800;padding-right:4rem}
+@media (min-width:1100px){#rowPuestos{grid-template-columns:1.45fr 1fr 1fr 1fr}}
+.head p{font-size:1.0625rem;opacity:.92;margin-top:0.25rem}
+.emoji{position:absolute;right:1.25rem;top:0.75rem;font-size:2.875rem}
+.items{padding:0.625rem 1.375rem 0.375rem;flex:1}
+.it{display:flex;align-items:center;gap:0.75rem;padding:0.625rem 0;border-bottom:0.125rem solid #eef0f7;font-size:1.25rem;font-weight:600}
+.it:last-child{border-bottom:0}
+.ic{width:2.625rem;height:2.625rem;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;font-size:1.4375rem;background:#f1f3fb;flex:none}
+.q{margin-left:auto;font-size:1.75rem;font-weight:800}
+.tag{font-size:0.8125rem;font-weight:700;border-radius:0.5rem;padding:0.1875rem 0.5rem;vertical-align:middle}
+.foot{display:flex;gap:0.75rem;padding:0.75rem 1.375rem 1.375rem}
+.m{flex:1;background:#f1f3fb;border-radius:1rem;padding:0.625rem 0.75rem;text-align:center}
+.m b{display:block;font-size:2.25rem;font-weight:800;line-height:1.1}
+.m span{font-size:0.9375rem;color:#5b6486;font-weight:600}
+.bar{flex:1;min-width:2.5rem;height:0.75rem;background:#eef0f7;border-radius:0.5rem;overflow:hidden;margin:0 0.25rem}
+.bar i{display:block;height:100%;border-radius:0.5rem;background:linear-gradient(90deg,#f59e0b,#ea580c)}
+.lv{font-size:1.25rem;font-weight:700;line-height:1.15}
+.lv small{display:block;font-size:0.875rem;color:#5b6486;font-weight:600}
+.bg{margin-left:auto;text-align:right;min-width:5.75rem}
+.bg b{display:block;font-size:1.625rem;font-weight:800;line-height:1}
+.bg span{font-size:0.8125rem;color:#5b6486;font-weight:600}
+.tabs{display:flex;gap:.5rem;background:#ffffff14;border:2px solid #ffffff30;border-radius:3rem;padding:.3rem}
+.tab{font:inherit;font-size:1.25rem;font-weight:700;color:#b8c4ee;background:transparent;border:0;border-radius:3rem;padding:.55rem 1.6rem;cursor:pointer;transition:background .15s,color .15s}
+.tab:hover{color:#fff}
+.tab[aria-selected=true]{background:#fff;color:#16213e}
+.tab:focus-visible{outline:3px solid #8b5cf6;outline-offset:2px}
+.panel[hidden]{display:none}
+.hint{color:#b8c4ee;font-size:.95rem;margin:-.6rem 0 1.2rem;text-align:center}
+.hint kbd{background:#ffffff1f;border:1px solid #ffffff40;border-radius:.4rem;padding:.05rem .45rem;font-family:inherit}
+.bottom{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;color:#b8c4ee;font-size:1rem;padding-top:0.375rem}
+.live{display:flex;align-items:center;gap:.6rem}
+.dot{width:.7rem;height:.7rem;border-radius:50%;background:#94a3b8}
+.dot.on{background:#22c55e;box-shadow:0 0 0 .25rem #22c55e33}
+.dot.off{background:#f59e0b}
+.rf{font:inherit;font-size:.95rem;color:#fff;background:#ffffff1f;border:1px solid #ffffff40;border-radius:2rem;padding:.25rem .9rem;cursor:pointer}
+.rf:hover{background:#ffffff33}
+@media (max-width:700px){html{font-size:14px}body{padding:1.5rem 0.875rem 1.25rem}.row{grid-template-columns:minmax(0,1fr)}}
+</style></head><body>
+<div class="deco d1"></div><div class="deco d2"></div>
+<div class="wrap">
+<div class="top">
+ <div><h1>Plan de premios</h1><div class="sub">Muestra anual 2026 · bolsitas, ruleta, trivia y cámaras</div></div>
+ <nav class="tabs" role="tablist" aria-label="Secciones"><button class="tab" id="tab1" role="tab" aria-selected="true" aria-controls="p1">Bolsitas</button><button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="p2">Puestos</button><button class="tab" id="tab3" role="tab" aria-selected="false" aria-controls="p3">Stock en vivo</button></nav>
+ <div class="pill" id="turnos">2 turnos</div>
+</div>
+
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> o <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> cambian de pestaña · <kbd>↑</kbd> <kbd>↓</kbd> suben y bajan</div>
+<section class="panel" id="p1" role="tabpanel" aria-labelledby="tab1"><div class="row" id="rowBolsas"></div></section>
+<section class="panel" id="p2" role="tabpanel" aria-labelledby="tab2" hidden><div class="row" id="rowPuestos"></div></section>
+<section class="panel" id="p3" role="tabpanel" aria-labelledby="tab3" hidden><div class="row" id="rowStock"></div></section>
+
+<div class="bottom">
+ <span class="live"><span class="dot" id="dot"></span><span id="estado">Cargando…</span><button class="rf" id="rf" type="button">Actualizar</button></span>
+ <span>Plan de premios · Muestra anual 2026</span>
+</div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
+<script src="fb-config.js?v=18"></script>
+<script src="fb.js?v=18"></script>
+<script src="sheet-config.js?v=1"></script>
+<script src="sheet.js?v=1"></script>
+<script>
+(function(){
+  var SHEET_ID='1jJ_WUHFocqyaO1RpoVkGBGoonnojCt6Y1u4OOrWFK2A';
+  var REFRESH_MS=60000;
+
+  /* Datos guardados: se usan si no hay conexión con la planilla */
+  var DATA={
+    turnos:2,
+    labels:['Caramelos','Stickers aleatorios','Stickers a elección','Logos planos','Logos 3D medianos','Logos grandes','Lapiceras','Lapiceras personalizadas','Cuadernos','Cuadernos premiun'],
+    bags:{
+      'Pequeño':{q:[2,0,0,1,0,0,0,0,0,0],t:18,T:36},
+      'Normal':{q:[1,1,0,1,0,0,0,0,0,0],t:68,T:136},
+      'Grande':{q:[2,0,1,0,1,0,1,0,0,0],t:40,T:80},
+      'Especial':{q:[4,0,2,0,0,1,0,1,0,1],t:3,T:6}
+    },
+    puestos:[
+      {p:'Stream en vivo',h:'Participar',b:'Normal',t:8,T:16},
+      {p:'Stream en vivo',h:'Ganar en vivo',b:'Grande',t:3,T:6,x:'Vasos',xq:1,x2:'Cuadernos premiun',xq2:1},
+      {p:'Trivia',h:'Nivel fácil y medio',b:'Pequeño',t:0,T:0},
+      {p:'Trivia',h:'Nivel difícil',b:'Normal',t:60,T:120},
+      {p:'Trivia',h:'Ganar el nivel difícil',b:'Grande',t:32,T:64},
+      {p:'Trivia',h:'Top del ranking',b:'Especial',t:3,T:6},
+      {p:'Cámaras',h:'Saludar a la cámara y validar el QR',b:'Pequeño',t:18,T:36},
+      {p:'Stream en vivo',h:'Ganar en vivo (si se acaban los cuadernos)',b:'Grande',t:5,T:10,x:'Vasos',xq:1,x2:'Lapiceras personalizadas',xq2:1}
+    ],
+    ruleta:[
+      {n:'Caramelos',m:'Caramelos',pc:2,t:12,T:24},
+      {n:'Stickers',m:'Stickers a elección',pc:11,t:55,T:110},
+      {n:'Llavero 3D',m:'Logos 3D medianos',pc:2,t:10,T:20},
+      {n:'Lapicera',m:'Lapiceras',pc:2,t:10,T:20},
+      {n:'Cuaderno',m:'Cuadernos',pc:4,t:20,T:40},
+      {n:'Vaso',m:'Vasos',pc:1,t:4,T:8},
+      {n:'Llavero plano',m:'Logos planos',pc:3,t:14,T:28},
+      {n:'Llavero grande',m:'Logos grandes',pc:4,t:20,T:40},
+      {n:'Lapicera personalizada',m:'Lapiceras personalizadas',pc:0,t:2,T:4}
+    ]
+  };
+
+  var BAGS=[
+    {key:'Pequeño',name:'Pequeño',grad:'#0ea5a4,#14b8a6',emoji:'🎁'},
+    {key:'Normal',name:'Normal',grad:'#6d28d9,#8b5cf6',emoji:'🎁'},
+    {key:'Grande',name:'Grande',grad:'#ea580c,#f59e0b',emoji:'🎁'},
+    {key:'Especial',name:'Top 3',grad:'#be123c,#ec4899',emoji:'🏆'}
+  ];
+  var BAGNAME={'Especial':'Top 3'};
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+  function emojiFor(l){
+    var n=norm(l);
+    if(n.indexOf('caramelo')>-1)return'🍬';
+    if(n.indexOf('sticker')>-1)return'⭐';
+    if(n.indexOf('3d')>-1)return'🧊';
+    if(n.indexOf('logo')>-1||n.indexOf('llavero')>-1)return'🔑';
+    if(n.indexOf('personaliz')>-1)return'🖊️';
+    if(n.indexOf('lapicera')>-1)return'✏️';
+    if(n.indexOf('cuaderno')>-1)return'📒';
+    if(n.indexOf('vaso')>-1)return'🥤';
+    return'📦';
+  }
+  var SING={'caramelos':'Caramelo','logos planos':'Logo plano','logos 3d medianos':'Logo 3D mediano','logos grandes':'Logo grande','lapiceras':'Lapicera','lapiceras personalizadas':'Lapicera personalizada','cuadernos':'Cuaderno','cuadernos premiun':'Cuaderno premium','cuadernos premium':'Cuaderno premium','vasos':'Vaso'};
+  function itemName(label,q){
+    var n=norm(label);
+    if(n.indexOf('sticker')===0){
+      var tag=n.indexOf('aleator')>-1?'aleatorio':(n.indexOf('elecci')>-1?'a elección':'');
+      return{text:q===1?'Sticker':'Stickers',tag:tag};
+    }
+    if(q===1&&SING[n])return{text:SING[n],tag:''};
+    return{text:String(label).replace('premiun','premium'),tag:''};
+  }
+  function tagStyle(tag){return tag==='aleatorio'?'background:#ccfbf1;color:#0f766e':'background:#ffedd5;color:#c2410c';}
+  function sum(a,k){return a.reduce(function(s,x){return s+(+x[k]||0);},0);}
+  function uniq(a){return a.filter(function(x,i){return a.indexOf(x)===i;});}
+  function joinY(a){return a.length<2?a.join(''):a.slice(0,-1).join(', ')+' y '+a[a.length-1];}
+
+  function bagItems(bag,d){
+    var items=[];
+    d.labels.forEach(function(l,i){
+      var q=+bag.q[i]||0;
+      if(q>0){var nm=itemName(l,q);items.push('<div class="it"><div class="ic">'+emojiFor(l)+'</div>'+esc(nm.text)+(nm.tag?' <span class="tag" style="'+tagStyle(nm.tag)+'">'+nm.tag+'</span>':'')+'<div class="q">'+q+'</div></div>');}
+    });
+    return items.join('');
+  }
+  function foot(t,T){return'<div class="foot"><div class="m"><b>'+t+'</b><span>por turno</span></div><div class="m"><b>'+T+'</b><span>en total</span></div></div>';}
+  function card(grad,title,sub,emoji,body,footHtml){
+    return'<div class="card"><div class="head" style="background:linear-gradient(135deg,'+grad+')"><h2>'+esc(title)+'</h2><p>'+esc(sub)+'</p><div class="emoji">'+emoji+'</div></div><div class="items">'+body+'</div>'+(footHtml||'')+'</div>';
+  }
+  function bagSub(key,d){
+    var rows=d.puestos.filter(function(r){return r.b===key&&r.t>0;});
+    if(!rows.length)return'';
+    var ps=uniq(rows.map(function(r){return r.p;}));
+    return joinY(ps);
+  }
+
+  function render(d){
+    document.getElementById('turnos').textContent=d.turnos+(d.turnos===1?' turno':' turnos');
+    var h='';
+    BAGS.forEach(function(b){
+      var bag=d.bags[b.key]; if(!bag)return;
+      h+=card(b.grad,b.name,bagSub(b.key,d),b.emoji,bagItems(bag,d),foot(bag.t,bag.T));
+    });
+    document.getElementById('rowBolsas').innerHTML=h;
+
+    var p='';
+    var rl=d.ruleta.slice().sort(function(a,b){return b.t-a.t;});
+    var max=Math.max.apply(null,rl.map(function(r){return r.t;}).concat([1]));
+    var rb='';
+    rl.forEach(function(r){
+      var nm=itemName(r.n,1).text;
+      rb+='<div class="it"><div class="ic">'+emojiFor(r.m||r.n)+'</div>'+esc(nm)+'<div class="bar"><i style="width:'+Math.max(4,Math.round(r.t/max*100))+'%"></i></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
+    });
+    p+=card('#ea580c,#f59e0b','Ruleta','Premios previstos · '+sum(d.ruleta,'t')+' giros por turno','🎡',rb,'<div class="foot"><div class="m"><b>'+sum(d.ruleta,'t')+'</b><span>premios por turno</span></div><div class="m"><b>'+sum(d.ruleta,'T')+'</b><span>premios en total</span></div></div>');
+
+    var st='',stRows=d.puestos.filter(function(r){return norm(r.p).indexOf('stream')===0;});
+    stRows.forEach(function(r){
+      function ex(m,q){return m&&q>0?' + '+(q>1?q+' ':'')+itemName(m,q).text:'';}
+      var extra=ex(r.x,r.xq)+ex(r.x2,r.xq2);
+      var hh=String(r.h);
+      st+='<div class="it"><div class="lv">'+esc(hh)+'<small>'+esc((BAGNAME[r.b]||r.b)+extra)+'</small></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
+    });
+    if(stRows.length)p+=card('#2563eb,#38bdf8','Stream en vivo','Jugar en el programa','📺',st,foot(sum(stRows,'t'),sum(stRows,'T')));
+
+    var tr='';
+    d.puestos.filter(function(r){return norm(r.p)==='trivia';}).forEach(function(r){
+      tr+='<div class="it"><div class="lv">'+esc(r.h)+'<small>'+esc(BAGNAME[r.b]||r.b)+'</small></div><div class="bg"><b>'+r.t+'</b><span>por turno</span></div></div>';
+    });
+    p+=card('#6d28d9,#8b5cf6','Trivia','Un premio por cada nivel','🧠',tr,'');
+
+    var cam=d.puestos.filter(function(r){return norm(r.p).indexOf('camara')===0;});
+    var cb='',ct=sum(cam,'t'),cT=sum(cam,'T');
+    if(cam.length){
+      var bag=d.bags[cam[0].b];
+      cb='<div class="it"><div class="ic">🎁</div>Bolsita '+esc(BAGNAME[cam[0].b]||cam[0].b)+'</div>'+(bag?bagItems(bag,d):'');
+    }
+    p+=card('#0ea5a4,#14b8a6','Cámaras',cam.length?cam[0].h:'','📷',cb,foot(ct,cT));
+    document.getElementById('rowPuestos').innerHTML=p;
+  }
+
+  /* Lectura en vivo de la planilla (gviz, JSONP) */
+  var seq=0;
+  function gv(sheet,range,headers){
+    return new Promise(function(res,rej){
+      var cb='__gv'+(++seq)+'_'+Date.now(),s=document.createElement('script'),done=false;
+      function end(){done=true;clearTimeout(to);try{delete window[cb];}catch(e){window[cb]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+      var to=setTimeout(function(){if(!done){end();rej(new Error('timeout'));}},12000);
+      window[cb]=function(r){if(done)return;end();if(r&&r.status==='ok')res(r.table);else rej(new Error('error'));};
+      s.onerror=function(){if(!done){end();rej(new Error('red'));}};
+      s.src='https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json;responseHandler:'+cb+'&headers='+headers+'&sheet='+encodeURIComponent(sheet)+'&range='+range+'&_='+Date.now();
+      document.head.appendChild(s);
+    });
+  }
+  function val(c){return c&&c.v!=null?c.v:null;}
+  function num(c){var v=val(c);return v==null?0:(+v||0);}
+
+  function load(){
+    return Promise.all([
+      gv('Premios','A4:N8',1),
+      gv('Puestos','A5:I21',1),
+      gv('Ruleta','A6:G20',1),
+      gv('Materiales','A4:B4',0)
+    ]).then(function(r){
+      var d={labels:[],bags:{},puestos:[],ruleta:[],turnos:DATA.turnos};
+      var P=r[0];
+      for(var i=2;i<=11;i++)d.labels.push(P.cols[i].label);
+      P.rows.forEach(function(row){
+        var c=row.c,name=val(c[0]);if(!name)return;
+        var q=[];for(var i=2;i<=11;i++)q.push(num(c[i]));
+        d.bags[name]={q:q,t:num(c[12]),T:num(c[13])};
+      });
+      r[1].rows.forEach(function(row){
+        var c=row.c,p=val(c[0]),b=val(c[2]);if(!p||typeof p!=='string'||!b||typeof b!=='string')return;
+        d.puestos.push({p:p,h:val(c[1])||'',b:b,t:num(c[3]),T:num(c[4]),x:val(c[5])||'',xq:num(c[6]),x2:val(c[7])||'',xq2:num(c[8])});
+      });
+      r[2].rows.forEach(function(row){
+        var c=row.c,n=val(c[0]);if(!n||typeof n!=='string'||norm(n)==='total'||!val(c[1]))return;
+        d.ruleta.push({n:n,m:val(c[1])||n,pc:num(c[3]),t:num(c[5]),T:num(c[6])});
+      });
+      var tt=r[3].rows&&r[3].rows[0]?num(r[3].rows[0].c[1]):0;
+      if(tt>0)d.turnos=tt;
+      if(!Object.keys(d.bags).length||!d.ruleta.length)throw new Error('vacio');
+      return d;
+    });
+  }
+
+  /* Stock en vivo: planilla (stock de cada turno) menos lo entregado en Firebase */
+  var TNAME={manana:'Turno mañana',tarde:'Turno tarde'};
+  function stockCard(t,title,keys,grad,emoji,activo){
+    var body='',tot=0,tq=0;
+    keys.forEach(function(k){
+      var i=ST3Sheet.info(t,k),q=i?i.quedan:null,n=i?i.stock:null;
+      var pc=i&&n>0?Math.max(0,Math.min(100,Math.round(q/n*100))):0;
+      var col=q===null?'#cbd5e1':(q<=0?'#dc2626':(q<=5?'#f59e0b':'#16a34a'));
+      if(i){tot+=n;tq+=Math.max(0,q);}
+      body+='<div class="it"><div class="ic">'+emojiFor(k)+'</div>'+esc(k)+'<div class="bar"><i style="width:'+pc+'%;background:'+col+'"></i></div><div class="bg"><b style="color:'+col+'">'+(q===null?'—':q)+'</b><span>'+(i?'de '+n+(i.manual?' (ajustado)':''):'sin datos')+'</span></div></div>';
+    });
+    return card(grad,title,(activo?'Turno activo · ':'')+TNAME[t],emoji,body,'<div class="foot"><div class="m"><b>'+tq+'</b><span>quedan</span></div><div class="m"><b>'+tot+'</b><span>stock del turno</span></div></div>');
+  }
+  function renderStock(){
+    var act=(window.FB&&FB.cfg&&FB.cfg().turno)||'manana',h='';
+    ['manana','tarde'].forEach(function(t){
+      h+=stockCard(t,'Bolsitas',ST3Sheet.PREMIOS,'#6d28d9,#8b5cf6','🎁',t===act);
+      h+=stockCard(t,'Ruleta',ST3Sheet.RULETA,'#ea580c,#f59e0b','🎡',t===act);
+    });
+    document.getElementById('rowStock').innerHTML=h;
+  }
+  ST3Sheet.onChange(renderStock);
+  renderStock();
+
+  var dot=document.getElementById('dot'),estado=document.getElementById('estado'),busy=false;
+  function hora(){var n=new Date();return('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2);}
+  function refresh(){
+    if(busy)return;busy=true;
+    estado.textContent='Actualizando…';dot.className='dot';
+    ST3Sheet.load();
+    load().then(function(d){render(d);dot.className='dot on';estado.textContent='En vivo desde la planilla · actualizado '+hora();})
+    .catch(function(){dot.className='dot off';estado.textContent='Sin conexión con la planilla · se muestran los últimos datos guardados';})
+    .then(function(){busy=false;});
+  }
+
+  /* Pestañas y teclado */
+  var tabs=[document.getElementById('tab1'),document.getElementById('tab2'),document.getElementById('tab3')];
+  var panels=[document.getElementById('p1'),document.getElementById('p2'),document.getElementById('p3')];
+  var HASH=['bolsitas','puestos','stock'];
+  var cur=0;
+  function show(n,keep){
+    cur=(n+tabs.length)%tabs.length;
+    tabs.forEach(function(b,i){b.setAttribute('aria-selected',i===cur?'true':'false');panels[i].hidden=i!==cur;});
+    try{history.replaceState(null,'','#'+HASH[cur]);}catch(e){}
+    if(!keep)window.scrollTo({top:0,behavior:'smooth'});
+  }
+  tabs.forEach(function(b,i){b.addEventListener('click',function(){show(i);});});
+  document.addEventListener('keydown',function(e){
+    if(e.altKey||e.ctrlKey||e.metaKey)return;
+    if(e.key==='ArrowRight'){e.preventDefault();show(cur+1);}
+    else if(e.key==='ArrowLeft'){e.preventDefault();show(cur-1);}
+    else if(e.key==='1')show(0);
+    else if(e.key==='2')show(1);
+    else if(e.key==='3')show(2);
+    else if(e.key==='r'||e.key==='R')refresh();
+  });
+  document.getElementById('rf').addEventListener('click',refresh);
+
+  render(DATA);
+  show(Math.max(0,HASH.indexOf(location.hash.slice(1))),true);
+  refresh();
+  setInterval(refresh,REFRESH_MS);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)refresh();});
+})();
+</script>
+</body></html>

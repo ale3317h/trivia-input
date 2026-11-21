@@ -2286,7 +2286,7 @@ function hasCont(){
 }
 async function showPrize(){
   stopT();contSave();
-  try{await ST3Sheet.load(true,3000)}catch(e){}
+  try{await Promise.race([ST3Sheet.load(),new Promise(function(r){setTimeout(r,2500)})])}catch(e){}
   var li=efLi(3),ok=!!QPZ[li];
   $("pz-em").textContent=ok?"🏆":"😢";$("pz-t").textContent=ok?"¡FELICIDADES!":"LO SIENTO";$("pz-t").className="big "+(ok?"yel":"red");
   $("pz-lead").textContent=ok?"Ganaste el premio "+QPZ[li][1]:"Nos quedamos sin stock de este premio en este turno";
@@ -2381,7 +2381,7 @@ function mailSend(){
 async function end(win){
   stopT();if(win)score+=hp*100;contClear();
   var early=!win&&cq<totalQ();
-  try{await ST3Sheet.load(true,3000)}catch(e){}   // stock al día antes de decidir el premio
+  try{await Promise.race([ST3Sheet.load(),new Promise(function(r){setTimeout(r,2500)})])}catch(e){}   // stock al día antes de decidir el premio
   var li0=win?3:lvOf(cq),li=efLi(li0),prize=!!QPZ[li],agot=!!QPZ[li0]&&!prize;   // fácil y medio: sin premio; agot: ganó pero el turno se quedó sin stock
   var good=prize;
   if(good)playSonido("tada");

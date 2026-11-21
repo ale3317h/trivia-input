@@ -1,64 +1,107 @@
-/* Base de datos global: el Excel "Plan de premios Muestra anual 2026", vía Apps Script.
-   Lo usan todas las páginas. Si no hay URL o falla la conexión, devuelve null y cada página
-   sigue con sus datos incorporados (nunca bloquea el juego por un error de red). */
-(function () {
-  var URL_ = function () { return (window.ST3_SHEET_URL || "").trim(); };
-  var data = null, at = 0, pending = null;
-  try { data = JSON.parse(localStorage.getItem("st3_sheet") || "null"); } catch (e) {}
+/* Base de datos global del stock (la usan todas las páginas).
 
-  function timeout(ms) {
-    var c = new AbortController(); setTimeout(function () { c.abort(); }, ms); return c.signal;
+   - STOCK del turno: lo escribe producción en la planilla de Google (pestañas "Hoja en vivo turno ...").
+     Se lee en vivo, sin iniciar sesión (gviz/JSONP), cada pocos segundos.
+   - AJUSTE manual (opcional): cfg/stk/<turno>/<clave>/n en Firebase. Si existe, manda sobre la planilla.
+   - ENTREGAS: cfg/stk/<turno>/<clave>/used/<código> en Firebase. Cada entrega descuenta 1.
+   quedan = (ajuste o planilla) - entregas
+
+   Si no se puede leer nada (sin internet o planilla sin compartir), devuelve null y las páginas
+   siguen sin bloquear el juego. */
+(function () {
+  var PREMIOS = ["Normal", "Grande", "Especial", "Pequeño"];
+  var RULETA = ["Stickers", "Llavero 3D", "Lapicera", "Cuaderno", "Vaso", "Llavero plano", "Llavero grande", "Lapicera personalizada"];
+  var POLL_MS = 15000;
+  var sheet = { manana: null, tarde: null }, okAt = 0, listeners = [], timer = null, seq = 0, started = false;
+  try { var c0 = JSON.parse(localStorage.getItem("st3_stock") || "null"); if (c0) sheet = c0; } catch (e) {}
+
+  function fkey(k) { return String(k).replace(/ñ/g, "n").replace(/\s+/g, "_"); }
+  function safe(s) { return String(s).replace(/[.#$\[\]\/]/g, "_"); }
+  function cfgStk() { var c = window.FB && FB.cfg && FB.cfg(); return (c && c.stk) || {}; }
+  function emit() { listeners.forEach(function (f) { try { f(); } catch (e) {} }); }
+
+  /* ---- lectura de la planilla (JSONP: no hace falta CORS ni cuenta) ---- */
+  function gv(tab) {
+    return new Promise(function (res, rej) {
+      var id = window.ST3_SHEET_ID, cb = "__st3gv" + (++seq), s = document.createElement("script"), t;
+      if (!id) return rej(new Error("sin planilla"));
+      function done() { clearTimeout(t); delete window[cb]; if (s.parentNode) s.parentNode.removeChild(s); }
+      window[cb] = function (r) { done(); res(r); };
+      s.onerror = function () { done(); rej(new Error("no se pudo leer la planilla")); };
+      t = setTimeout(function () { done(); rej(new Error("la planilla no respondió")); }, 9000);
+      s.src = "https://docs.google.com/spreadsheets/d/" + id + "/gviz/tq?tqx=out:json;responseHandler:" + cb +
+        "&sheet=" + encodeURIComponent(tab) + "&range=A4:C18&headers=1&_=" + Date.now();
+      document.head.appendChild(s);
+    });
   }
-  /* Modo Firebase (por defecto, sin URL de Apps Script): el stock vive en cfg/stk y lo edita producción en el admin. */
-  function fbStock(turno, premio) {
-    var c = window.FB && FB.cfg && FB.cfg(), t = c && c.stk && c.stk[turno], p = t && t[premio];
-    if (!p || typeof p.n !== "number") return null;
-    var used = p.used ? Object.keys(p.used).length : 0;
-    return { stock: p.n, entregados: used, quedan: p.n - used };
+  function parse(r) {
+    var o = {};
+    if (!r || r.status !== "ok" || !r.table) return null;
+    r.table.rows.forEach(function (row) {
+      var c = row.c || [], k = c[0] && c[0].v, v = c[2] && c[2].v;
+      if (typeof k === "string" && typeof v === "number") o[k] = v;
+    });
+    return o;
   }
-  function load(force, ms) {
-    if (!URL_()) return (window.FB && FB.readCfg ? FB.readCfg() : Promise.resolve()).then(function () { return null; }, function () { return null; });
-    if (!force && data && Date.now() - at < 20000) return Promise.resolve(data);
-    if (pending) return pending;
-    pending = fetch(URL_() + "?action=plan&t=" + Date.now(), { signal: timeout(ms || 4000) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) {
-        if (!j || !j.ok) throw new Error((j && j.error) || "respuesta inválida");
-        data = j; at = Date.now();
-        try { localStorage.setItem("st3_sheet", JSON.stringify(j)); } catch (e) {}
-        return data;
-      })
-      .catch(function () { return null; })
-      .then(function (d) { pending = null; return d; });
-    return pending;
+  function load() {
+    var tabs = window.ST3_TABS || {}, ks = ["manana", "tarde"];
+    return Promise.all(ks.map(function (k) {
+      return gv(tabs[k]).then(parse).catch(function () { return null; });
+    })).then(function (rs) {
+      var any = false;
+      ks.forEach(function (k, i) { if (rs[i] && Object.keys(rs[i]).length) { sheet[k] = rs[i]; any = true; } });
+      if (any) { okAt = Date.now(); try { localStorage.setItem("st3_stock", JSON.stringify(sheet)); } catch (e) {} }
+      emit();
+      return any;
+    });
   }
-  function stock(turno, premio) {
-    if (!URL_()) return fbStock(turno, premio);
-    var s = data && data.stock && data.stock[turno];
-    return s && s[premio] ? s[premio] : null;
+
+  /* ---- cálculo ---- */
+  function info(turno, key) {
+    var f = cfgStk()[turno], p = f && f[fkey(key)], base = null, manual = false;
+    if (p && typeof p.n === "number") { base = p.n; manual = true; }
+    else if (sheet[turno] && typeof sheet[turno][key] === "number") base = sheet[turno][key];
+    if (base === null) return null;
+    var used = p && p.used ? Object.keys(p.used).length : 0;
+    return { stock: base, entregados: used, quedan: base - used, manual: manual };
   }
-  /* true solo si la hoja del turno dice que ese premio ya no tiene stock */
-  function agotado(turno, premio) {
-    var s = stock(turno, premio);
-    return !!(s && s.quedan <= 0);
+  function quedan(turno, key) { var i = info(turno, key); return i ? i.quedan : null; }
+  /* true solo si sabemos que no queda: si no hay dato, no se bloquea nada */
+  function agotado(turno, key) { var q = quedan(turno, key); return q !== null && q <= 0; }
+
+  /* ---- escritura en Firebase (entregas y ajustes) ---- */
+  function dbx() { return (window.firebase && window.FB && FB.shared && FB.shared()) ? firebase.database() : null; }
+  function ref(turno, key, extra) { var d = dbx(); return d ? d.ref("cfg/stk/" + turno + "/" + fkey(key) + (extra || "")) : null; }
+  function consume(turno, key, code) {
+    var r = ref(turno, key, "/used/" + safe(code)); if (!r) return Promise.reject(new Error("sin conexión"));
+    return r.set(firebase.database.ServerValue.TIMESTAMP);
   }
-  function texto(premio) {
-    var p = data && data.premios && data.premios[premio];
-    return p && p.texto ? p.texto : null;
+  function release(turno, key, code) {
+    var r = ref(turno, key, "/used/" + safe(code)); if (!r) return Promise.reject(new Error("sin conexión"));
+    return r.remove();
   }
-  function send(action, turno, premio, codigo) {
-    if (!URL_()) return Promise.resolve(null);
-    return fetch(URL_(), { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: action, turno: turno, premio: premio, codigo: codigo }), signal: timeout(10000) })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { if (j && j.ok && j.stock && data) { data.stock[turno] = j.stock; at = Date.now(); } return j; })
-      .catch(function (e) { return { ok: false, error: String((e && e.message) || e) }; });
+  function setManual(turno, key, n) {
+    var r = ref(turno, key, "/n"); if (!r) return Promise.reject(new Error("sin conexión"));
+    return n === null ? r.remove() : r.set(Math.max(0, n | 0));
   }
+
+  /* ---- arranque: lee la planilla y avisa cuando cambia algo (planilla o Firebase) ---- */
+  function start() {
+    if (started) return; started = true;
+    load();
+    timer = setInterval(function () { if (!document.hidden) load(); }, POLL_MS);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
+    if (window.FB && FB.watchCfg) FB.watchCfg(function () { emit(); });
+  }
+
   window.ST3Sheet = {
-    load: load, stock: stock, agotado: agotado, texto: texto,
-    entregar: function (t, p, c) { return send("entregar", t, p, c); },
-    revertir: function (t, p, c) { return send("revertir", t, p, c); },
-    activo: function () { return !!URL_(); },   // true = modo Apps Script; false = modo Firebase
-    data: function () { return data; }
+    PREMIOS: PREMIOS, RULETA: RULETA,
+    start: start, load: load, info: info, quedan: quedan, agotado: agotado,
+    consume: consume, release: release, setManual: setManual,
+    onChange: function (f) { listeners.push(f); },
+    leyo: function () { return okAt; },
+    sheetValue: function (turno, key) { return sheet[turno] && typeof sheet[turno][key] === "number" ? sheet[turno][key] : null; },
+    texto: function () { return null }
   };
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else setTimeout(start, 0);
 })();

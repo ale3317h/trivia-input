@@ -50,6 +50,7 @@ body.app-on{padding-bottom:84px}
 .ah{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .pane{animation:pin .3s ease both}@keyframes pin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 #t-scan,#t-pen,#t-ok,#t-sal{max-width:540px;margin:0 auto}
+.stt{width:100%;border-collapse:collapse;font-size:14px;margin:6px 0 14px}.stt th{font:700 11px system-ui,sans-serif;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}.stt th,.stt td{padding:7px 3px;text-align:center;border-bottom:1px solid #ffffff1a}.stt td:first-child,.stt th:first-child{text-align:left}.stt input{width:64px;padding:6px 4px;font-size:14px;text-align:center;margin:0}.stt .q{font-weight:800}.stt .q.z{color:var(--red)}.stt .q.l{color:var(--yel)}.stt .q.k{color:var(--grn)}.stt tr.sec td{font:800 12px system-ui,sans-serif;color:var(--yel);letter-spacing:.08em;padding-top:12px;border-bottom:0}.tn{margin:14px 0 4px;font:800 16px system-ui,sans-serif}.tn.on{color:var(--grn)}
 .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;background:#0b0518ee;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid #3a1a55;padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
 .tabs button{flex:1;margin:0 3px;border:0;background:transparent;border-radius:12px;padding:7px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;font:700 11px/1.1 system-ui,sans-serif;color:var(--mut);position:relative;transition:background .25s,color .25s}
 .tabs button i{font-style:normal;font-size:20px}.tabs button.on{background:#2d1050;color:#fff}
@@ -232,6 +233,15 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       </div>
     </div>
 
+    <div id="t-stk" class="pane hide">
+      <h2>Stock en vivo</h2>
+      <p class="small" style="margin-top:0">El stock de cada turno se edita en la <b>planilla de Google</b> y se actualiza solo. Acá se descuenta lo entregado (trivia, ruleta y cámaras). «Ajuste» corrige un número sin tocar la planilla.</p>
+      <div class="row"><button id="stk-m" onclick="setTurno('manana')">☀️ TURNO MAÑANA</button><button id="stk-t" onclick="setTurno('tarde')">🌙 TURNO TARDE</button></div>
+      <div class="small" id="stk-st" style="margin:8px 0"></div>
+      <div id="stk-box"></div>
+      <div class="row"><button class="p" onclick="stkOpen()">ABRIR LA PLANILLA</button><button class="p" onclick="stkRefresh()">ACTUALIZAR AHORA</button></div>
+    </div>
+
     <div id="t-set" class="pane hide">
       <p class="small" style="margin-top:0"><a href="index.html">Juego</a> · <a href="ranking.html" target="_blank">Ranking para OBS</a> · <span id="mode">comprobando base…</span></p>
     <h2>Ranking</h2>
@@ -259,17 +269,6 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
         <div><label>Preguntas difíciles (4 opciones)</label><input id="c-n3" type="number" min="0" max="50"></div>
       </div>
       <label style="margin-top:14px"><input type="checkbox" id="c-show" style="width:auto;margin-right:8px">Los jugadores ven el ranking (top 3 / top 10)</label>
-      <div style="margin-top:14px"><label>Turno activo (decide qué hoja en vivo manda el stock)</label>
-        <select id="c-turno" onchange="setTurno(this.value)"><option value="manana">Turno mañana</option><option value="tarde">Turno tarde</option></select>
-        <div id="stk" class="small" style="margin-top:6px"></div>
-        <div class="row" style="margin-top:8px">
-          <div><label>Normal</label><input id="st-Normal" type="number" min="0"></div>
-          <div><label>Grande</label><input id="st-Grande" type="number" min="0"></div>
-          <div><label>Especial</label><input id="st-Especial" type="number" min="0"></div>
-          <div><label>Pequeño</label><input id="st-Pequeno" type="number" min="0"></div>
-        </div>
-        <button class="g" onclick="saveStock()">GUARDAR STOCK DEL TURNO</button>
-        <button class="p" onclick="planStock()">PONER LOS VALORES DEL PLAN (60 / 32 / 3 / 18)</button></div>
       <button class="g" onclick="saveCfg()">GUARDAR CONFIGURACIÓN</button>
       <div id="cfgmsg" class="small"></div>
     </div>
@@ -297,6 +296,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <button id="tb-sal" onclick="tab('sal')"><i>👋</i>Saludos<span class="bd hide" id="bd-sal">0</span></button>
       <button id="tb-ok" onclick="tab('ok')"><i>✅</i>Reclamados</button>
       <button id="tb-rk" onclick="tab('rk')"><i>🏆</i>Ranking</button>
+      <button id="tb-stk" onclick="tab('stk')"><i>📦</i>Stock</button>
       <button id="tb-set" onclick="tab('set')"><i>⚙️</i>Ajustes</button>
     </nav>
     <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('sal');hideAlert()">VER</button></div>
@@ -1747,46 +1747,49 @@ function loadCfgUI(){
   $("c-n1").value=c.n[0];$("c-n2").value=c.n[1];$("c-n3").value=c.n[2];
   $("c-show").checked=c.showRank!==false;
   $("genb").textContent="Ranking #"+c.gen;
-  $("c-turno").value=c.turno||"manana";
-  paintStock();
+  stkTurnoPaint();
 }
-/* Stock en vivo por turno: se guarda en Firebase (cfg/stk/<turno>/<premio>) y lo lee la trivia */
-var STK_P=["Normal","Grande","Especial","Pequeno"],STK_PLAN={Normal:60,Grande:32,Especial:3,Pequeno:18};
-function stkKey(p){return p==="Pequeño"?"Pequeno":p}
-async function setTurno(v){
-  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓");paintStock()}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
-}
-function paintStock(){
-  var e=$("stk");if(!e)return;
-  var t=FB.cfg().turno||"manana",st=(FB.cfg().stk||{})[t]||{};
-  e.innerHTML="Turno "+(t==="tarde"?"tarde":"mañana")+" · quedan / stock: "+STK_P.map(function(k){
-    var x=st[k],n=x&&typeof x.n==="number"?x.n:null,u=x&&x.used?Object.keys(x.used).length:0;
-    return n===null?k+" sin cargar":"<b style='color:"+(n-u<=0?"var(--red)":"inherit")+"'>"+k+" "+(n-u)+" / "+n+"</b>"}).join(" · ");
-  var ae=document.activeElement;
-  STK_P.forEach(function(k){var i=$("st-"+k);if(i&&ae!==i){var x=st[k];i.value=x&&typeof x.n==="number"?x.n:""}});
-}
-async function saveStock(){
-  var t=FB.cfg().turno||"manana",d=sdb();if(!d)return alert("Sin conexión con la base");
-  try{
-    for(var i=0;i<STK_P.length;i++){var k=STK_P[i],v=$("st-"+k).value;if(v==="")continue;
-      var n=Math.max(0,parseInt(v,10)||0);await d.ref("cfg/stk/"+t+"/"+k+"/n").set(n)}
-    toast("Stock del turno guardado ✓")
-  }catch(e){alert("No se pudo guardar el stock: "+(e&&e.message))}
-}
-function planStock(){STK_P.forEach(function(k){$("st-"+k).value=STK_PLAN[k]})}
-/* Premio de la lista de stock que corresponde a un premio de la base */
+/* ---------- Stock en vivo: planilla de Google (stock) + Firebase (entregas) ---------- */
+function stkTurno(){return FB.cfg().turno||"manana"}
 function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Grande":"Normal")}
-/* Al entregar se descuenta del turno activo; al revertir se devuelve. */
-async function sheetSync(action,x){
-  if(!x)return;
-  var t=FB.cfg().turno||"manana",p=sheetPremio(x),code=x.code||x.id;
-  try{
-    if(ST3Sheet.activo()){var r=await ST3Sheet[action](t,p,code);if(!r||!r.ok)throw new Error((r&&r.error)||"sin conexión");return}
-    var d=sdb();if(!d)return;
-    var ref=d.ref("cfg/stk/"+t+"/"+p+"/used/"+String(code).replace(/[.#$\[\]\/]/g,"_"));
-    if(action==="entregar")await ref.set(firebase.database.ServerValue.TIMESTAMP);else await ref.remove();
-  }catch(e){toast("⚠ No se pudo actualizar el stock del turno: "+((e&&e.message)||"sin conexión"))}
+/* Descuenta del turno activo al entregar; al revertir se devuelve (en el turno en que se descontó). */
+function stockUse(action,key,code){
+  var p=action==="entregar"?ST3Sheet.consume(stkTurno(),key,code):Promise.all(["manana","tarde"].map(function(t){return ST3Sheet.release(t,key,code)}));
+  return p.catch(function(e){toast("⚠ No se pudo actualizar el stock: "+((e&&e.message)||"sin conexión"))});
 }
+function sheetSync(action,x){if(x)return stockUse(action,sheetPremio(x),x.code||x.id)}
+function stkSaludo(action,id){return stockUse(action,"Pequeño","sal-"+id)}
+async function setTurno(v){
+  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓")}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
+}
+function stkTurnoPaint(){
+  var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(!m||!n)return;
+  m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p";
+  renderStock();
+}
+function stkOpen(){window.open("https://docs.google.com/spreadsheets/d/"+window.ST3_SHEET_ID+"/edit","_blank")}
+async function stkRefresh(){var ok=await ST3Sheet.load();toast(ok?"Planilla leída ✓":"No se pudo leer la planilla")}
+async function stkAdj(el){
+  var v=el.value.trim();
+  try{await ST3Sheet.setManual(el.dataset.t,el.dataset.k,v===""?null:parseInt(v,10)||0);toast(v===""?"Ajuste quitado: manda la planilla":"Ajuste guardado ✓")}
+  catch(e){alert("No se pudo guardar el ajuste: "+(e&&e.message))}
+}
+function renderStock(){
+  var box=$("stk-box");if(!box||$("t-stk").classList.contains("hide"))return;
+  var ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&box.contains(ae))return;   // no pisar lo que se está escribiendo
+  var act=stkTurno(),h="";
+  ["manana","tarde"].forEach(function(t){
+    h+='<div class="tn'+(t===act?' on':'')+'">'+(t==="manana"?"☀️ Turno mañana":"🌙 Turno tarde")+(t===act?" · activo":"")+'</div><table class="stt"><tr><th>Premio</th><th>Planilla</th><th>Ajuste</th><th>Entregados</th><th>Quedan</th></tr>';
+    function rows(list){return list.map(function(k){
+      var i=ST3Sheet.info(t,k),sv=ST3Sheet.sheetValue(t,k),q=i?i.quedan:null;
+      var c=q===null?"":(q<=0?"z":(q<=5?"l":"k"));
+      return '<tr><td>'+esc(k)+'</td><td>'+(sv===null?"—":sv)+'</td><td><input type="number" min="0" placeholder="—" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)"></td><td>'+(i?i.entregados:"—")+'</td><td class="q '+c+'">'+(q===null?"—":q)+'</td></tr>'}).join("")}
+    h+='<tr class="sec"><td colspan="5">BOLSITAS (trivia y cámaras)</td></tr>'+rows(ST3Sheet.PREMIOS)+'<tr class="sec"><td colspan="5">RULETA</td></tr>'+rows(ST3Sheet.RULETA)+'</table>';
+  });
+  box.innerHTML=h;
+  var at=ST3Sheet.leyo();$("stk-st").textContent=at?"Planilla leída hace "+Math.max(0,Math.round((Date.now()-at)/1000))+" s · se actualiza sola cada 15 s":"No se pudo leer la planilla: revisá que esté compartida («cualquiera con el enlace puede ver»).";
+}
+ST3Sheet.onChange(function(){renderStock();var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(m&&n){m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p"}});
 async function saveCfg(){
   var n=[+$("c-n1").value|0,+$("c-n2").value|0,+$("c-n3").value|0];
   var t=Math.max(5,Math.min(60,+$("c-t").value|0))*1000;
@@ -1806,8 +1809,8 @@ function watchPr(){
   pOff=FB.watchAllPrizes(function(l){PRraw=l;PR=l.map(effP);renderLists();renderRk()});
 }
 function tab(n){
-  ["scan","pen","sal","ok","rk","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
-  if(n!=="scan"){camStop();closeSheet()}window.scrollTo(0,0);
+  ["scan","pen","sal","ok","rk","stk","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
+  if(n!=="scan"){camStop();closeSheet()}if(n==="stk")renderStock();window.scrollTo(0,0);
 }
 function hm(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
 function row(x,done){
@@ -2146,11 +2149,13 @@ function renderSa(){
 async function revertSa(id){
   var x=SA.filter(function(p){return p.id===id})[0];if(!x||x._s!=="redeemed")return;
   if(!await askSteps([{icon:"↩️",title:"¿Revertir este canje?",text:"El saludo de la persona <b>"+esc(id)+"</b> vuelve a <b>validado, esperando canje</b> y su QR vale de nuevo (a ella le reaparece en el celular). Queda anotado que se revirtió.",ok:"REVERTIR CANJE",danger:true}]))return;
-  try{await sdb().ref("cfg/ovs/"+id).set({s:"v",t:firebase.database.ServerValue.TIMESTAMP});toast("Canje revertido ✓")}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
+  try{await sdb().ref("cfg/ovs/"+id).set({s:"v",t:firebase.database.ServerValue.TIMESTAMP});stkSaludo("revertir",id);toast("Canje revertido ✓")}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
 }
 function saBusy(b){if(b){b.disabled=true;b.style.opacity=".5"}}
 async function saValidate(id,b){
-  var d=sdb();if(!d)return;saBusy(b);
+  var d=sdb();if(!d)return;
+  if(ST3Sheet.agotado(stkTurno(),"Pequeño")&&!confirm("Ya no queda stock de la bolsita Pequeño en este turno: a esta persona se le va a mostrar «lo siento, sin stock» en vez del QR.\n\n¿Validar igual?"))return;
+  saBusy(b);
   var code=id+"-"+saRnd(4),u={};
   u["saludosCod/"+id+"/code"]=code;u["saludos/"+id+"/status"]="validated";u["saludos/"+id+"/validatedAt"]=firebase.database.ServerValue.TIMESTAMP;
   try{await d.ref().update(u)}catch(e){alert("No se pudo validar: "+(e&&e.message)+"\n(Puede que otro panel ya lo haya resuelto.)");renderSa()}
@@ -2176,6 +2181,7 @@ async function saMarkRow(id){
   try{
     if(x.status==="redeemed"||OVS[id]){var r=await d.ref("cfg/ovs/"+id).transaction(function(c){if(c&&c.s==="r")return;return{s:"r",t:firebase.database.ServerValue.TIMESTAMP}});if(!r.committed)throw{code:"permission-denied"}}
     else await d.ref("saludos/"+id).update({status:"redeemed",redeemedAt:firebase.database.ServerValue.TIMESTAMP});
+    stkSaludo("entregar",id);
     toast("Saludo canjeado ✓")
   }catch(e){alert("No se pudo marcar: "+((e&&(e.message||e.code))||"error"))}
 }
@@ -2201,6 +2207,7 @@ async function saRedeem(){
       var r=await d.ref("cfg/ovs/"+id).transaction(function(c){if(c&&c.s==="r")return;return{s:"r",t:firebase.database.ServerValue.TIMESTAMP}});
       if(!r.committed)throw{code:"permission-denied"};
     }else await d.ref("saludos/"+id).update({status:"redeemed",redeemedAt:firebase.database.ServerValue.TIMESTAMP});
+    stkSaludo("entregar",id);
     showSheet("ok",'<div class="tt">✓ CANJEADO</div>'+saCard(x)+'<button class="g" onclick="closeSheet()">SEGUIR ESCANEANDO</button>')}
   catch(e){var dn=/permission/i.test(e&&(e.code||e.message));
     if(dn)showSheet("dup",'<div class="tt">YA FUE USADO: otro dispositivo lo canjeó</div>'+saCard(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');

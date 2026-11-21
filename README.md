@@ -10,18 +10,21 @@
 
 Las direcciones de GitHub Pages (`ale3317h.github.io/trivia-input/...`) siguen funcionando con los mismos datos, como respaldo.
 
-## Stock en vivo por turno
+## Base de datos global del stock (planilla + Firebase)
 
-El plan de premios (Planilla de Google **Plan de premios Muestra anual 2026**) tiene las pestañas
-**Hoja en vivo turno mañana** y **Hoja en vivo turno tarde** como referencia en papel.
-El stock que usa la trivia vive en Firebase (`cfg/stk/<turno>/<premio>`) y se maneja desde el admin:
+Todo el stock de premios sale de la **Planilla de Google "Plan de premios Muestra anual 2026"** y se muestra en vivo en todas las páginas:
 
-- Admin, Ajustes: elegir el **turno activo** (mañana o tarde) y cargar el **stock del turno** de Normal, Grande, Especial y Pequeño (hay un botón con los valores del plan: 60 / 32 / 3 / 18).
-- Al marcar un premio como entregado en el admin se descuenta del turno activo; al revertirlo se devuelve.
-- Trivia: si el premio ganado ya no tiene stock en el turno activo muestra «Lo siento, nos quedamos sin stock» y no genera QR. Si falta el Grande pero queda Normal, entrega el Normal. Si el stock de ese premio no está cargado, no bloquea nada.
+- **Stock del turno:** producción lo edita en las celdas azules de las pestañas **Hoja en vivo turno mañana** y **Hoja en vivo turno tarde** (bolsitas Normal, Grande, Especial y Pequeño, y los ocho premios de la ruleta). Las páginas lo leen solas cada 15 segundos, sin iniciar sesión. La planilla tiene que estar compartida como «cualquier persona con el enlace puede ver».
+- **Entregas:** las cuenta Firebase (`cfg/stk/<turno>/<premio>/used`). Quedan = stock de la planilla menos lo entregado. En el admin, pestaña **Stock**, la columna «Ajuste» corrige un número sin tocar la planilla (`cfg/stk/<turno>/<premio>/n`).
+- **Turno activo:** se elige en el admin, pestaña Stock. Decide qué hoja manda.
+- Se descuenta al marcar un premio como entregado (admin), al girar la ruleta y al canjear un saludo de cámara. Revertir lo devuelve.
 
-### Opcional: leer y escribir la planilla con Apps Script
+| Página | Qué hace |
+| --- | --- |
+| `premios.html` | Premios en gráficos (bolsitas, puestos) y pestaña **Stock en vivo** de los dos turnos. |
+| `ruleta.html` | Ruleta: las porciones y la probabilidad salen de lo que queda de cada premio; descuenta al girar y permite deshacer. |
+| `index.html` (trivia) | Si el premio ganado se agotó en el turno: «Lo siento, nos quedamos sin stock». Si falta el Grande pero queda Normal, entrega el Normal. |
+| `saluda.html` (cámaras) | Si la bolsita Pequeño se agotó, muestra «Lo siento» en vez del QR. |
+| `admin.html` | Pestaña **Stock**: tabla en vivo de los dos turnos, ajustes y selector de turno. |
 
-`apps-script/Code.gs` hace lo mismo contra las pestañas de la planilla. Para usarlo: pegarlo en Extensiones > Apps Script
-(con la cuenta dueña de la planilla), implementar como aplicación web (ejecutar como *Yo*, acceso *Cualquier persona*) y pegar la URL
-que termina en `/exec` en `sheet-config.js` (`window.ST3_SHEET_URL`). Con la URL vacía se usa Firebase.
+Si no se puede leer la planilla (sin internet), las páginas no bloquean nada.
