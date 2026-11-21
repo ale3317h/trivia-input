@@ -421,14 +421,13 @@ button{font-weight:800}
 @keyframes rqpulse{0%,100%{opacity:0}50%{opacity:.8}}
 /* Requisitos simplificados y en neón: filas enteras tocables, premios en un solo recuadro */
 .rqs{text-align:center;margin:-4px 0 12px;font:700 1.05rem var(--sans);color:var(--tx);text-shadow:0 0 10px #ffffff55}
-.rqi{--c:var(--b);display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:18px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 14px -2px var(--c),inset 0 0 18px -10px var(--c);-webkit-tap-highlight-color:transparent}
+.rqi{--c:#ff3b4e;display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:18px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 10%,transparent);box-shadow:0 0 14px -2px var(--c),inset 0 0 18px -10px var(--c);-webkit-tap-highlight-color:transparent}
 .rqi::after{border-radius:inherit;box-shadow:0 0 26px 0 var(--c)}
-.rqi .app{--c:var(--b);flex:none}
+.rqi .app{flex:none}
 .rqi .nm{flex:1;min-width:0;font:800 1.2rem var(--sans);color:var(--c);text-shadow:0 0 8px color-mix(in srgb,var(--c) 80%,transparent),0 0 20px color-mix(in srgb,var(--c) 50%,transparent)}
 .rqi .st{flex:none;padding:8px 14px;border-radius:12px;border:2px solid var(--c);background:var(--c);font:800 .85rem var(--sans);color:#10051a;white-space:nowrap;box-shadow:0 0 14px -2px var(--c)}
 .rqi .st::before{content:"SEGUIR"}
 .rqi.on{--c:var(--grn);background:color-mix(in srgb,var(--grn) 12%,transparent);box-shadow:0 0 22px -4px var(--grn),inset 0 0 18px -10px var(--grn)}
-.rqi.on .app{--c:var(--grn)}
 .rqi.on .st{background:transparent;color:var(--grn);box-shadow:none;text-shadow:0 0 8px var(--grn)}
 .rqi.on .st::before{content:"SIGUIENDO ✓"}
 .rqp{display:flex;flex-direction:column;gap:0;padding:6px 16px;border-radius:18px;border:2px solid #ffe14d;background:#ffe14d0a;box-shadow:0 0 18px -4px #ffe14d99,inset 0 0 22px -12px #ffe14d}
