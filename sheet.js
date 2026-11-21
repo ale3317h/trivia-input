@@ -9,8 +9,15 @@
   function timeout(ms) {
     var c = new AbortController(); setTimeout(function () { c.abort(); }, ms); return c.signal;
   }
+  /* Modo Firebase (por defecto, sin URL de Apps Script): el stock vive en cfg/stk y lo edita producción en el admin. */
+  function fbStock(turno, premio) {
+    var c = window.FB && FB.cfg && FB.cfg(), t = c && c.stk && c.stk[turno], p = t && t[premio];
+    if (!p || typeof p.n !== "number") return null;
+    var used = p.used ? Object.keys(p.used).length : 0;
+    return { stock: p.n, entregados: used, quedan: p.n - used };
+  }
   function load(force, ms) {
-    if (!URL_()) return Promise.resolve(null);
+    if (!URL_()) return (window.FB && FB.readCfg ? FB.readCfg() : Promise.resolve()).then(function () { return null; }, function () { return null; });
     if (!force && data && Date.now() - at < 20000) return Promise.resolve(data);
     if (pending) return pending;
     pending = fetch(URL_() + "?action=plan&t=" + Date.now(), { signal: timeout(ms || 4000) })
@@ -26,6 +33,7 @@
     return pending;
   }
   function stock(turno, premio) {
+    if (!URL_()) return fbStock(turno, premio);
     var s = data && data.stock && data.stock[turno];
     return s && s[premio] ? s[premio] : null;
   }
@@ -50,7 +58,7 @@
     load: load, stock: stock, agotado: agotado, texto: texto,
     entregar: function (t, p, c) { return send("entregar", t, p, c); },
     revertir: function (t, p, c) { return send("revertir", t, p, c); },
-    activo: function () { return !!URL_(); },
+    activo: function () { return !!URL_(); },   // true = modo Apps Script; false = modo Firebase
     data: function () { return data; }
   };
 })();

@@ -261,7 +261,15 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <label style="margin-top:14px"><input type="checkbox" id="c-show" style="width:auto;margin-right:8px">Los jugadores ven el ranking (top 3 / top 10)</label>
       <div style="margin-top:14px"><label>Turno activo (decide qué hoja en vivo manda el stock)</label>
         <select id="c-turno" onchange="setTurno(this.value)"><option value="manana">Turno mañana</option><option value="tarde">Turno tarde</option></select>
-        <div id="stk" class="small" style="margin-top:6px"></div></div>
+        <div id="stk" class="small" style="margin-top:6px"></div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Normal</label><input id="st-Normal" type="number" min="0"></div>
+          <div><label>Grande</label><input id="st-Grande" type="number" min="0"></div>
+          <div><label>Especial</label><input id="st-Especial" type="number" min="0"></div>
+          <div><label>Pequeño</label><input id="st-Pequeno" type="number" min="0"></div>
+        </div>
+        <button class="g" onclick="saveStock()">GUARDAR STOCK DEL TURNO</button>
+        <button class="p" onclick="planStock()">PONER LOS VALORES DEL PLAN (60 / 32 / 3 / 18)</button></div>
       <button class="g" onclick="saveCfg()">GUARDAR CONFIGURACIÓN</button>
       <div id="cfgmsg" class="small"></div>
     </div>
@@ -1742,23 +1750,42 @@ function loadCfgUI(){
   $("c-turno").value=c.turno||"manana";
   paintStock();
 }
-/* Stock en vivo (Excel "Hoja en vivo turno ...") */
+/* Stock en vivo por turno: se guarda en Firebase (cfg/stk/<turno>/<premio>) y lo lee la trivia */
+var STK_P=["Normal","Grande","Especial","Pequeno"],STK_PLAN={Normal:60,Grande:32,Especial:3,Pequeno:18};
+function stkKey(p){return p==="Pequeño"?"Pequeno":p}
 async function setTurno(v){
-  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓");paintStock(true)}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
+  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓");paintStock()}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
 }
-async function paintStock(force){
+function paintStock(){
   var e=$("stk");if(!e)return;
-  if(!ST3Sheet.activo()){e.textContent="Stock en vivo: falta conectar el Excel (URL de Apps Script en sheet-config.js).";return}
-  await ST3Sheet.load(!!force,5000);
-  var t=FB.cfg().turno||"manana",d=ST3Sheet.data(),s=d&&d.stock&&d.stock[t];
-  e.innerHTML=s?"Quedan en el turno "+(t==="tarde"?"tarde":"mañana")+": "+["Normal","Grande","Especial","Pequeño"].map(function(k){var x=s[k];return x?"<b style='color:"+(x.quedan<=0?"var(--red)":"inherit")+"'>"+k+" "+x.quedan+"</b>":""}).join(" · "):"No se pudo leer el stock del Excel.";
+  var t=FB.cfg().turno||"manana",st=(FB.cfg().stk||{})[t]||{};
+  e.innerHTML="Turno "+(t==="tarde"?"tarde":"mañana")+" · quedan / stock: "+STK_P.map(function(k){
+    var x=st[k],n=x&&typeof x.n==="number"?x.n:null,u=x&&x.used?Object.keys(x.used).length:0;
+    return n===null?k+" sin cargar":"<b style='color:"+(n-u<=0?"var(--red)":"inherit")+"'>"+k+" "+(n-u)+" / "+n+"</b>"}).join(" · ");
+  var ae=document.activeElement;
+  STK_P.forEach(function(k){var i=$("st-"+k);if(i&&ae!==i){var x=st[k];i.value=x&&typeof x.n==="number"?x.n:""}});
 }
-/* Premio de la hoja en vivo que corresponde a un premio de la base */
+async function saveStock(){
+  var t=FB.cfg().turno||"manana",d=sdb();if(!d)return alert("Sin conexión con la base");
+  try{
+    for(var i=0;i<STK_P.length;i++){var k=STK_P[i],v=$("st-"+k).value;if(v==="")continue;
+      var n=Math.max(0,parseInt(v,10)||0);await d.ref("cfg/stk/"+t+"/"+k+"/n").set(n)}
+    toast("Stock del turno guardado ✓")
+  }catch(e){alert("No se pudo guardar el stock: "+(e&&e.message))}
+}
+function planStock(){STK_P.forEach(function(k){$("st-"+k).value=STK_PLAN[k]})}
+/* Premio de la lista de stock que corresponde a un premio de la base */
 function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Grande":"Normal")}
+/* Al entregar se descuenta del turno activo; al revertir se devuelve. */
 async function sheetSync(action,x){
-  if(!ST3Sheet.activo()||!x)return;
-  var r=await ST3Sheet[action](FB.cfg().turno||"manana",sheetPremio(x),x.code||x.id);
-  if(!r||!r.ok)toast("⚠ No se pudo anotar en la hoja en vivo: "+((r&&r.error)||"sin conexión"));else paintStock();
+  if(!x)return;
+  var t=FB.cfg().turno||"manana",p=sheetPremio(x),code=x.code||x.id;
+  try{
+    if(ST3Sheet.activo()){var r=await ST3Sheet[action](t,p,code);if(!r||!r.ok)throw new Error((r&&r.error)||"sin conexión");return}
+    var d=sdb();if(!d)return;
+    var ref=d.ref("cfg/stk/"+t+"/"+p+"/used/"+String(code).replace(/[.#$\[\]\/]/g,"_"));
+    if(action==="entregar")await ref.set(firebase.database.ServerValue.TIMESTAMP);else await ref.remove();
+  }catch(e){toast("⚠ No se pudo actualizar el stock del turno: "+((e&&e.message)||"sin conexión"))}
 }
 async function saveCfg(){
   var n=[+$("c-n1").value|0,+$("c-n2").value|0,+$("c-n3").value|0];

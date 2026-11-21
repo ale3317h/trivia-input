@@ -25,6 +25,7 @@ var FB = (function () {
       showRank: v.showRank === undefined ? true : !!v.showRank,
       gen: typeof v.gen === "number" ? v.gen : DEF.gen,
       rg: (v.rs && typeof v.rs === "object" && +v.rs.allGen) || 0,   // ronda del último "Reiniciar todo" (vuelve a pedir seguir las redes)
+      stk: (v.stk && typeof v.stk === "object") ? v.stk : {},   // stock en vivo por turno: stk/<turno>/<premio>/{n, used/<código>}
       turno: v.turno === "tarde" ? "tarde" : "manana",   // turno activo (lo elige producción en el admin): decide qué hoja en vivo manda
       px: (v.px && typeof v.px === "object") ? v.px : {},   // personas que producción reinició: uid -> hora
       pv: (v.pv && typeof v.pv === "object") ? v.pv : {}    // premios/QR anulados: id -> hora

@@ -10,21 +10,17 @@
 
 Las direcciones de GitHub Pages (`ale3317h.github.io/trivia-input/...`) siguen funcionando con los mismos datos, como respaldo.
 
-## Excel como base de datos global y stock en vivo
+## Stock en vivo por turno
 
-El Excel **Plan de premios Muestra anual 2026** es la base de datos de todas las páginas.
-Tiene dos pestañas de stock en vivo: **Hoja en vivo turno mañana** y **Hoja en vivo turno tarde**
-(stock del turno, entregados, quedan y estado de Normal, Grande, Especial y Pequeño).
+El plan de premios (Planilla de Google **Plan de premios Muestra anual 2026**) tiene las pestañas
+**Hoja en vivo turno mañana** y **Hoja en vivo turno tarde** como referencia en papel.
+El stock que usa la trivia vive en Firebase () y se maneja desde el admin:
 
-- `apps-script/Code.gs`: script que lee y escribe esas hojas. Se despliega una sola vez.
-- `sheet.js`: lo usan todas las páginas para leer el plan y el stock (y descontar al entregar).
-- `sheet-config.js`: acá se pega la URL de la aplicación web de Apps Script.
-- Admin, Ajustes: selector de **turno activo**. El stock que manda es el de la hoja de ese turno.
-- Trivia: si el premio que ganó la persona ya no tiene stock en el turno activo, muestra «Lo siento, nos quedamos sin stock» y no genera QR. Si falta el Grande pero queda Normal, entrega el Normal.
-- Admin: al marcar un premio como entregado se anota en la hoja del turno (y se descuenta); al revertirlo se devuelve.
+- Admin, Ajustes: elegir el **turno activo** (mañana o tarde) y cargar el **stock del turno** de Normal, Grande, Especial y Pequeño (botón con los valores del plan: 60 / 32 / 3 / 18).
+- Al marcar un premio como entregado en el admin se descuenta del turno activo; al revertirlo se devuelve.
+- Trivia: si el premio ganado ya no tiene stock en el turno activo muestra «Lo siento, nos quedamos sin stock» y no genera QR. Si falta el Grande pero queda Normal, entrega el Normal. Si el stock de ese premio no está cargado, no bloquea nada.
 
-### Puesta en marcha (una vez)
-1. Abrir el Excel, Extensiones, Apps Script, pegar `apps-script/Code.gs` y guardar.
-2. Implementar, Nueva implementación, tipo **Aplicación web**: ejecutar como *Yo*, acceso *Cualquier persona*.
-3. Copiar la URL que termina en `/exec` y pegarla en `sheet-config.js` (`window.ST3_SHEET_URL`).
-4. Subir los cambios y publicar. Mientras la URL esté vacía todo funciona como antes, sin control de stock.
+### Opcional: leer y escribir la planilla con Apps Script
+ hace lo mismo contra las pestañas de la planilla. Para usarlo: pegarlo en Extensiones > Apps Script
+(con la cuenta dueña de la planilla), implementar como aplicación web (ejecutar como *Yo*, acceso *Cualquier persona*) y pegar la URL
+que termina en  en  (). Con la URL vacía se usa Firebase.
