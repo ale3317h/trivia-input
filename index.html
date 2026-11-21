@@ -438,6 +438,16 @@ button{font-weight:800}
 .rqp p span{color:var(--tx);font-weight:700}
 #rq-go{background:#ffe14d;color:#1a1000;box-shadow:0 0 22px -2px #ffe14d}
 #rq-go.off{background:#ff4d7d14;color:#ff7a9c;border:2px solid #ff4d7d;box-shadow:0 0 16px -4px #ff4d7d;text-shadow:0 0 8px #ff4d7d}
+/* Reglas: DIFICULTADES y POR TIEMPO (estructura simple) */
+.hw{margin:0 0 clamp(14px,3vh,24px)}
+.dif{width:100%;max-width:440px;margin:0 auto;padding:clamp(10px,2vh,18px) 18px;border-radius:24px;border:2px solid #ffe14d;background:#ffe14d0a;box-shadow:0 0 22px -4px #ffe14d99,inset 0 0 26px -14px #ffe14d}
+.dif p{margin:0;max-width:none;text-align:left;display:flex;align-items:center;gap:14px;padding:clamp(12px,2.4vh,20px) 0;font:600 clamp(1rem,2.6vh,1.2rem)/1.3 var(--sans);color:var(--tx)}
+.dif p+p{border-top:1px solid #ffffff1a}
+.dif p em{font-style:normal;font-size:1.9rem;width:1.5em;text-align:center;flex:none;filter:drop-shadow(0 0 10px var(--c))}
+.dif p b{font:900 1.05em var(--disp);letter-spacing:.06em;color:var(--c);text-shadow:0 0 8px var(--c),0 0 20px color-mix(in srgb,var(--c) 60%,transparent)}
+.tm{--c:#ffe14d;width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(16px,4vh,32px)}
+.tm p{max-width:300px;margin:0;text-align:center;font:600 clamp(1.05rem,2.8vh,1.3rem)/1.4 var(--sans);color:var(--tx);text-wrap:balance}
+.tm p b{color:var(--c);font-weight:900;text-shadow:0 0 10px var(--c)}
 /* Reglas: pasos con nombre arriba */
 .steps{display:flex;gap:6px;justify-content:center;margin:0 0 12px}
 .steps i{flex:1;max-width:130px;display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 6px;border-radius:99px;font:800 .7rem var(--disp);letter-spacing:.08em;text-transform:uppercase;font-style:normal;color:var(--mut);background:#ffffff08;border:1px solid var(--line);cursor:pointer;transition:all .35s var(--ease)}
@@ -565,14 +575,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="steps" id="dots"><i><b>1</b>Vidas</i><i><b>2</b>Premios</i><i><b>3</b>Tiempo</i></div>
 <div class="view" id="view"><div class="track" id="track">
 <div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span>♥</span><span class="lose">♥</span></div>
-<div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p><span class="chip">💔 En nivel experto queda 1 sola</span></div></div>
-<div class="slide sl-prize"><div class="t">Subí de nivel, <b>ganá premios</b></div>
-<div class="prz"><div style="--c:#3dff8a;--i:0"><em>🍬</em><b>FÁCIL</b><span>sticker o caramelos</span></div>
-<div style="--c:#ffe14d;--i:1"><em>🔑</em><b>MEDIO</b><span>llavero plano</span></div>
-<div style="--c:#ff4d7d;--i:2"><em>🧊</em><b>DIFÍCIL</b><span>logo grande</span></div></div></div>
-<div class="slide sl-time"><div class="hero" style="--c:#ffe14d"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
-<div class="t">Segundos por pregunta</div><div class="chips"><span class="chip" style="--c:#ffe14d">⚡ Más rápido, más puntos</span><span class="chip" style="--c:#ff4d7d">🔒 Se juega una sola vez</span></div>
-</div></div>
+<div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
+<div class="slide sl-prize"><div class="rqt hw">DIFICULTADES</div>
+<div class="dif"><p style="--c:#3dff8a"><em>🍬</em><span><b>FÁCIL:</b> sticker o caramelos</span></p>
+<p style="--c:#ffd21f"><em>🔑</em><span><b>MEDIO:</b> llavero plano</span></p>
+<p style="--c:#ff4d5e"><em>🧊</em><span><b>DIFÍCIL:</b> logo grande</span></p></div></div>
+<div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
+<p>Tenés <b id="how-ts">15</b> segundos para responder cada pregunta</p></div></div>
 </div></div>
 <div class="nav"><button class="p" id="how-b" onclick="howBack()">←</button><button id="how-n" onclick="howNext()">SIGUIENTE →</button></div>
 </section>
@@ -2159,7 +2168,7 @@ function ringDemo(on){
   clearInterval(ringT);ringT=null;
   var c=$("how-arc"),b=$("how-t");if(!c||!b)return;
   var C=307.9,T0=Math.max(1,Math.round(T/1000)),s=T0;
-  function put(){c.style.strokeDashoffset=(C*(1-s/T0)).toFixed(1)+"px";b.textContent=s;var lo=s<=5;c.classList.toggle("low",lo);b.classList.toggle("low",lo)}
+  function put(){(function(){var e=$("how-ts");if(e)e.textContent=T0})();c.style.strokeDashoffset=(C*(1-s/T0)).toFixed(1)+"px";b.textContent=s;var lo=s<=5;c.classList.toggle("low",lo);b.classList.toggle("low",lo)}
   put();if(!on)return;
   ringT=setInterval(function(){s=s>0?s-1:T0;put()},600);
 }
