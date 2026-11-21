@@ -578,9 +578,10 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span>♥</span><span class="lose">♥</span></div>
 <div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
 <div class="slide sl-prize"><div class="t" style="--c:#ffe14d;margin:0 0 clamp(14px,3vh,24px);text-align:center">Subí de nivel, <b>ganá premios</b></div>
-<div class="dif"><p style="--c:#3dff8a"><em>🍬</em><span><b>FÁCIL:</b> sticker o caramelos</span></p>
-<p style="--c:#ffd21f"><em>🔑</em><span><b>MEDIO:</b> llavero plano</span></p>
-<p style="--c:#ff4d5e"><em>🧊</em><span><b>DIFÍCIL:</b> logo grande</span></p></div></div>
+<div class="dif"><p style="--c:#3dff8a"><em>🙂</em><span><b>FÁCIL Y MEDIO:</b> sin premio</span></p>
+<p style="--c:#ff4d5e"><em>🎁</em><span><b>DIFÍCIL:</b> premio Normal</span></p>
+<p style="--c:#b86bff"><em>🎁</em><span><b>GANÁ EL DIFÍCIL:</b> premio Grande</span></p>
+<p style="--c:#ffd21f"><em>🏆</em><span><b>TOP 3 DEL RANKING:</b> premio Especial</span></p></div></div>
 <div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
 <p>Tenés <b id="how-ts">15</b> segundos para responder cada pregunta</p></div></div>
 </div></div>
@@ -595,7 +596,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <a class="rqi" data-k="tt" style="--b:#3de8ff;--i:2" href="https://www.tiktok.com/@streaming_roomt3" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M14 3h3a5 5 0 0 0 4 4v3a8 8 0 0 1-4-1.2V15a6 6 0 1 1-6-6h1v3.2h-1A2.8 2.8 0 1 0 14 15z"/></svg></em><b class="nm">TikTok</b><span class="st"></span></a>
 </div>
 <div class="rqt">PARTICIPÁ POR</div>
-<div class="rqp"><p style="--c:#3dff8a"><em>🍬</em><b>Fácil</b><span>sticker o caramelos</span></p><p style="--c:#ffe14d"><em>🔑</em><b>Medio</b><span>llavero plano</span></p><p style="--c:#ff4d7d"><em>🧊</em><b>Difícil</b><span>logo grande</span></p></div>
+<div class="rqp"><p style="--c:#ff4d5e"><em>🎁</em><b>Difícil</b><span>premio Normal</span></p><p style="--c:#b86bff"><em>🎁</em><b>Ganar difícil</b><span>premio Grande</span></p><p style="--c:#ffd21f"><em>🏆</em><b>Top 3</b><span>premio Especial</span></p></div>
 <div class="rqf"><div class="nav"><button id="rq-go" class="off" onclick="reqGo()">JUGAR 0/3</button></div></div>
 </section>
 <section id="s-game" class="hide">
@@ -623,13 +624,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <small class="mut" style="display:block;margin-top:6px">Lo usamos solo para avisarte de este concurso.</small></div>
 </section>
 <section id="s-prize" class="hide">
-<div class="card y c pz1"><div class="em">🏆</div><div class="big yel">¡FELICIDADES!</div><p class="lead">Ganaste la recompensa máxima</p><p>Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" onclick="qrOpen()">VER MI QR</button></div>
+<div class="card y c pz1"><div class="em">🏆</div><div class="big yel">¡FELICIDADES!</div><p class="lead">Ganaste el premio Grande</p><p>Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" onclick="qrOpen()">VER MI QR</button></div>
 <div class="card c pz2"><p>¿Querés seguir respondiendo preguntas para avanzar en el ranking?</p><p class="mut">(Si quedás en el top 3 tendrás una recompensa especial)</p>
 <button onclick="prizeGo()">CONTINUAR →</button><button class="r" onclick="prizeExit()">SALIR</button></div>
 </section>
 <section id="s-exp" class="hide">
 <div class="xh"><span class="xb">MODO EXPERTO</span></div>
-<div class="xn0"><em>🏆</em><span>Tu recompensa máxima ya está ganada: lo que pase acá no te la quita. Ahora competís contra los demás por el <b class="yel">ranking</b>.</span></div>
+<div class="xn0"><em>🏆</em><span>Tu premio Grande ya está ganado: lo que pase acá no te la quita. Ahora competís contra los demás por el <b class="yel">ranking</b>.</span></div>
 <div class="xg">
 <div class="xt" style="--c:#b86bff;--i:0"><div class="xi">🎯</div><div class="xv">6</div><div class="xl"><b>opciones</b> por pregunta</div></div>
 <div class="xt" style="--c:#ffe14d;--i:1"><div class="xi">⏱️</div><div class="xv" id="ex-t">12</div><div class="xl"><b>segundos</b> para responder</div></div>
@@ -2063,7 +2064,7 @@ function renderStart(){
   if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.";
   if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
-  if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste la <b>recompensa máxima</b>: podés continuar para avanzar en el ranking.";
+  if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste el <b>premio Grande</b>: podés continuar para avanzar en el ranking.";
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
 async function init(){
@@ -2278,7 +2279,7 @@ function hasCont(){
   if(test)return false;
   try{var c=JSON.parse(ls("cont")||"null");return !!(c&&String(c.gen)===String(FB.cfg().gen))}catch(e){return false}
 }
-function showPrize(){stopT();contSave();qrIssue(2,qi);show("s-prize");playSonido("tada");confetti()}
+function showPrize(){stopT();contSave();qrIssue(3,qi);show("s-prize");playSonido("tada");confetti()}
 function prizeExit(){go()}
 function expIntro(){
   $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=qi+1;
@@ -2296,46 +2297,49 @@ function resume(){
   expIntro();
 }
 /* ---------- QR único, se genera y se lee sin internet ---------- */
-var QRSALT="st3room-2026",QRTEST=null,QPZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","logo grande"],["🧊","logo grande"]];
+var QRSALT="st3room-2026",QRTEST=null,QPZ=[null,null,["🎁","Normal","1 caramelo + 1 sticker + 1 logo plano"],["🎁","Grande","2 caramelos + 1 sticker + 1 logo 3D + 1 lapicera"]];   // plan de premios: fácil y medio no ganan nada (null)
+function pzName(li){return LV[li][0]+" · Premio "+QPZ[li][1]}
 function qrRand(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
   try{crypto.getRandomValues(b)}catch(e){for(i=0;i<n;i++)b[i]=Math.random()*256}
   for(i=0;i<n;i++)o+=a.charAt(b[i]%32);return o}
 function qrSig(r){return ("0000"+hh(QRSALT+r.id+"|"+r.name+"|"+r.li+"|"+r.score).toString(36)).slice(-4).toUpperCase()}
-function qrGet(){if(test)return QRTEST;try{var r=JSON.parse(ls("qr")||"null");return r&&String(r.gen)===String(FB.cfg().gen)&&!(FB.cfg().pv||{})[r.id]?r:null}catch(e){return null}}
+function qrGet(){if(test)return QRTEST;try{var r=JSON.parse(ls("qr")||"null");return r&&QPZ[r.li]&&String(r.gen)===String(FB.cfg().gen)&&!(FB.cfg().pv||{})[r.id]?r:null}catch(e){return null}}
 // Un solo código por jugador: el ID nunca cambia; solo se actualizan premio/puntos (nunca bajan).
 function qrIssue(li,q){if(qrBlocked())return null;
+  if(!QPZ[li])return qrGet();   // fácil y medio no ganan premio: no se genera QR
   var r=qrGet()||{gen:FB.cfg().gen,id:qrRand(4)+"-"+qrRand(4),ts:Date.now()};
   r.name=name||r.name||"Jugador";r.li=Math.max(li,r.li||0);r.score=Math.max(score,r.score||0);r.q=Math.max(q,r.q||0);
   r.code=r.id+"-"+qrSig(r);
-  r.txt="ST3 ROOM · TRIVIA\nJugador: "+r.name+"\nPremio: "+LV[r.li][0]+" · "+QPZ[r.li][1]+"\nPuntos: "+r.score+" · Pregunta "+r.q+"\nCódigo: "+r.code;
+  r.txt="ST3 ROOM · TRIVIA\nJugador: "+r.name+"\nPremio: "+pzName(r.li)+"\nPuntos: "+r.score+" · Pregunta "+r.q+"\nCódigo: "+r.code;
   if(test)QRTEST=r;else{ls("qr",JSON.stringify(r));qrSync()}
   return r;
 }
 // Registra el premio en la base para que el productor lo vea en el admin (se reintenta si no había conexión).
 function qrSync(){var r=qrGet();if(!r||test||!FB.shared())return;
-  FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:LV[r.li][0]+" · "+QPZ[r.li][1],score:r.score,q:r.q,ts:r.ts}).catch(function(){})}
+  FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:pzName(r.li),score:r.score,q:r.q,ts:r.ts}).catch(function(){})}
 window.addEventListener("online",qrSync);
 function u8(s){try{return String.fromCharCode.apply(null,new TextEncoder().encode(s))}catch(e){return unescape(encodeURIComponent(s))}}
 function qrMat(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();return q}
 function qrSvg(r){var q=qrMat(r.txt),n=q.getModuleCount(),m=4,s=n+2*m,p="",x,y;
   for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
   return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="Código QR"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
-function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+LV[r.li][0]+'</b><span>'+QPZ[r.li][1]+'</span></div></div><div class="tk-cut"></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
+function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+QPZ[r.li][1].toUpperCase()+'</b><span>'+QPZ[r.li][2]+'</span></div></div><div class="tk-cut"></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
 function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}e.innerHTML=qrHTML(r);e.classList.remove("hide")}
 function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=qrHTML(r)+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
 function qrClose(){$("qr-ov").classList.add("hide")}
 function qrSave(){
   var r=qrGet();if(!r)return;
-  var q=qrMat(r.txt),n=q.getModuleCount(),m=4,u=Math.floor(560/(n+2*m)),S=u*(n+2*m),W=720,H=S+330,x0=(W-S)/2,y0=100,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
+  var q=qrMat(r.txt),n=q.getModuleCount(),m=4,u=Math.floor(560/(n+2*m)),S=u*(n+2*m),W=720,H=S+350,x0=(W-S)/2,y0=100,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
   c.width=W;c.height=H;g.fillStyle="#07030e";g.fillRect(0,0,W,H);g.textAlign="center";
   g.fillStyle="#ffe14d";g.font="700 38px monospace";g.fillText("ST3 ROOM · TRIVIA",W/2,66);
   g.fillStyle="#fff";g.beginPath();var a=x0-16,b=y0-16,w=S+32,k=28;
   g.moveTo(a+k,b);g.arcTo(a+w,b,a+w,b+w,k);g.arcTo(a+w,b+w,a,b+w,k);g.arcTo(a,b+w,a,b,k);g.arcTo(a,b,a+w,b,k);g.fill();
   g.fillStyle="#000";for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))g.fillRect(x0+(x+m)*u,y0+(y+m)*u,u,u);
   g.fillStyle="#fff";g.font="700 44px sans-serif";g.fillText(r.name,W/2,y0+S+78);
-  g.fillStyle=LV[r.li][4];g.font="700 36px monospace";g.fillText(LV[r.li][0]+" · "+QPZ[r.li][1],W/2,y0+S+138);
-  g.fillStyle="#b9a6d6";g.font="700 32px monospace";g.fillText(r.code,W/2,y0+S+192);
-  g.font="26px monospace";g.fillText(r.score+" pts · pregunta "+r.q,W/2,y0+S+236);
+  g.fillStyle=LV[r.li][4];g.font="700 36px monospace";g.fillText("PREMIO "+QPZ[r.li][1].toUpperCase(),W/2,y0+S+132);
+  g.fillStyle="#fff";g.font="22px monospace";g.fillText(QPZ[r.li][2],W/2,y0+S+170);
+  g.fillStyle="#b9a6d6";g.font="700 32px monospace";g.fillText(r.code,W/2,y0+S+222);
+  g.font="26px monospace";g.fillText(r.score+" pts · pregunta "+r.q,W/2,y0+S+264);
   c.toBlob(function(bl){var l=document.createElement("a");l.href=URL.createObjectURL(bl);l.download="st3room-"+r.code+".png";document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(l.href);l.remove()},1500)},"image/png");
 }
 /* Aviso por mail al final del modo experto */
@@ -2356,18 +2360,18 @@ function mailSend(){
 async function end(win){
   stopT();if(win)score+=hp*100;contClear();
   var early=!win&&cq<totalQ();
-  var good=win||early;
+  var li=win?3:lvOf(cq),prize=!!QPZ[li];   // fácil y medio: sin premio, solo un "lo siento"
+  var good=prize;
   if(good)playSonido("tada");
   $("end-c").className="endh "+(good?"ok":"bad");
-  $("end-t").textContent=win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER");$("end-t").className="big "+(good?"yel":"red");
+  $("end-t").textContent=!prize?"😢 LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
-  $("end-pz").textContent=early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
+  $("end-pz").textContent=!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
-  var PZ=[["🍬","sticker o caramelos"],["🔑","llavero plano"],["🧊","logo grande"],["🧊","logo grande"]],li=win?3:lvOf(cq),lc=LV[li][4];
-  $("end-badge").innerHTML="<div class='pb' style='--c:"+lc+"'><em>"+PZ[li][0]+"</em><b>"+LV[li][0]+"</b><span>"+PZ[li][1]+"</span></div>";
+  $("end-badge").innerHTML="";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
-  qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
+  if(prize)qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
   show("s-end");countTo($("st-pts"),score,true);if(good)confetti();
   await saveScore(true);await refresh();
   var m=merged();
