@@ -14,13 +14,14 @@ Las direcciones de GitHub Pages (`ale3317h.github.io/trivia-input/...`) siguen f
 
 El plan de premios (Planilla de Google **Plan de premios Muestra anual 2026**) tiene las pestañas
 **Hoja en vivo turno mañana** y **Hoja en vivo turno tarde** como referencia en papel.
-El stock que usa la trivia vive en Firebase () y se maneja desde el admin:
+El stock que usa la trivia vive en Firebase (`cfg/stk/<turno>/<premio>`) y se maneja desde el admin:
 
-- Admin, Ajustes: elegir el **turno activo** (mañana o tarde) y cargar el **stock del turno** de Normal, Grande, Especial y Pequeño (botón con los valores del plan: 60 / 32 / 3 / 18).
+- Admin, Ajustes: elegir el **turno activo** (mañana o tarde) y cargar el **stock del turno** de Normal, Grande, Especial y Pequeño (hay un botón con los valores del plan: 60 / 32 / 3 / 18).
 - Al marcar un premio como entregado en el admin se descuenta del turno activo; al revertirlo se devuelve.
 - Trivia: si el premio ganado ya no tiene stock en el turno activo muestra «Lo siento, nos quedamos sin stock» y no genera QR. Si falta el Grande pero queda Normal, entrega el Normal. Si el stock de ese premio no está cargado, no bloquea nada.
 
 ### Opcional: leer y escribir la planilla con Apps Script
- hace lo mismo contra las pestañas de la planilla. Para usarlo: pegarlo en Extensiones > Apps Script
+
+`apps-script/Code.gs` hace lo mismo contra las pestañas de la planilla. Para usarlo: pegarlo en Extensiones > Apps Script
 (con la cuenta dueña de la planilla), implementar como aplicación web (ejecutar como *Yo*, acceso *Cualquier persona*) y pegar la URL
-que termina en  en  (). Con la URL vacía se usa Firebase.
+que termina en `/exec` en `sheet-config.js` (`window.ST3_SHEET_URL`). Con la URL vacía se usa Firebase.
