@@ -624,7 +624,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <small class="mut" style="display:block;margin-top:6px">Lo usamos solo para avisarte de este concurso.</small></div>
 </section>
 <section id="s-prize" class="hide">
-<div class="card y c pz1"><div class="em">🏆</div><div class="big yel">¡FELICIDADES!</div><p class="lead">Ganaste el premio Grande</p><p>Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" onclick="qrOpen()">VER MI QR</button></div>
+<div class="card y c pz1"><div class="em" id="pz-em">🏆</div><div class="big yel" id="pz-t">¡FELICIDADES!</div><p class="lead" id="pz-lead">Ganaste el premio Grande</p><p id="pz-p">Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" id="pz-btn" onclick="qrOpen()">VER MI QR</button></div>
 <div class="card c pz2"><p>¿Querés seguir respondiendo preguntas para avanzar en el ranking?</p><p class="mut">(Si quedás en el top 3 tendrás una recompensa especial)</p>
 <button onclick="prizeGo()">CONTINUAR →</button><button class="r" onclick="prizeExit()">SALIR</button></div>
 </section>
@@ -653,6 +653,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script src="fb.js?v=18"></script>
+<script src="sheet-config.js?v=1"></script>
+<script src="sheet.js?v=1"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -2070,11 +2072,14 @@ function renderStart(){
 async function init(){
   podium();tbl("tb");
   await FB.readCfg();applyCfg();playerReset();reqSync();
+  ST3Sheet.load().then(planSheet);
   D=await FB.loadQuestions();
   cache=await getList();loaded=true;renderStart();
   FB.watchCfg(function(){applyCfg();playerReset();reqSync();renderStart()});
   FB.watchScores(function(l){cache=l;loaded=true;repaint()});
 }
+/* El Excel manda en lo que lleva cada premio */
+function planSheet(){var a=ST3Sheet.texto("Normal"),b=ST3Sheet.texto("Grande");if(a)QPZ[2][2]=a;if(b)QPZ[3][2]=b}
 async function go(){show("s-name");cache=await getList();loaded=true;playerReset();renderStart();reqSync()}
 /* Producción puede reiniciar a una persona (cfg/px/<su id>) o anular su premio y QR (cfg/pv/<id del QR>).
    Cuando pasa, se limpia lo guardado en este celular: puede volver a jugar y el QR anulado desaparece.
@@ -2279,7 +2284,17 @@ function hasCont(){
   if(test)return false;
   try{var c=JSON.parse(ls("cont")||"null");return !!(c&&String(c.gen)===String(FB.cfg().gen))}catch(e){return false}
 }
-function showPrize(){stopT();contSave();qrIssue(3,qi);show("s-prize");playSonido("tada");confetti()}
+async function showPrize(){
+  stopT();contSave();
+  try{await ST3Sheet.load(true,3000)}catch(e){}
+  var li=efLi(3),ok=!!QPZ[li];
+  $("pz-em").textContent=ok?"🏆":"😢";$("pz-t").textContent=ok?"¡FELICIDADES!":"LO SIENTO";$("pz-t").className="big "+(ok?"yel":"red");
+  $("pz-lead").textContent=ok?"Ganaste el premio "+QPZ[li][1]:"Nos quedamos sin stock de este premio en este turno";
+  $("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"Igual podés seguir jugando para avanzar en el ranking.";
+  $("pz-btn").classList.toggle("hide",!ok);
+  if(ok)qrIssue(3,qi);
+  show("s-prize");if(ok){playSonido("tada");confetti()}
+}
 function prizeExit(){go()}
 function expIntro(){
   $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=qi+1;
@@ -2299,6 +2314,11 @@ function resume(){
 /* ---------- QR único, se genera y se lee sin internet ---------- */
 var QRSALT="st3room-2026",QRTEST=null,QPZ=[null,null,["🎁","Normal","1 caramelo + 1 sticker + 1 logo plano"],["🎁","Grande","2 caramelos + 1 sticker + 1 logo 3D + 1 lapicera"]];   // plan de premios: fácil y medio no ganan nada (null)
 function pzName(li){return LV[li][0]+" · Premio "+QPZ[li][1]}
+/* Stock en vivo: la hoja "Hoja en vivo turno ..." del turno activo manda. Si el premio de ese turno se agotó
+   se baja al premio anterior que todavía tenga stock; si ninguno tiene, "lo siento, nos quedamos sin stock". */
+function turnoNow(){return FB.cfg().turno||"manana"}
+function sinStock(li){return !test&&!!QPZ[li]&&ST3Sheet.agotado(turnoNow(),QPZ[li][1])}
+function efLi(li){while(li>=2&&sinStock(li))li--;return li}
 function qrRand(n){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(n),i;
   try{crypto.getRandomValues(b)}catch(e){for(i=0;i<n;i++)b[i]=Math.random()*256}
   for(i=0;i<n;i++)o+=a.charAt(b[i]%32);return o}
@@ -2306,6 +2326,7 @@ function qrSig(r){return ("0000"+hh(QRSALT+r.id+"|"+r.name+"|"+r.li+"|"+r.score)
 function qrGet(){if(test)return QRTEST;try{var r=JSON.parse(ls("qr")||"null");return r&&QPZ[r.li]&&String(r.gen)===String(FB.cfg().gen)&&!(FB.cfg().pv||{})[r.id]?r:null}catch(e){return null}}
 // Un solo código por jugador: el ID nunca cambia; solo se actualizan premio/puntos (nunca bajan).
 function qrIssue(li,q){if(qrBlocked())return null;
+  li=efLi(li);
   if(!QPZ[li])return qrGet();   // fácil y medio no ganan premio: no se genera QR
   var r=qrGet()||{gen:FB.cfg().gen,id:qrRand(4)+"-"+qrRand(4),ts:Date.now()};
   r.name=name||r.name||"Jugador";r.li=Math.max(li,r.li||0);r.score=Math.max(score,r.score||0);r.q=Math.max(q,r.q||0);
@@ -2360,13 +2381,14 @@ function mailSend(){
 async function end(win){
   stopT();if(win)score+=hp*100;contClear();
   var early=!win&&cq<totalQ();
-  var li=win?3:lvOf(cq),prize=!!QPZ[li];   // fácil y medio: sin premio, solo un "lo siento"
+  try{await ST3Sheet.load(true,3000)}catch(e){}   // stock al día antes de decidir el premio
+  var li0=win?3:lvOf(cq),li=efLi(li0),prize=!!QPZ[li],agot=!!QPZ[li0]&&!prize;   // fácil y medio: sin premio; agot: ganó pero el turno se quedó sin stock
   var good=prize;
   if(good)playSonido("tada");
   $("end-c").className="endh "+(good?"ok":"bad");
-  $("end-t").textContent=!prize?"😢 LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
+  $("end-t").textContent=agot?"😢 SIN STOCK":!prize?"😢 LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
-  $("end-pz").textContent=!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
+  $("end-pz").textContent=agot?"Lo siento, nos quedamos sin stock de este premio en este turno. ¡Gracias por jugar!":!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
   $("end-badge").innerHTML="";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);

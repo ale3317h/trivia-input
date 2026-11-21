@@ -259,6 +259,9 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
         <div><label>Preguntas difíciles (4 opciones)</label><input id="c-n3" type="number" min="0" max="50"></div>
       </div>
       <label style="margin-top:14px"><input type="checkbox" id="c-show" style="width:auto;margin-right:8px">Los jugadores ven el ranking (top 3 / top 10)</label>
+      <div style="margin-top:14px"><label>Turno activo (decide qué hoja en vivo manda el stock)</label>
+        <select id="c-turno" onchange="setTurno(this.value)"><option value="manana">Turno mañana</option><option value="tarde">Turno tarde</option></select>
+        <div id="stk" class="small" style="margin-top:6px"></div></div>
       <button class="g" onclick="saveCfg()">GUARDAR CONFIGURACIÓN</button>
       <div id="cfgmsg" class="small"></div>
     </div>
@@ -301,6 +304,8 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script src="fb.js?v=18"></script>
+<script src="sheet-config.js?v=1"></script>
+<script src="sheet.js?v=1"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -1734,6 +1739,26 @@ function loadCfgUI(){
   $("c-n1").value=c.n[0];$("c-n2").value=c.n[1];$("c-n3").value=c.n[2];
   $("c-show").checked=c.showRank!==false;
   $("genb").textContent="Ranking #"+c.gen;
+  $("c-turno").value=c.turno||"manana";
+  paintStock();
+}
+/* Stock en vivo (Excel "Hoja en vivo turno ...") */
+async function setTurno(v){
+  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓");paintStock(true)}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
+}
+async function paintStock(force){
+  var e=$("stk");if(!e)return;
+  if(!ST3Sheet.activo()){e.textContent="Stock en vivo: falta conectar el Excel (URL de Apps Script en sheet-config.js).";return}
+  await ST3Sheet.load(!!force,5000);
+  var t=FB.cfg().turno||"manana",d=ST3Sheet.data(),s=d&&d.stock&&d.stock[t];
+  e.innerHTML=s?"Quedan en el turno "+(t==="tarde"?"tarde":"mañana")+": "+["Normal","Grande","Especial","Pequeño"].map(function(k){var x=s[k];return x?"<b style='color:"+(x.quedan<=0?"var(--red)":"inherit")+"'>"+k+" "+x.quedan+"</b>":""}).join(" · "):"No se pudo leer el stock del Excel.";
+}
+/* Premio de la hoja en vivo que corresponde a un premio de la base */
+function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Grande":"Normal")}
+async function sheetSync(action,x){
+  if(!ST3Sheet.activo()||!x)return;
+  var r=await ST3Sheet[action](FB.cfg().turno||"manana",sheetPremio(x),x.code||x.id);
+  if(!r||!r.ok)toast("⚠ No se pudo anotar en la hoja en vivo: "+((r&&r.error)||"sin conexión"));else paintStock();
 }
 async function saveCfg(){
   var n=[+$("c-n1").value|0,+$("c-n2").value|0,+$("c-n3").value|0];
@@ -1972,13 +1997,14 @@ async function doClaim(id,via){
       var r=await sdb().ref("cfg/ovp/"+id).transaction(function(c){if(c&&c.s==="c")return;return{s:"c",t:firebase.database.ServerValue.TIMESTAMP,via:via||"manual"}});
       if(!r.committed)return{ok:false,dup:true,msg:"Otro dispositivo ya lo marcó como reclamado."};
     }else await FB.claimPrize(x.gen,id,via);
+    sheetSync("entregar",x);
     return{ok:true}
   }catch(e){var d=/permission/i.test(e&&(e.code||e.message));return{ok:false,dup:d,msg:d?"Otro dispositivo ya lo marcó como reclamado.":"No se pudo guardar: "+(e&&e.message)}}
 }
 async function revertPrize(id){
   var x=PR.filter(function(p){return p.id===id})[0];if(!x||!x._c)return;
   if(!await askSteps([{icon:"↩️",title:"¿Revertir este premio?",text:"<b>"+esc(x.name)+"</b> ("+esc(x.prize||"")+") vuelve a <b>Pendientes</b> y su QR vale de nuevo. Queda anotado que se revirtió.",ok:"REVERTIR RECLAMADO",danger:true}]))return;
-  try{await sdb().ref("cfg/ovp/"+id).set({s:"p",t:firebase.database.ServerValue.TIMESTAMP});toast("Premio de "+x.name+" vuelto a pendiente ✓")}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
+  try{await sdb().ref("cfg/ovp/"+id).set({s:"p",t:firebase.database.ServerValue.TIMESTAMP});toast("Premio de "+x.name+" vuelto a pendiente ✓");sheetSync("revertir",x)}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
 }
 async function voidPrize(id){
   var x=PR.filter(function(p){return p.id===id})[0];if(!x)return;
