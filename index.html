@@ -2124,13 +2124,13 @@ function reqPaint(){
 function reqShow(){if(!$("rq-logo").src)$("rq-logo").src=document.querySelector(".logo-c").src;show("s-req");reqPaint()}
 function reqGo(){if($("rq-go").disabled)return;go()}
 /* Los requisitos valen para la ronda en que se cumplieron (r.rg): si producción hace "Reiniciar todo"
-   (cambia cfg.rg) vuelven a pedirse. Lo guardado sin marca de ronda se toma como de la ronda actual. */
+   (cambia cfg.rg) vuelven a pedirse. Lo guardado sin marca de ronda es de la ronda 0 (antes de cualquier reinicio). */
 function reqRg(){return String(FB.cfg().rg||0)}
-function reqDone(){var r=reqGet();return !!(r.yt&&r.tt&&r.ig)&&String(r.rg===undefined?reqRg():r.rg)===reqRg()}
+function reqOf(r){return String(r.rg===undefined?0:r.rg)}
+function reqDone(){var r=reqGet();return !!(r.yt&&r.tt&&r.ig)&&reqOf(r)===reqRg()}
 function reqSync(){
   var r=reqGet();
-  if(r.rg===undefined&&(r.yt||r.tt||r.ig)){r.rg=+reqRg();ls("req",JSON.stringify(r))}   // estado viejo: queda en la ronda actual
-  if(r.rg!==undefined&&String(r.rg)!==reqRg()){ls("req","{}")}                          // ronda nueva: hay que seguir las redes otra vez
+  if(reqOf(r)!==reqRg())ls("req","{}");   // ronda nueva: hay que seguir las redes otra vez
   if(!inPlay()&&!test&&!reqDone()&&$("s-req").classList.contains("hide"))reqShow();
   else if(!$("s-req").classList.contains("hide"))reqPaint();
 }
