@@ -24,6 +24,7 @@ var FB = (function () {
       n: (v.n && v.n.length === 3) ? v.n : DEF.n,
       showRank: v.showRank === undefined ? true : !!v.showRank,
       gen: typeof v.gen === "number" ? v.gen : DEF.gen,
+      rg: (v.rs && typeof v.rs === "object" && +v.rs.allGen) || 0,   // ronda del último "Reiniciar todo" (vuelve a pedir seguir las redes)
       px: (v.px && typeof v.px === "object") ? v.px : {},   // personas que producción reinició: uid -> hora
       pv: (v.pv && typeof v.pv === "object") ? v.pv : {}    // premios/QR anulados: id -> hora
     };
