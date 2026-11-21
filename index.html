@@ -438,6 +438,20 @@ button{font-weight:800}
 .rqp p span{color:var(--tx);font-weight:700}
 #rq-go{background:#ffe14d;color:#1a1000;box-shadow:0 0 22px -2px #ffe14d}
 #rq-go.off{background:#ff4d7d14;color:#ff7a9c;border:2px solid #ff4d7d;box-shadow:0 0 16px -4px #ff4d7d;text-shadow:0 0 8px #ff4d7d}
+/* Ventana de Gmail al terminar el modo experto */
+.mov{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:#07030ed9;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:auto}
+.mbox{width:100%;max-width:420px;text-align:center;background:var(--card);border:2px solid #ffe14d;border-radius:24px;padding:22px 18px;box-shadow:0 0 36px -6px #ffe14d99}
+.mbox .mem{font-size:3rem;line-height:1}
+.mbox h2{font:900 1.35rem/1.15 var(--disp);margin:8px 0 6px;color:#fff;letter-spacing:.02em}
+.mbox p{margin:0 0 6px;color:var(--mut);font-size:1rem}
+.mbox input{margin:12px 0 6px;text-align:center}
+.mbox .mer{min-height:1.2em;margin:2px 0 8px;font-weight:700;color:var(--red);font-size:.95rem}
+.mbox .mer.big{font:900 1.05rem/1.25 var(--sans);padding:10px;border:2px solid var(--red);border-radius:12px;background:#ff4d7d1a}
+.mbox .mbt{display:flex;gap:10px}.mbox .mbt button{flex:1;margin:0}
+.mbox small{display:block;margin-top:10px;color:var(--mut)}
+.mbox.warn{border-color:#ff2d3d;box-shadow:0 0 44px -4px #ff2d3dcc}
+.mbox.warn h2{color:#ff4d5e;font-size:1.8rem}
+.mbox .wbig{color:#ff4d5e;font:900 clamp(1.3rem,6vw,1.7rem)/1.2 var(--disp);margin:10px 0 16px;text-shadow:0 0 14px #ff2d3d99}
 /* Reglas: DIFICULTADES y POR TIEMPO (estructura simple) */
 .hw{margin:0 0 clamp(14px,3vh,24px)}
 .dif{width:100%;max-width:440px;margin:0 auto;padding:clamp(10px,2vh,18px) 18px;border-radius:24px;border:2px solid #ffe14d;background:#ffe14d0a;box-shadow:0 0 22px -4px #ffe14d99,inset 0 0 26px -14px #ffe14d}
@@ -575,13 +589,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <p class="hi">Hola <b class="yel" id="hi"></b> 👋</p>
 <div class="steps" id="dots"><i><b>1</b>Vidas</i><i><b>2</b>Premios</i><i><b>3</b>Tiempo</i></div>
 <div class="view" id="view"><div class="track" id="track">
-<div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span>♥</span><span class="lose">♥</span></div>
+<div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span class="lose">♥</span></div>
 <div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
 <div class="slide sl-prize"><div class="t" style="--c:#ffe14d;margin:0 0 clamp(14px,3vh,24px);text-align:center">Subí de nivel, <b>ganá premios</b></div>
-<div class="dif"><p style="--c:#3dff8a"><em>🙂</em><span><b>FÁCIL Y MEDIO:</b> sin premio</span></p>
-<p style="--c:#ff4d5e"><em>🎁</em><span><b>DIFÍCIL:</b> premio Normal</span></p>
-<p style="--c:#b86bff"><em>🎁</em><span><b>GANÁ EL DIFÍCIL:</b> premio Grande</span></p>
-<p style="--c:#ffd21f"><em>🏆</em><span><b>TOP 3 DEL RANKING:</b> premio Especial</span></p></div></div>
+<div class="dif"><p style="--c:#3dff8a"><em>🙂</em><span><b>FÁCIL Y MEDIO:</b> para entrar en calor</span></p>
+<p style="--c:#ff4d5e"><em>🎁</em><span><b>SI LLEGÁS AL DIFÍCIL:</b> te llevás un premio pequeño</span></p>
+<p style="--c:#b86bff"><em>🎁</em><span><b>SI GANÁS EL JUEGO:</b> un premio normal</span></p>
+<p style="--c:#ffd21f"><em>🏆</em><span><b>SI QUEDÁS EN EL TOP 3:</b> ¡un premio especial!</span></p></div></div>
 <div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
 <p>Tenés <b id="how-ts">15</b> segundos para responder cada pregunta</p></div></div>
 </div></div>
@@ -596,7 +610,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <a class="rqi" data-k="tt" style="--b:#3de8ff;--i:2" href="https://www.tiktok.com/@streaming_roomt3" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M14 3h3a5 5 0 0 0 4 4v3a8 8 0 0 1-4-1.2V15a6 6 0 1 1-6-6h1v3.2h-1A2.8 2.8 0 1 0 14 15z"/></svg></em><b class="nm">TikTok</b><span class="st"></span></a>
 </div>
 <div class="rqt">PARTICIPÁ POR</div>
-<div class="rqp"><p style="--c:#ff4d5e"><em>🎁</em><b>Difícil</b><span>premio Normal</span></p><p style="--c:#b86bff"><em>🎁</em><b>Ganar difícil</b><span>premio Grande</span></p><p style="--c:#ffd21f"><em>🏆</em><b>Top 3</b><span>premio Especial</span></p></div>
+<div class="rqp"><p style="--c:#ff4d5e"><em>🎁</em><b>Llegás al difícil</b><span>premio pequeño</span></p><p style="--c:#b86bff"><em>🎁</em><b>Ganás el juego</b><span>premio normal</span></p><p style="--c:#ffd21f"><em>🏆</em><b>Top 3</b><span>premio especial</span></p></div>
 <div class="rqf"><div class="nav"><button id="rq-go" class="off" onclick="reqGo()">JUGAR 0/3</button></div></div>
 </section>
 <section id="s-game" class="hide">
@@ -623,14 +637,31 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <small id="mail-msg" class="mut"></small>
 <small class="mut" style="display:block;margin-top:6px">Lo usamos solo para avisarte de este concurso.</small></div>
 </section>
+<div class="mov hide" id="mail-ov" role="dialog" aria-modal="true" aria-labelledby="mo-t">
+ <div class="mbox" id="mb-ask">
+  <div class="mem">📬</div>
+  <h2 id="mo-t">¿Querés que te avisemos si ganás?</h2>
+  <p>Colocá tu Gmail para que te avisemos si te llevás un premio por quedar en el top del ranking.</p>
+  <input id="mo-in" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="tunombre@gmail.com">
+  <div class="mer" id="mo-err" role="alert"></div>
+  <div class="mbt"><button id="mo-ok" onclick="moAccept()">ACEPTAR</button><button class="r" onclick="moReject()">RECHAZAR</button></div>
+  <small>Lo usamos solo para avisarte de este concurso.</small>
+ </div>
+ <div class="mbox warn hide" id="mb-warn">
+  <div class="mem">⚠️</div>
+  <h2>¡ATENCIÓN!</h2>
+  <p class="wbig">SI RECHAZÁS, NO PODREMOS AVISARTE SI GANÁS EL PREMIO.</p>
+  <div class="mbt"><button onclick="moBack()">PONER MI GMAIL</button><button class="r" onclick="moReally()">RECHAZAR IGUAL</button></div>
+ </div>
+</div>
 <section id="s-prize" class="hide">
-<div class="card y c pz1"><div class="em" id="pz-em">🏆</div><div class="big yel" id="pz-t">¡FELICIDADES!</div><p class="lead" id="pz-lead">Ganaste el premio Grande</p><p id="pz-p">Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" id="pz-btn" onclick="qrOpen()">VER MI QR</button></div>
+<div class="card y c pz1"><div class="em" id="pz-em">🏆</div><div class="big yel" id="pz-t">¡FELICIDADES!</div><p class="lead" id="pz-lead">Ganaste un premio Normal</p><p id="pz-p">Acercate al puesto del streaming y reclamá tu recompensa.</p><button class="p" id="pz-btn" onclick="qrOpen()">VER MI QR</button></div>
 <div class="card c pz2"><p>¿Querés seguir respondiendo preguntas para avanzar en el ranking?</p><p class="mut">(Si quedás en el top 3 tendrás una recompensa especial)</p>
 <button onclick="prizeGo()">CONTINUAR →</button><button class="r" onclick="prizeExit()">SALIR</button></div>
 </section>
 <section id="s-exp" class="hide">
 <div class="xh"><span class="xb">MODO EXPERTO</span></div>
-<div class="xn0"><em>🏆</em><span>Tu premio Grande ya está ganado: lo que pase acá no te la quita. Ahora competís contra los demás por el <b class="yel">ranking</b>.</span></div>
+<div class="xn0"><em>🏆</em><span>Tu premio Normal ya está ganado: lo que pase acá no te la quita. Ahora competís contra los demás por el <b class="yel">ranking</b>.</span></div>
 <div class="xg">
 <div class="xt" style="--c:#b86bff;--i:0"><div class="xi">🎯</div><div class="xv">6</div><div class="xl"><b>opciones</b> por pregunta</div></div>
 <div class="xt" style="--c:#ffe14d;--i:1"><div class="xi">⏱️</div><div class="xv" id="ex-t">12</div><div class="xl"><b>segundos</b> para responder</div></div>
@@ -1853,7 +1884,7 @@ module.exports = QRCode;
 </script>
 <script>
 var D=[];
-var LV=[],T=15000,MAXHP=4,PWH=6118475695008877;
+var LV=[],T=15000,MAXHP=3,PWH=6118475695008877;
 function applyCfg(){
   var c=FB.cfg(),n1=c.n[0]|0,n2=c.n[1]|0,n3=c.n[2]|0;
   T=c.t||15000;
@@ -2066,7 +2097,7 @@ function renderStart(){
   if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.";
   if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
-  if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste el <b>premio Grande</b>: podés continuar para avanzar en el ranking.";
+  if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio Normal</b>: podés continuar para avanzar en el ranking.";
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
 async function init(){
@@ -2079,7 +2110,7 @@ async function init(){
   FB.watchScores(function(l){cache=l;loaded=true;repaint()});
 }
 /* El Excel manda en lo que lleva cada premio */
-function planSheet(){var a=ST3Sheet.texto("Normal"),b=ST3Sheet.texto("Grande");if(a)QPZ[2][2]=a;if(b)QPZ[3][2]=b}
+function planSheet(){}
 async function go(){show("s-name");cache=await getList();loaded=true;playerReset();renderStart();reqSync()}
 /* Producción puede reiniciar a una persona (cfg/px/<su id>) o anular su premio y QR (cfg/pv/<id del QR>).
    Cuando pasa, se limpia lo guardado en este celular: puede volver a jugar y el QR anulado desaparece.
@@ -2289,7 +2320,7 @@ async function showPrize(){
   try{await Promise.race([ST3Sheet.load(),new Promise(function(r){setTimeout(r,2500)})])}catch(e){}
   var li=efLi(3),ok=!!QPZ[li];
   $("pz-em").textContent=ok?"🏆":"😢";$("pz-t").textContent=ok?"¡FELICIDADES!":"LO SIENTO";$("pz-t").className="big "+(ok?"yel":"red");
-  $("pz-lead").textContent=ok?"Ganaste el premio "+QPZ[li][1]:"Nos quedamos sin stock de este premio en este turno";
+  $("pz-lead").textContent=ok?"Ganaste un premio "+QPZ[li][1]:"Nos quedamos sin stock de este premio en este turno";
   $("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"Igual podés seguir jugando para avanzar en el ranking.";
   $("pz-btn").classList.toggle("hide",!ok);
   if(ok)qrIssue(3,qi);
@@ -2312,7 +2343,7 @@ function resume(){
   expIntro();
 }
 /* ---------- QR único, se genera y se lee sin internet ---------- */
-var QRSALT="st3room-2026",QRTEST=null,QPZ=[null,null,["🎁","Normal","1 caramelo + 1 sticker + 1 logo plano"],["🎁","Grande","2 caramelos + 1 sticker + 1 logo 3D + 1 lapicera"]];   // plan de premios: fácil y medio no ganan nada (null)
+var QRSALT="st3room-2026",QRTEST=null,QPZ=[null,null,["🎁","Pequeño","2 caramelos + 1 logo plano"],["🎁","Normal","1 caramelo + 1 sticker + 1 logo plano"]];   // llegar al difícil = Pequeño, ganar el juego = Normal (el top 3 recibe el Especial desde el admin); fácil y medio no ganan nada (null)
 function pzName(li){return LV[li][0]+" · Premio "+QPZ[li][1]}
 /* Stock en vivo: la hoja "Hoja en vivo turno ..." del turno activo manda. Si el premio de ese turno se agotó
    se baja al premio anterior que todavía tenga stock; si ninguno tiene, "lo siento, nos quedamos sin stock". */
@@ -2363,6 +2394,52 @@ function qrSave(){
   g.font="26px monospace";g.fillText(r.score+" pts · pregunta "+r.q,W/2,y0+S+264);
   c.toBlob(function(bl){var l=document.createElement("a");l.href=URL.createObjectURL(bl);l.download="st3room-"+r.code+".png";document.body.appendChild(l);l.click();setTimeout(function(){URL.revokeObjectURL(l.href);l.remove()},1500)},"image/png");
 }
+/* Ventana de Gmail: aparece apenas termina el modo experto (aceptar o rechazar) */
+var moRes=null;
+function lev(a,b){var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.length;i++){var q=[i];for(j=1;j<=b.length;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=q}return p[b.length]}
+function gmailCheck(raw){
+  var v=String(raw||"").trim().toLowerCase();
+  if(!v)return{ok:false,msg:"Escribí tu Gmail."};
+  var m=v.match(/^([^@\s]+)@([^@\s]+)$/);
+  if(!m)return{ok:false,msg:"Eso no parece un mail. Ejemplo: tunombre@gmail.com"};
+  var u=m[1],d=m[2];if(d==="googlemail.com")d="gmail.com";
+  if(d!=="gmail.com"){
+    var typo=lev(d,"gmail.com")<=2;
+    return{ok:false,msg:typo?"Ese Gmail no existe: revisá cómo lo escribiste (tiene que terminar en @gmail.com).":"Tiene que ser un Gmail (termina en @gmail.com)."};
+  }
+  var base=u.split("+")[0],letras=base.replace(/\./g,"");
+  // reglas reales de Gmail: 6 a 30 caracteres, solo letras, números y puntos; sin punto al principio, al final ni dos seguidos
+  if(!/^[a-z0-9.]+$/.test(base)||letras.length<6||letras.length>30||base.charAt(0)==="."||base.slice(-1)==="."||base.indexOf("..")>-1)
+    return{ok:false,msg:"Ese Gmail no existe: los Gmail tienen entre 6 y 30 letras, números o puntos."};
+  if(/^(.)\1+$/.test(letras)||/^(test|tests|prueba|ejemplo|nombre|usuario|asdfgh|qwerty|123456|abcdef|micorreo)/.test(letras))
+    return{ok:false,msg:"Ese Gmail parece inventado. Escribí el tuyo."};
+  return{ok:true,mail:v};
+}
+function mailGate(){
+  if(test||ls("mail"))return Promise.resolve("ya");
+  return new Promise(function(res){
+    moRes=res;$("mo-in").value="";$("mo-err").textContent="";$("mo-err").className="mer";
+    $("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";
+    $("mb-ask").classList.remove("hide");$("mb-warn").classList.add("hide");$("mail-ov").classList.remove("hide");
+    setTimeout(function(){try{$("mo-in").focus()}catch(e){}},350);
+  });
+}
+function moClose(r){$("mail-ov").classList.add("hide");var f=moRes;moRes=null;if(f)f(r)}
+function moAccept(){
+  var c=gmailCheck($("mo-in").value),e=$("mo-err");
+  if(!c.ok){e.textContent=c.msg;e.className="mer big";try{navigator.vibrate&&navigator.vibrate(80)}catch(x){}return}
+  var b=$("mo-ok");b.disabled=true;b.textContent="Guardando…";e.textContent="";e.className="mer";
+  FB.saveMail({uid:FB.uid(),email:c.mail,name:name,score:score,gen:FB.cfg().gen}).then(function(){
+    ls("mail",c.mail);moClose("ok");
+  }).catch(function(x){
+    b.disabled=false;b.textContent="ACEPTAR";var den=/permission/i.test(x&&(x.code||x.message));
+    e.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";e.className="mer big";
+  });
+}
+function moReject(){$("mb-ask").classList.add("hide");$("mb-warn").classList.remove("hide")}
+function moBack(){$("mb-warn").classList.add("hide");$("mb-ask").classList.remove("hide");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},200)}
+function moReally(){ls("mailNo","1");moClose("no")}
+$("mo-in").addEventListener("keydown",function(e){if(e.key==="Enter")moAccept()});
 /* Aviso por mail al final del modo experto */
 function mailBox(on){
   var mb=$("end-menu");if(mb)mb.classList.toggle("hide",!on);   // terminó el modo experto: botón para volver al menú principal
@@ -2394,7 +2471,9 @@ async function end(win){
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(prize)qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
-  show("s-end");countTo($("st-pts"),score,true);if(good)confetti();
+  show("s-end");countTo($("st-pts"),score,true);
+  // terminó el modo experto: lo primero que se ve es la ventana para dejar el Gmail (aceptar o rechazar)
+  (win||lvOf(cq)===3?mailGate():Promise.resolve("ya")).then(function(r){if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");if(good)confetti()});
   await saveScore(true);await refresh();
   var m=merged();
   $("st-pos").innerHTML=rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–";$("st-pc").classList.toggle("hide",!rankVisible());

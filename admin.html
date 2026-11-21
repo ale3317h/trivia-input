@@ -1751,7 +1751,7 @@ function loadCfgUI(){
 }
 /* ---------- Stock en vivo: planilla de Google (stock) + Firebase (entregas) ---------- */
 function stkTurno(){return FB.cfg().turno||"manana"}
-function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Grande":"Normal")}
+function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Normal":"Pequeño")}
 /* Descuenta del turno activo al entregar; al revertir se devuelve (en el turno en que se descontó). */
 function stockUse(action,key,code){
   var p=action==="entregar"?ST3Sheet.consume(stkTurno(),key,code):Promise.all(["manana","tarde"].map(function(t){return ST3Sheet.release(t,key,code)}));
