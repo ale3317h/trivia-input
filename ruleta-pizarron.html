@@ -558,6 +558,13 @@ const ICONOS_SRC={"caramelo":"data:image/webp;base64,UklGRsBMAABXRUJQVlA4WAoAAAA
 const ICONOS={};
 Object.keys(ICONOS_SRC).forEach(k=>{const im=new Image();im.onload=()=>{ICONOS[k]=im;if(typeof draw==='function'&&typeof curHi!=='undefined')draw(curHi);};im.src=ICONOS_SRC[k];});
 function nombreVista(n){n=String(n);return /llavero +grande/i.test(n)?n.replace(/llavero +grande/i,"Logo grande"):n;}
+/* tamaño relativo de cada ícono dentro de su círculo (1 = normal): el vaso es alto y el llavero 3D llena toda su imagen */
+const ICONOS_K={vaso:.84,llavero_3d:.78,lapicera:.9,lapicera_pers:.9,cuaderno:.9};
+function iconoImg(name,base){
+  const k=iconoDe(name),u=k&&ICONOS_SRC[k];if(!u)return'';
+  const p=(base*(ICONOS_K[k]||1)).toFixed(1);
+  return '<img alt="" src="'+u+'" style="width:'+p+'%;height:'+p+'%">';
+}
 function iconoDe(name){
   const n=normN(name);
   if(n.indexOf('grande')>-1&&n.indexOf('logo')>-1)return'logo_3d';
@@ -869,7 +876,7 @@ function terminar(){
     $('win').classList.add('show');pend=-1;ultimo=null;undoUI();
     return;
   }
-  {const ik=iconoDe(it.name),u=ik&&ICONOS_SRC[ik];if(u)$('wEm').innerHTML='<img alt="" src="'+u+'">';else $('wEm').textContent=it.emoji||'🎁';}$('wNm').textContent=it.name||'Premio';
+  {const hi=iconoImg(it.name,92);if(hi)$('wEm').innerHTML=hi;else $('wEm').textContent=it.emoji||'🎁';}$('wNm').textContent=it.name||'Premio';
   $('wcard').style.setProperty('--c',it.color);$('wcard').classList.remove('nada');
   $('win').classList.add('show');
   pend=st.remove?idx:-1;
@@ -987,7 +994,7 @@ function tabla(){
     const pct=(p<10&&p>0?p.toFixed(1):Math.round(p))+'%';
     const qt=q===null?'stock: sin dato':(ago?'sin stock · sale NADA':'quedan '+q);
     return '<li class="'+(ago?'ago':(q!==null&&q<=3?'poco':''))+'" style="--c:'+esc(ago?GRIS:it.color)+'">'
-      +'<i class="sw">'+(ICONOS_SRC[iconoDe(it.name)]?'<img alt="" src="'+ICONOS_SRC[iconoDe(it.name)]+'">':'<b></b>')+'</i><span class="nm">'+esc(it.name)+'<small>'+esc(qt)+'</small></span><b class="pc">'+pct+'</b></li>';
+      +'<i class="sw">'+(iconoImg(it.name,96)||'<b></b>')+'</i><span class="nm">'+esc(it.name)+'<small>'+esc(qt)+'</small></span><b class="pc">'+pct+'</b></li>';
   }).join('');
   $('tablaSub').textContent='chance de salir · stock '+(turnoNow()==='tarde'?'turno tarde':'turno mañana');
 }
