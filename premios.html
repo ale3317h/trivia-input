@@ -57,6 +57,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
 #rowStock .bg{min-width:3rem}
 #rowStock .bar{flex:0 1 2.2rem;min-width:1rem}
 #rowStock .it{font-size:1.1rem}
+@media (max-width:1100px){.bar{min-width:0.75rem}.bg{min-width:3.5rem}.it{gap:0.5rem}}
 </style></head><body>
 <div class="deco d1"></div><div class="deco d2"></div>
 <div class="wrap">
@@ -195,7 +196,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     var max=Math.max.apply(null,rl.map(function(r){return r.t;}).concat([1]));
     var rb='';
     rl.forEach(function(r){
-      var nm=itemName((window.ST3Sheet&&ST3Sheet.nombre)?ST3Sheet.nombre(r.n):r.n,1).text;
+      var nm=itemName((window.ST3Sheet&&ST3Sheet.nombre)?ST3Sheet.nombre(r.n):String(r.n).replace(/^llavero +grande$/i,"Logo grande"),1).text;
       rb+='<div class="it"><div class="ic">'+emojiFor(r.m||r.n)+'</div>'+esc(nm)+'<div class="bar"><i style="width:'+Math.max(4,Math.round(r.t/max*100))+'%"></i></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
     });
     p+=card('#ea580c,#f59e0b','Ruleta','Premios previstos · '+sum(d.ruleta,'t')+' giros por turno','🎡',rb,'<div class="foot"><div class="m"><b>'+sum(d.ruleta,'t')+'</b><span>premios por turno</span></div><div class="m"><b>'+sum(d.ruleta,'T')+'</b><span>premios en total</span></div></div>');
@@ -207,8 +208,8 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
       // extras de este puesto: uno por línea, con su emoji (igual que la bolsita de Cámaras)
       (d.extras||[]).filter(function(e){return norm(e.h)===norm(r.h);}).sort(function(x,y){return (x.alt?1:0)-(y.alt?1:0);}).forEach(function(e){
         var nm=function(x){return itemName(x,1).text.replace('premiun','premium');};
-        st+='<div class="it"><div class="ic">'+emojiFor(e.m)+'</div>+ '+esc(nm(e.m))+'<div class="q">'+e.q+'</div></div>';
-        if(e.alt)st+='<div class="it"><div class="ic">'+emojiFor(e.alt)+'</div>o '+esc(nm(e.alt).toLowerCase())+'<div class="q">'+e.q+'</div></div>';
+        st+='<div class="it"><div class="ic">'+emojiFor(e.m)+'</div><span style="flex:1;min-width:0;overflow-wrap:anywhere">+ '+esc(nm(e.m))+'</span><div class="q">'+e.q+'</div></div>';
+        if(e.alt)st+='<div class="it"><div class="ic">'+emojiFor(e.alt)+'</div><span style="flex:1;min-width:0;overflow-wrap:anywhere">o '+esc(nm(e.alt).toLowerCase())+'</span><div class="q">'+e.q+'</div></div>';
       });
     });
     if(stRows.length)p+=card('#2563eb,#38bdf8','Stream en vivo','Jugar en el programa','📺',st,foot(sum(stRows,'t'),sum(stRows,'T')));
@@ -223,9 +224,9 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     var cb='',ct=sum(cam,'t'),cT=sum(cam,'T');
     if(cam.length){
       var bag=d.bags[cam[0].b];
-      cb='<div class="it"><div class="ic">🎁</div>Bolsita '+esc(BAGNAME[cam[0].b]||cam[0].b)+'</div>';
+      cb='<div class="it"><div class="ic">🎁</div><span style="flex:1;min-width:0">Premio '+esc(BAGNAME[cam[0].b]||cam[0].b)+'</span></div>';
     }
-    p+=card('#0ea5a4,#14b8a6','Cámaras',cam.length?cam[0].h:'','📷',cb,foot(ct,cT));
+    p+=card('#0ea5a4,#14b8a6','Cámaras',cam.length?'Por participar':'','📷',cb,foot(ct,cT));
     document.getElementById('rowPuestos').innerHTML=p;
   }
 
