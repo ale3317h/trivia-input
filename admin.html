@@ -1833,7 +1833,7 @@ function row(x,done){
   var li=x.li|0,rd=(x.gen!=null&&String(x.gen)!==String(FB.cfg().gen))?' · ronda '+esc(x.gen):'';
   return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b>'+(done?'<span class="tg tr">TRIVIA</span>':'')+' <span class="small">· '+x.score+' pts'+rd+'</span></div>'+
     '<div class="small"><span style="color:'+PC[li]+';font-weight:700">'+esc(x.prize||"")+'</span> · <span class="cd">'+esc(x.code)+'</span></div>'+
-    '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x._t)+'</span><button class="p rv" onclick="revertPrize(\''+esc(x.id)+'\')">↩ REVERTIR</button>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button>')+'</div></div>';
+    '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x._t)+'</span><button class="p rv" onclick="revertPrize(\''+esc(x.id)+'\')">↩ REVERTIR</button>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button><button class="r" onclick="voidPrize(\''+esc(x.id)+'\')">✖ ANULAR</button>')+'</div></div>';
 }
 function nz(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]/g,"")}   // sin acentos ni espacios: "López" == "lopez"
 /* ---------- estado efectivo y reinicios ----------
@@ -2018,13 +2018,24 @@ function openPerson(uid){
     if(x._v)b+='<button class="p" onclick="pvRestore(\''+id+'\')">RESTAURAR PREMIO Y QR</button>';
     else{
       b+=x._c?'<button class="g" onclick="revertPrize(\''+id+'\')">↩ REVERTIR RECLAMADO</button>':'<button class="g" onclick="claimRow(\''+id+'\')">MARCAR COMO RECLAMADO</button>';
-      b+='<button class="r" onclick="voidPrize(\''+id+'\')">ANULAR PREMIO Y QR</button>';
+      b+='<button class="r" onclick="voidPrize(\''+id+'\')">− RESTAR: ANULAR ESTE PREMIO Y QR</button>';
     }
   });
   var u=esc(uid);
+  if(!h)b+='<div class="small" style="margin:12px 0 4px">＋ SUMAR UN PREMIO A '+esc(p.name)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g" onclick="addPrize(\''+u+'\',\'peq\')">＋ Pequeño</button><button class="g" onclick="addPrize(\''+u+'\',\'nor\')">＋ Normal</button><button class="g" onclick="addPrize(\''+u+'\',\'esp\')">＋ Especial</button></div>';
   if(!h)b+='<button class="r" onclick="resetFromRank(\''+u+'\')" style="margin-top:12px">SACAR DEL RANKING Y DEJAR JUGAR</button>';
   b+='<button class="r" onclick="resetPerson(\''+u+'\')">REINICIAR PERSONA (todo)</button><button class="p" onclick="closePerson()">CERRAR</button>';
   $("psh-b").innerHTML=b;$("psh").className="cfm psh on";
+}
+/* Sumar un premio a mano (por si nos equivocamos o hay que compensar): es un premio más en prizes/<ronda>/<id>, igual que el QR del puesto. */
+var ADDPZ={peq:{li:2,t:"DIFÍCIL · Premio Pequeño",d:"2 caramelos + 1 logo plano"},nor:{li:3,t:"EXPERTO · Premio Normal",d:"1 caramelo + 1 sticker + 1 logo plano"},esp:{li:3,t:"🏆 Premio Especial",d:"el premio especial del top 3"}};
+async function addPrize(uid,k){
+  var p=RK.filter(function(x){return x.uid===uid})[0],z=ADDPZ[k],d=sdb();if(!p||!z)return;
+  if(!d){alert("Sin conexión con la base.");return}
+  if(!await askSteps([{icon:"🎁",title:"¿Sumar un premio a "+esc(p.name)+"?",text:"Se crea un premio <b>"+esc(z.t)+"</b> ("+esc(z.d)+") con su QR, pendiente de entrega. Si es un error, lo restás con ANULAR.",ok:"SUMAR PREMIO"}]))return;
+  var id=saRnd(4)+"-"+saRnd(4),code=id+"-"+saRnd(4);
+  try{await d.ref("prizes/"+FB.cfg().gen+"/"+id).update({name:p.name,code:code,li:z.li,prize:z.t,score:p.score|0,q:0,ts:Date.now(),uid:uid});toast("Premio sumado a "+p.name+" ✓")}
+  catch(e){alert("No se pudo sumar: "+(e&&e.message))}
 }
 function closePerson(){personOpen=null;$("psh").className="cfm psh"}
 
