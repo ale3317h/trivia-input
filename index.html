@@ -2470,6 +2470,7 @@ async function end(win){
   $("end-badge").innerHTML="";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
+  if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize)qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
   show("s-end");countTo($("st-pts"),score,true);
   // terminó el modo experto: lo primero que se ve es la ventana para dejar el Gmail (aceptar o rechazar)
