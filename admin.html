@@ -134,6 +134,10 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .rs{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #3a1a55}
 .rs:first-child{padding-top:0}.rs>div{flex:1;min-width:0}.rs button{margin:0;flex:0 0 auto}
 .rs b{display:block;font-size:15px}
+.card.stkc>.stkrs{margin-top:0;padding-top:0;border-top:0}
+.stkrs{margin-top:16px;padding-top:14px;border-top:2px solid #3a1a55}
+.stkrs .sc2{font:800 12px system-ui,sans-serif;letter-spacing:.06em;color:var(--yel);margin-bottom:4px}
+.stkrs .sc2 b{color:var(--grn)}
 .dz{border:1.5px solid var(--red);background:#2a0612;border-radius:14px;padding:14px;margin-top:16px}
 .dz b{color:#ffb3c6;font-size:15px}
 .dz button{width:100%;padding:16px;font-size:16px;margin:12px 0 0;letter-spacing:.5px}
@@ -261,6 +265,13 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <div class="small" id="stk-st" style="margin:8px 0"></div>
       <div id="stk-box"></div>
       <div class="row"><button class="p" onclick="stkOpen()">ABRIR LA PLANILLA</button><button class="p" onclick="stkRefresh()">ACTUALIZAR AHORA</button></div>
+      <div class="card stkc" style="margin-top:12px"><div class="stkrs">
+        <div class="sc2">STOCK · turno activo: <b class="js-turno">—</b></div>
+        <div class="rs"><div><b>Bolsitas</b><span class="small">Normal, Grande, Especial y Pequeño vuelven al número de la planilla: se borran las entregas y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('bolsitas')">REINICIAR</button></div>
+        <div class="rs"><div><b>Ruleta</b><span class="small">Los premios de la ruleta vuelven al número de la planilla: se borran los giros y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('ruleta')">REINICIAR</button></div>
+        <div class="rs"><div><b>Turno completo</b><span class="small">Bolsitas y ruleta juntas, solo del turno activo.</span></div><button class="r" onclick="stkReset('turno')">REINICIAR</button></div>
+        <div class="rs" style="border-bottom:0"><div><b>Pasar sobrante mañana → tarde</b><span class="small">Lo que quedó sin entregar a la mañana se suma al stock de la tarde y la mañana queda en 0.</span></div><button class="g" onclick="stkPasar()">PASAR</button></div>
+      </div></div>
     </div>
 
     <div id="t-set" class="pane hide">
@@ -276,6 +287,13 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <div class="rs"><div><b>Ranking</b><span class="small" id="rs-rk">Vacía la tabla; todos pueden volver a jugar. No toca premios ni saludos.</span></div><button class="r" onclick="resetRank()">REINICIAR</button></div>
       <div class="rs"><div><b>Reclamados de trivia</b><span class="small" id="rs-tr">—</span></div><button class="r" onclick="resetClaimed()">REINICIAR</button></div>
       <div class="rs" style="border-bottom:0;padding-bottom:0"><div><b>Saludos canjeados</b><span class="small" id="rs-sa">—</span></div><button class="r" onclick="resetRedeemed()">REINICIAR</button></div>
+      <div class="stkrs">
+        <div class="sc2">STOCK · turno activo: <b class="js-turno">—</b></div>
+        <div class="rs"><div><b>Bolsitas</b><span class="small">Normal, Grande, Especial y Pequeño vuelven al número de la planilla: se borran las entregas y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('bolsitas')">REINICIAR</button></div>
+        <div class="rs"><div><b>Ruleta</b><span class="small">Los premios de la ruleta vuelven al número de la planilla: se borran los giros y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('ruleta')">REINICIAR</button></div>
+        <div class="rs"><div><b>Turno completo</b><span class="small">Bolsitas y ruleta juntas, solo del turno activo.</span></div><button class="r" onclick="stkReset('turno')">REINICIAR</button></div>
+        <div class="rs" style="border-bottom:0"><div><b>Pasar sobrante mañana → tarde</b><span class="small">Lo que quedó sin entregar a la mañana se suma al stock de la tarde y la mañana queda en 0.</span></div><button class="g" onclick="stkPasar()">PASAR</button></div>
+      </div>
       <div class="dz"><b>⚠ REINICIAR TODO</b>
         <div class="small" style="margin-top:4px">Ranking, premios pendientes y reclamados, y saludos (en espera, validados y canjeados). Pide dos confirmaciones.</div>
         <button class="r" onclick="resetAll()">REINICIAR TODO</button></div>
@@ -1783,10 +1801,47 @@ function stkSaludo(action,id){return stockUse(action,"Pequeño","sal-"+id)}
 async function setTurno(v){
   try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓")}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
 }
-function stkTurnoPaint(){
+function stkTurnoPaint(){stkPaintTurno();
   var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(!m||!n)return;
   m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p";
   renderStock();
+}
+/* ---------- reinicios de stock ---------- */
+function stkFk(k){return String(k).replace(/ñ/g,"n").replace(/\s+/g,"_")}
+function stkNom(t){return t==="tarde"?"turno tarde":"turno mañana"}
+function stkPaintTurno(){var n=stkNom(stkTurno());document.querySelectorAll(".js-turno").forEach(function(e){e.textContent=n})}
+async function stkReset(que){
+  var t=stkTurno(),ks=que==="bolsitas"?ST3Sheet.PREMIOS:(que==="ruleta"?ST3Sheet.RULETA:ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA));
+  var nom=que==="bolsitas"?"las bolsitas":(que==="ruleta"?"la ruleta":"todo el turno (bolsitas y ruleta)");
+  var ent=0;ks.forEach(function(k){var i=ST3Sheet.info(t,k);if(i)ent+=i.entregados||0});
+  if(!await askSteps([
+    {icon:"📦",title:"¿Reiniciar "+nom+"?",text:"Del <b>"+stkNom(t)+"</b>: se borran las entregas registradas ("+ent+") y los ajustes manuales, y el stock vuelve al número de la planilla. El otro turno no se toca.",ok:"SÍ, SEGUIR",danger:true},
+    {icon:"🛑",title:"No se puede deshacer",text:"Las entregas de "+nom+" del "+stkNom(t)+" se pierden. Los QR y la lista de reclamados <b>no</b> cambian.",ok:"REINICIAR",danger:true,wait:1800}]))return;
+  try{
+    var d=sdb();if(!d)throw new Error("Sin conexión con la base");
+    var u={};ks.forEach(function(k){u["cfg/stk/"+t+"/"+stkFk(k)]=null});
+    await d.ref().update(u);toast("Stock reiniciado: "+nom+" ✓");renderStock();
+  }catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
+}
+async function stkPasar(){
+  var ks=ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA),pasa=[],falta=[];
+  ks.forEach(function(k){
+    var m=ST3Sheet.info("manana",k),ta=ST3Sheet.info("tarde",k);
+    if(!m||!ta){falta.push(k);return}
+    if(m.quedan>0)pasa.push({k:k,q:m.quedan,m:m,ta:ta});
+  });
+  if(!pasa.length){alert(falta.length?"No se pudo leer el stock de la planilla. Tocá «Actualizar ahora» en la pestaña Stock y probá de nuevo.":"A la mañana no sobró nada para pasar.");return}
+  var lista=pasa.map(function(p){return esc(p.k)+": <b>"+p.q+"</b> (tarde "+p.ta.quedan+" → "+(p.ta.quedan+p.q)+")"}).join("<br>");
+  if(!await askSteps([{icon:"🌙",title:"¿Pasar lo que sobró a la tarde?",text:lista+"<br><br>La mañana queda en 0 en esos premios."+(falta.length?"<br><small>Sin datos (no se tocan): "+esc(falta.join(", "))+"</small>":""),ok:"PASAR A LA TARDE"}]))return;
+  try{
+    var d=sdb();if(!d)throw new Error("Sin conexión con la base");
+    var u={};
+    pasa.forEach(function(p){
+      u["cfg/stk/manana/"+stkFk(p.k)+"/n"]=p.m.entregados||0;            // mañana: stock = lo entregado → quedan 0
+      u["cfg/stk/tarde/"+stkFk(p.k)+"/n"]=p.ta.stock+p.q;                 // tarde: su stock + lo que sobró
+    });
+    await d.ref().update(u);toast("Sobrante pasado a la tarde ✓");renderStock();
+  }catch(e){alert("No se pudo pasar: "+(e&&e.message))}
 }
 function stkOpen(){window.open("https://docs.google.com/spreadsheets/d/"+window.ST3_SHEET_ID+"/edit","_blank")}
 async function stkRefresh(){var ok=await ST3Sheet.load();toast(ok?"Planilla leída ✓":"No se pudo leer la planilla")}
@@ -1820,7 +1875,7 @@ function renderStock(){
   box.innerHTML=h;
   var at=ST3Sheet.leyo();$("stk-st").textContent=at?"Planilla leída hace "+Math.max(0,Math.round((Date.now()-at)/1000))+" s · se actualiza sola":"No se pudo leer la planilla: revisá que esté compartida («cualquiera con el enlace puede ver»).";
 }
-ST3Sheet.onChange(function(){renderStock();var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(m&&n){m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p"}});
+ST3Sheet.onChange(function(){renderStock();stkPaintTurno();var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(m&&n){m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p"}});
 async function saveCfg(){
   var n=[+$("c-n1").value|0,+$("c-n2").value|0,+$("c-n3").value|0];
   var t=Math.max(5,Math.min(60,+$("c-t").value|0))*1000;
