@@ -121,6 +121,8 @@
     ruleta: function () { return ruletaDef; },
     leyo: function () { return okAt; },
     sheetValue: function (turno, key) { return sheet[turno] && typeof sheet[turno][key] === "number" ? sheet[turno][key] : null; },
+    // nombre para mostrar (el de la planilla no cambia: es la clave del stock)
+    nombre: function (k) { return /^llavero +grande$/i.test(String(k)) ? "Logo grande" : k; },
     texto: function () { return null }
   };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else setTimeout(start, 0);

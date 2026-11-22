@@ -1831,8 +1831,8 @@ async function stkPasar(){
     if(m.quedan>0)pasa.push({k:k,q:m.quedan,m:m,ta:ta});
   });
   if(!pasa.length){alert(falta.length?"No se pudo leer el stock de la planilla. Tocá «Actualizar ahora» en la pestaña Stock y probá de nuevo.":"A la mañana no sobró nada para pasar.");return}
-  var lista=pasa.map(function(p){return esc(p.k)+": <b>"+p.q+"</b> (tarde "+p.ta.quedan+" → "+(p.ta.quedan+p.q)+")"}).join("<br>");
-  if(!await askSteps([{icon:"🌙",title:"¿Pasar lo que sobró a la tarde?",text:lista+"<br><br>La mañana queda en 0 en esos premios."+(falta.length?"<br><small>Sin datos (no se tocan): "+esc(falta.join(", "))+"</small>":""),ok:"PASAR A LA TARDE"}]))return;
+  var lista=pasa.map(function(p){return esc(ST3Sheet.nombre(p.k))+": <b>"+p.q+"</b> (tarde "+p.ta.quedan+" → "+(p.ta.quedan+p.q)+")"}).join("<br>");
+  if(!await askSteps([{icon:"🌙",title:"¿Pasar lo que sobró a la tarde?",text:lista+"<br><br>La mañana queda en 0 en esos premios."+(falta.length?"<br><small>Sin datos (no se tocan): "+esc(falta.map(ST3Sheet.nombre).join(", "))+"</small>":""),ok:"PASAR A LA TARDE"}]))return;
   try{
     var d=sdb();if(!d)throw new Error("Sin conexión con la base");
     var u={};
@@ -1859,7 +1859,7 @@ function renderStock(){
     var c=q===null?"n":(q<=0?"z":(q<=5?"l":"k")),pc=i&&i.stock>0?Math.max(0,Math.min(100,Math.round(q/i.stock*100))):0;
     var tag=q===null?"sin datos":(q<=0?"SIN STOCK":(q<=5?"quedan pocos":""));
     var det=(i?'de <b>'+i.stock+'</b>'+(i.manual?' (ajustado)':(sv===null?'':'')):'stock —')+' · entregados <b>'+(i?i.entregados:"—")+'</b>'+(tag?' · '+tag:'');
-    return '<div class="si '+c+'"><i class="d"></i><div class="sn">'+esc(k)+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
+    return '<div class="si '+c+'"><i class="d"></i><div class="sn">'+esc(ST3Sheet.nombre(k))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
       '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+
       '<i class="sb" style="width:'+pc+'%"></i></div>';
   }
