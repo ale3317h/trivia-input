@@ -1853,9 +1853,16 @@ async function stkEx(b,dir){
   try{
     if(dir<0){await ST3Sheet.consume(t,k,stkExCode());toast("Entrega registrada: "+k)}
     else{
-      var f=(FB.cfg().stk||{})[t],p=f&&f[stkFk(k)],codes=Object.keys((p&&p.used)||{}).filter(function(c){return c.indexOf("man-")===0}).sort();
-      if(!codes.length){toast("No hay entregas manuales para deshacer");return}
-      await ST3Sheet.release(t,k,codes[codes.length-1]);toast("Última entrega deshecha: "+k)
+      // +1: deshace la entrega MÁS RECIENTE (la haya hecho el escáner, la ruleta o un −1); si no hay ninguna, suma 1 al stock
+      var f=(FB.cfg().stk||{})[t],p=f&&f[stkFk(k)],u=(p&&p.used)||{},codes=Object.keys(u);
+      if(codes.length){
+        codes.sort(function(x,y){return (+u[x]||0)-(+u[y]||0)});
+        await ST3Sheet.release(t,k,codes[codes.length-1]);toast("Entrega deshecha: "+k+" (+1)");
+      }else{
+        var i=ST3Sheet.info(t,k);
+        if(!i){toast("No hay stock cargado de "+k);return}
+        await ST3Sheet.setManual(t,k,i.stock+1);toast("Sin entregas para deshacer: se sumó 1 al stock de "+k);
+      }
     }
   }catch(e){alert("No se pudo: "+(e&&e.message))}
   renderStock();
@@ -1877,7 +1884,7 @@ function renderStock(){
     var tag=q===null?"sin datos":(q<=0?"SIN STOCK":(q<=5?"quedan pocos":""));
     var det=(i?'de <b>'+i.stock+'</b>'+(i.manual?' (ajustado)':(sv===null?'':'')):'stock —')+' · entregados <b>'+(i?i.entregados:"—")+'</b>'+(tag?' · '+tag:'');
     return '<div class="si '+c+' x"><i class="d"></i><div class="sn">'+esc(String(ST3Sheet.nombre(k)).replace(/ \(Ganar en vivo\)$/i,'').replace(/ \(reemplazo de .*\)$/i,' (si no hay)'))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
-      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+('<div class="sx"><button type="button" class="p" title="Entregué 1" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,-1)">−1</button><button type="button" class="p" title="Deshacer la última entrega" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,1)">+1</button></div>')+
+      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+('<div class="sx"><button type="button" class="p" title="Entregué 1" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,-1)">−1</button><button type="button" class="p" title="Sumar 1 (deshace la última entrega)" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,1)">+1</button></div>')+
       '<i class="sb" style="width:'+pc+'%"></i></div>';
   }
   function turno(t){
