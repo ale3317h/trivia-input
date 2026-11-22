@@ -54,6 +54,9 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
 .rf{font:inherit;font-size:.95rem;color:#fff;background:#ffffff1f;border:1px solid #ffffff40;border-radius:2rem;padding:.25rem .9rem;cursor:pointer}
 .rf:hover{background:#ffffff33}
 @media (max-width:700px){html{font-size:14px}body{padding:1.5rem 0.875rem 1.25rem}.row{grid-template-columns:minmax(0,1fr)}}
+#rowStock .bg{min-width:3rem}
+#rowStock .bar{flex:0 1 2.2rem;min-width:1rem}
+#rowStock .it{font-size:1.1rem}
 </style></head><body>
 <div class="deco d1"></div><div class="deco d2"></div>
 <div class="wrap">
@@ -79,7 +82,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
 <script src="fb-config.js?v=18"></script>
 <script src="fb.js?v=18"></script>
 <script src="sheet-config.js?v=1"></script>
-<script src="sheet.js?v=3"></script>
+<script src="sheet.js?v=4"></script>
 <script>
 (function(){
   var SHEET_ID='1jJ_WUHFocqyaO1RpoVkGBGoonnojCt6Y1u4OOrWFK2A';
@@ -88,26 +91,30 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
   /* Datos guardados: se usan si no hay conexión con la planilla */
   var DATA={
     turnos:2,
-    labels:['Caramelos','Stickers aleatorios','Stickers a elección','Logos planos','Logos 3D medianos','Logos grandes','Lapiceras','Lapiceras personalizadas','Cuadernos','Cuadernos premiun'],
+    labels:['Caramelos','Stickers','Logos planos','Logos 3D medianos','Logos grandes','Lapiceras','Lapiceras personalizadas','Cuadernos','Cuadernos premiun'],
     bags:{
-      'Pequeño':{q:[2,0,0,1,0,0,0,0,0,0],t:18,T:36},
-      'Normal':{q:[1,1,0,1,0,0,0,0,0,0],t:68,T:136},
-      'Grande':{q:[2,0,1,0,1,0,1,0,0,0],t:40,T:80},
-      'Especial':{q:[4,0,2,0,0,1,0,1,0,1],t:3,T:6}
+      'Pequeño':{q:[2,0,1,0,0,0,0,0,0],t:18,T:36},
+      'Normal':{q:[1,1,1,0,0,0,0,0,0],t:68,T:136},
+      'Grande':{q:[2,1,0,1,0,1,0,0,0],t:40,T:80},
+      'Especial':{q:[3,2,0,0,1,0,1,0,1],t:3,T:6}
     },
     puestos:[
       {p:'Stream en vivo',h:'Participar',b:'Normal',t:8,T:16},
-      {p:'Stream en vivo',h:'Ganar en vivo',b:'Grande',t:3,T:6,x:'Vasos',xq:1,x2:'Cuadernos premiun',xq2:1},
+      {p:'Stream en vivo',h:'Ganar en vivo',b:'Grande',t:8,T:16},
       {p:'Trivia',h:'Nivel fácil y medio',b:'Pequeño',t:0,T:0},
       {p:'Trivia',h:'Nivel difícil',b:'Normal',t:60,T:120},
       {p:'Trivia',h:'Ganar el nivel difícil',b:'Grande',t:32,T:64},
       {p:'Trivia',h:'Top del ranking',b:'Especial',t:3,T:6},
-      {p:'Cámaras',h:'Saludar a la cámara y validar el QR',b:'Pequeño',t:18,T:36},
-      {p:'Stream en vivo',h:'Ganar en vivo (si se acaban los cuadernos)',b:'Grande',t:5,T:10,x:'Vasos',xq:1,x2:'Lapiceras personalizadas',xq2:1}
+      {p:'Cámaras',h:'Saludar a la cámara y validar el QR',b:'Pequeño',t:18,T:36}
+    ],
+    extras:[
+      {h:'Ganar en vivo',m:'Vasos',q:1,alt:'',t:16,ta:0},
+      {h:'Ganar en vivo',m:'Cuadernos premiun',q:1,alt:'Lapiceras personalizadas',t:6,ta:10},
+      {h:'Ganar en vivo',m:'Caramelos',q:1,alt:'',t:16,ta:0}
     ],
     ruleta:[
       {n:'Caramelos',m:'Caramelos',pc:2,t:12,T:24},
-      {n:'Stickers',m:'Stickers a elección',pc:11,t:55,T:110},
+      {n:'Stickers',m:'Stickers',pc:11,t:55,T:110},
       {n:'Llavero 3D',m:'Logos 3D medianos',pc:2,t:10,T:20},
       {n:'Lapicera',m:'Lapiceras',pc:2,t:10,T:20},
       {n:'Cuaderno',m:'Cuadernos',pc:4,t:20,T:40},
@@ -188,17 +195,21 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     var max=Math.max.apply(null,rl.map(function(r){return r.t;}).concat([1]));
     var rb='';
     rl.forEach(function(r){
-      var nm=itemName(r.n,1).text;
+      var nm=itemName((window.ST3Sheet&&ST3Sheet.nombre)?ST3Sheet.nombre(r.n):r.n,1).text;
       rb+='<div class="it"><div class="ic">'+emojiFor(r.m||r.n)+'</div>'+esc(nm)+'<div class="bar"><i style="width:'+Math.max(4,Math.round(r.t/max*100))+'%"></i></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
     });
     p+=card('#ea580c,#f59e0b','Ruleta','Premios previstos · '+sum(d.ruleta,'t')+' giros por turno','🎡',rb,'<div class="foot"><div class="m"><b>'+sum(d.ruleta,'t')+'</b><span>premios por turno</span></div><div class="m"><b>'+sum(d.ruleta,'T')+'</b><span>premios en total</span></div></div>');
 
     var st='',stRows=d.puestos.filter(function(r){return norm(r.p).indexOf('stream')===0;});
     stRows.forEach(function(r){
-      function ex(m,q){return m&&q>0?' + '+(q>1?q+' ':'')+itemName(m,q).text:'';}
-      var extra=ex(r.x,r.xq)+ex(r.x2,r.xq2);
       var hh=String(r.h);
-      st+='<div class="it"><div class="lv">'+esc(hh)+'<small>'+esc((BAGNAME[r.b]||r.b)+extra)+'</small></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
+      st+='<div class="it"><div class="lv">'+esc(hh)+'<small>'+esc(BAGNAME[r.b]||r.b)+'</small></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
+      // extras de este puesto: uno por línea, con su emoji (igual que la bolsita de Cámaras)
+      (d.extras||[]).filter(function(e){return norm(e.h)===norm(r.h);}).sort(function(x,y){return (x.alt?1:0)-(y.alt?1:0);}).forEach(function(e){
+        var nm=function(x){return itemName(x,1).text.replace('premiun','premium');};
+        st+='<div class="it"><div class="ic">'+emojiFor(e.m)+'</div>+ '+esc(nm(e.m))+'<div class="q">'+e.q+'</div></div>';
+        if(e.alt)st+='<div class="it"><div class="ic">'+emojiFor(e.alt)+'</div>o '+esc(nm(e.alt).toLowerCase())+'<div class="q">'+e.q+'</div></div>';
+      });
     });
     if(stRows.length)p+=card('#2563eb,#38bdf8','Stream en vivo','Jugar en el programa','📺',st,foot(sum(stRows,'t'),sum(stRows,'T')));
 
@@ -212,7 +223,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     var cb='',ct=sum(cam,'t'),cT=sum(cam,'T');
     if(cam.length){
       var bag=d.bags[cam[0].b];
-      cb='<div class="it"><div class="ic">🎁</div>Bolsita '+esc(BAGNAME[cam[0].b]||cam[0].b)+'</div>'+(bag?bagItems(bag,d):'');
+      cb='<div class="it"><div class="ic">🎁</div>Bolsita '+esc(BAGNAME[cam[0].b]||cam[0].b)+'</div>';
     }
     p+=card('#0ea5a4,#14b8a6','Cámaras',cam.length?cam[0].h:'','📷',cb,foot(ct,cT));
     document.getElementById('rowPuestos').innerHTML=p;
@@ -239,25 +250,33 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
       gv('Premios','A4:N8',1),
       gv('Puestos','A5:I21',1),
       gv('Ruleta','A6:G20',1),
-      gv('Materiales','A4:B4',0)
+      gv('Materiales','A4:B4',0),
+      gv('Puestos','A35:F75',1).catch(function(){return null;})
     ]).then(function(r){
-      var d={labels:[],bags:{},puestos:[],ruleta:[],turnos:DATA.turnos};
+      var d={labels:[],bags:{},puestos:[],ruleta:[],extras:[],turnos:DATA.turnos};
       var P=r[0];
-      for(var i=2;i<=11;i++)d.labels.push(P.cols[i].label);
+      // las columnas de materiales van desde "Caramelos" hasta antes de "Cantidad por turno" (así no importa cuántas haya)
+      var qi=11;for(var j=2;j<P.cols.length;j++){if(/cantidad por turno/i.test(P.cols[j].label||'')){qi=j;break;}}
+      for(var i=2;i<qi;i++)d.labels.push(P.cols[i].label);
       P.rows.forEach(function(row){
         var c=row.c,name=val(c[0]);if(!name)return;
-        var q=[];for(var i=2;i<=11;i++)q.push(num(c[i]));
-        d.bags[name]={q:q,t:num(c[12]),T:num(c[13])};
+        var q=[];for(var i=2;i<qi;i++)q.push(num(c[i]));
+        d.bags[name]={q:q,t:num(c[qi]),T:num(c[qi+1])};
       });
       r[1].rows.forEach(function(row){
         var c=row.c,p=val(c[0]),b=val(c[2]);if(!p||typeof p!=='string'||!b||typeof b!=='string')return;
-        d.puestos.push({p:p,h:val(c[1])||'',b:b,t:num(c[3]),T:num(c[4]),x:val(c[5])||'',xq:num(c[6]),x2:val(c[7])||'',xq2:num(c[8])});
+        d.puestos.push({p:p,h:val(c[1])||'',b:b,t:num(c[3]),T:num(c[4])});
+      });
+      if(r[4]&&r[4].rows)r[4].rows.forEach(function(row){
+        var c=row.c,h=val(c[0]),m=val(c[1]);if(!h||!m||typeof h!=='string'||typeof m!=='string')return;
+        d.extras.push({h:h,m:m,q:num(c[2])||1,alt:val(c[3])||'',t:num(c[4]),ta:num(c[5])});
       });
       r[2].rows.forEach(function(row){
         var c=row.c,n=val(c[0]);if(!n||typeof n!=='string'||norm(n)==='total'||!val(c[1]))return;
         d.ruleta.push({n:n,m:val(c[1])||n,pc:num(c[3]),t:num(c[5]),T:num(c[6])});
       });
       var tt=r[3].rows&&r[3].rows[0]?num(r[3].rows[0].c[1]):0;
+      if(!d.extras.length)d.extras=DATA.extras;
       if(tt>0)d.turnos=tt;
       if(!Object.keys(d.bags).length||!d.ruleta.length)throw new Error('vacio');
       return d;
@@ -273,7 +292,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
       var pc=i&&n>0?Math.max(0,Math.min(100,Math.round(q/n*100))):0;
       var col=q===null?'#cbd5e1':(q<=0?'#dc2626':(q<=5?'#f59e0b':'#16a34a'));
       if(i){tot+=n;tq+=Math.max(0,q);}
-      body+='<div class="it"><div class="ic">'+emojiFor(k)+'</div>'+esc(ST3Sheet.nombre?ST3Sheet.nombre(k):k)+'<div class="bar"><i style="width:'+pc+'%;background:'+col+'"></i></div><div class="bg"><b style="color:'+col+'">'+(q===null?'—':q)+'</b><span>'+(i?'de '+n+(i.manual?' (ajustado)':''):'sin datos')+'</span></div></div>';
+      body+='<div class="it"><div class="ic">'+emojiFor(k)+'</div>'+esc(String(ST3Sheet.nombre?ST3Sheet.nombre(k):k).replace(/ \(Ganar en vivo\)$/i,'').replace(/ \(reemplazo de .*\)$/i,' (si no hay)'))+'<div class="bar"><i style="width:'+pc+'%;background:'+col+'"></i></div><div class="bg"><b style="color:'+col+'">'+(q===null?'—':q)+'</b><span>'+(i?'de '+n+(i.manual?' (ajustado)':''):'sin datos')+'</span></div></div>';
     });
     return card(grad,title,(activo?'Turno activo · ':'')+TNAME[t],emoji,body,'<div class="foot"><div class="m"><b>'+tq+'</b><span>quedan</span></div><div class="m"><b>'+tot+'</b><span>stock del turno</span></div></div>');
   }
@@ -282,6 +301,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     ['manana','tarde'].forEach(function(t){
       h+=stockCard(t,'Bolsitas',ST3Sheet.PREMIOS,'#6d28d9,#8b5cf6','🎁',t===act);
       h+=stockCard(t,'Ruleta',ST3Sheet.RULETA,'#ea580c,#f59e0b','🎡',t===act);
+      if(ST3Sheet.EXTRAS&&ST3Sheet.EXTRAS().length)h+=stockCard(t,'Extras del stream',ST3Sheet.EXTRAS(),'#2563eb,#38bdf8','📺',t===act);
     });
     document.getElementById('rowStock').innerHTML=h;
   }

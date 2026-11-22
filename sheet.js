@@ -12,10 +12,11 @@
   var PREMIOS = ["Normal", "Grande", "Especial", "Pequeño"];
   var RULETA = ["Stickers", "Llavero 3D", "Lapicera", "Cuaderno", "Vaso", "Llavero plano", "Llavero grande", "Lapicera personalizada"];
   var POLL_MS = 15000;
-  var ruletaDef = null;
+  var ruletaDef = null, extrasDef = [];
   var sheet = { manana: null, tarde: null }, okAt = 0, listeners = [], timer = null, seq = 0, started = false;
   try { var c0 = JSON.parse(localStorage.getItem("st3_stock") || "null"); if (c0) sheet = c0; } catch (e) {}
   try { ruletaDef = JSON.parse(localStorage.getItem("st3_ruleta") || "null"); } catch (e) {}
+  try { extrasDef = JSON.parse(localStorage.getItem("st3_extras") || "[]") || []; } catch (e) {}
 
   function fkey(k) { return String(k).replace(/ñ/g, "n").replace(/\s+/g, "_"); }
   function safe(s) { return String(s).replace(/[.#$\[\]\/]/g, "_"); }
@@ -32,17 +33,21 @@
       s.onerror = function () { done(); rej(new Error("no se pudo leer la planilla")); };
       t = setTimeout(function () { done(); rej(new Error("la planilla no respondió")); }, 9000);
       s.src = "https://docs.google.com/spreadsheets/d/" + id + "/gviz/tq?tqx=out:json;responseHandler:" + cb +
-        "&sheet=" + encodeURIComponent(tab) + "&range=" + (range || "A4:C18") + "&headers=" + (headers === undefined ? 1 : headers) + "&_=" + Date.now();
+        "&sheet=" + encodeURIComponent(tab) + "&range=" + (range || "A4:C40") + "&headers=" + (headers === undefined ? 1 : headers) + "&_=" + Date.now();
       document.head.appendChild(s);
     });
   }
   function parse(r) {
-    var o = {};
+    var o = {}, ex = [], inEx = false;
     if (!r || r.status !== "ok" || !r.table) return null;
     r.table.rows.forEach(function (row) {
       var c = row.c || [], k = c[0] && c[0].v, v = c[2] && c[2].v;
-      if (typeof k === "string" && typeof v === "number") o[k] = v;
+      if (typeof k === "string" && typeof v !== "number") inEx = /^extras/i.test(k);   // encabezados de cada bloque
+      if (typeof k === "string" && typeof v === "number") { o[k] = v; if (inEx) ex.push(k); }
     });
+    if (ex.length || /extras/i.test(JSON.stringify(r.table.rows.slice(0, 40).map(function (x) { return x.c && x.c[0] && x.c[0].v; })))) {
+      extrasDef = ex; try { localStorage.setItem("st3_extras", JSON.stringify(ex)); } catch (e) {}
+    }
     return o;
   }
   /* Hoja "Ruleta": un premio por fila (nombre, material, cantidad por giro, porciones, stock por turno) */
@@ -119,6 +124,7 @@
     consume: consume, release: release, setManual: setManual,
     onChange: function (f) { listeners.push(f); },
     ruleta: function () { return ruletaDef; },
+    EXTRAS: function () { return extrasDef.slice(); },
     leyo: function () { return okAt; },
     sheetValue: function (turno, key) { return sheet[turno] && typeof sheet[turno][key] === "number" ? sheet[turno][key] : null; },
     // nombre para mostrar (el de la planilla no cambia: es la clave del stock)

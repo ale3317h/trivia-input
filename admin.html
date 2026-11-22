@@ -68,6 +68,9 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .si .sq small{display:block;font:700 9px system-ui,sans-serif;letter-spacing:.06em;color:var(--mut);text-transform:uppercase;margin-top:1px}
 .si input{width:58px;min-height:34px;padding:4px;font-size:15px;text-align:center;margin:0;border-radius:8px}
 .si .sb{position:absolute;left:0;bottom:0;height:2px;background:var(--c);opacity:.75}
+.si.x{grid-template-columns:8px 1fr auto 52px auto}
+.si .sx{display:flex;gap:4px}.si .sx button{width:34px;min-height:34px;padding:0;margin:0;font:900 15px system-ui,sans-serif;border-radius:8px}
+@media(min-width:900px){.stg1 .sl{max-width:720px}}
 .stkh{display:grid;grid-template-columns:8px 1fr auto 58px;gap:0 10px;padding:0 8px 2px 10px;font:700 9px system-ui,sans-serif;letter-spacing:.06em;color:var(--mut);text-transform:uppercase}
 .stg>div+div .stkh{display:none}
 @media(min-width:900px){.stg{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}.stg>div+div .stkh{display:grid}}
@@ -269,7 +272,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
         <div class="sc2">STOCK · turno activo: <b class="js-turno">—</b></div>
         <div class="rs"><div><b>Bolsitas</b><span class="small">Normal, Grande, Especial y Pequeño vuelven al número de la planilla: se borran las entregas y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('bolsitas')">REINICIAR</button></div>
         <div class="rs"><div><b>Ruleta</b><span class="small">Los premios de la ruleta vuelven al número de la planilla: se borran los giros y los ajustes de este turno.</span></div><button class="r" onclick="stkReset('ruleta')">REINICIAR</button></div>
-        <div class="rs"><div><b>Turno completo</b><span class="small">Bolsitas y ruleta juntas, solo del turno activo.</span></div><button class="r" onclick="stkReset('turno')">REINICIAR</button></div>
+        <div class="rs"><div><b>Turno completo</b><span class="small">Bolsitas, ruleta y extras juntos, solo del turno activo.</span></div><button class="r" onclick="stkReset('turno')">REINICIAR</button></div>
         <div class="rs" style="border-bottom:0"><div><b>Pasar sobrante mañana → tarde</b><span class="small">Lo que quedó sin entregar a la mañana se suma al stock de la tarde y la mañana queda en 0.</span></div><button class="g" onclick="stkPasar()">PASAR</button></div>
       </div></div>
     </div>
@@ -352,7 +355,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 <script src="questions.js?v=18"></script>
 <script src="fb.js?v=18"></script>
 <script src="sheet-config.js?v=1"></script>
-<script src="sheet.js?v=3"></script>
+<script src="sheet.js?v=4"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -1811,8 +1814,8 @@ function stkFk(k){return String(k).replace(/ñ/g,"n").replace(/\s+/g,"_")}
 function stkNom(t){return t==="tarde"?"turno tarde":"turno mañana"}
 function stkPaintTurno(){var n=stkNom(stkTurno());document.querySelectorAll(".js-turno").forEach(function(e){e.textContent=n})}
 async function stkReset(que){
-  var t=stkTurno(),ks=que==="bolsitas"?ST3Sheet.PREMIOS:(que==="ruleta"?ST3Sheet.RULETA:ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA));
-  var nom=que==="bolsitas"?"las bolsitas":(que==="ruleta"?"la ruleta":"todo el turno (bolsitas y ruleta)");
+  var t=stkTurno(),ks=que==="bolsitas"?ST3Sheet.PREMIOS:(que==="ruleta"?ST3Sheet.RULETA:ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA,ST3Sheet.EXTRAS()));
+  var nom=que==="bolsitas"?"las bolsitas":(que==="ruleta"?"la ruleta":"todo el turno (bolsitas, ruleta y extras)");
   var ent=0;ks.forEach(function(k){var i=ST3Sheet.info(t,k);if(i)ent+=i.entregados||0});
   if(!await askSteps([
     {icon:"📦",title:"¿Reiniciar "+nom+"?",text:"Del <b>"+stkNom(t)+"</b>: se borran las entregas registradas ("+ent+") y los ajustes manuales, y el stock vuelve al número de la planilla. El otro turno no se toca.",ok:"SÍ, SEGUIR",danger:true},
@@ -1824,7 +1827,7 @@ async function stkReset(que){
   }catch(e){alert("No se pudo reiniciar: "+(e&&e.message))}
 }
 async function stkPasar(){
-  var ks=ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA),pasa=[],falta=[];
+  var ks=ST3Sheet.PREMIOS.concat(ST3Sheet.RULETA,ST3Sheet.EXTRAS()),pasa=[],falta=[];
   ks.forEach(function(k){
     var m=ST3Sheet.info("manana",k),ta=ST3Sheet.info("tarde",k);
     if(!m||!ta){falta.push(k);return}
@@ -1843,6 +1846,20 @@ async function stkPasar(){
     await d.ref().update(u);toast("Sobrante pasado a la tarde ✓");renderStock();
   }catch(e){alert("No se pudo pasar: "+(e&&e.message))}
 }
+/* extras (ganar en vivo): −1 registra una entrega a mano; +1 deshace la última */
+function stkExCode(){return "man-"+Date.now()+"-"+Math.random().toString(36).slice(2,5)}
+async function stkEx(b,dir){
+  var t=b.dataset.t,k=b.dataset.k;
+  try{
+    if(dir<0){await ST3Sheet.consume(t,k,stkExCode());toast("Entrega registrada: "+k)}
+    else{
+      var f=(FB.cfg().stk||{})[t],p=f&&f[stkFk(k)],codes=Object.keys((p&&p.used)||{}).filter(function(c){return c.indexOf("man-")===0}).sort();
+      if(!codes.length){toast("No hay entregas manuales para deshacer");return}
+      await ST3Sheet.release(t,k,codes[codes.length-1]);toast("Última entrega deshecha: "+k)
+    }
+  }catch(e){alert("No se pudo: "+(e&&e.message))}
+  renderStock();
+}
 function stkOpen(){window.open("https://docs.google.com/spreadsheets/d/"+window.ST3_SHEET_ID+"/edit","_blank")}
 async function stkRefresh(){var ok=await ST3Sheet.load();toast(ok?"Planilla leída ✓":"No se pudo leer la planilla")}
 async function stkAdj(el){
@@ -1854,19 +1871,20 @@ function renderStock(){
   var box=$("stk-box");if(!box||$("t-stk").classList.contains("hide"))return;
   var ae=document.activeElement;if(ae&&ae.tagName==="INPUT"&&box.contains(ae))return;   // no pisar lo que se está escribiendo
   var act=stkTurno(),h="";
-  function card(t,k){
+  function card(t,k,ex){
     var i=ST3Sheet.info(t,k),sv=ST3Sheet.sheetValue(t,k),q=i?i.quedan:null;
     var c=q===null?"n":(q<=0?"z":(q<=5?"l":"k")),pc=i&&i.stock>0?Math.max(0,Math.min(100,Math.round(q/i.stock*100))):0;
     var tag=q===null?"sin datos":(q<=0?"SIN STOCK":(q<=5?"quedan pocos":""));
     var det=(i?'de <b>'+i.stock+'</b>'+(i.manual?' (ajustado)':(sv===null?'':'')):'stock —')+' · entregados <b>'+(i?i.entregados:"—")+'</b>'+(tag?' · '+tag:'');
-    return '<div class="si '+c+'"><i class="d"></i><div class="sn">'+esc(ST3Sheet.nombre(k))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
-      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+
+    return '<div class="si '+c+(ex?' x':'')+'"><i class="d"></i><div class="sn">'+esc(ST3Sheet.nombre(k))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
+      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+(ex?'<div class="sx"><button type="button" class="p" title="Entregué 1" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,-1)">−1</button><button type="button" class="p" title="Deshacer la última entrega" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,1)">+1</button></div>':'')+
       '<i class="sb" style="width:'+pc+'%"></i></div>';
   }
   function turno(t){
     var hd='<div class="stkh"><span></span><span>Premio</span><span>Quedan</span><span>Ajuste</span></div>';
     return '<div class="stg"><div>'+hd+'<div class="sg">BOLSITAS (trivia y cámaras)</div><div class="sl">'+ST3Sheet.PREMIOS.map(function(k){return card(t,k)}).join("")+'</div></div>'+
-      '<div>'+hd+'<div class="sg">RULETA</div><div class="sl">'+ST3Sheet.RULETA.map(function(k){return card(t,k)}).join("")+'</div></div></div>';
+      '<div>'+hd+'<div class="sg">RULETA</div><div class="sl">'+ST3Sheet.RULETA.map(function(k){return card(t,k)}).join("")+'</div></div></div>'+
+      (ST3Sheet.EXTRAS().length?'<div class="sg">EXTRAS PARA QUIENES GANAN EN VIVO (−1 cuando lo entregás)</div><div class="stg1"><div class="sl">'+ST3Sheet.EXTRAS().map(function(k){return card(t,k,true)}).join("")+'</div></div>':'');
   }
   var otro=act==="manana"?"tarde":"manana",nom=function(t){return t==="manana"?"☀️ Turno mañana":"🌙 Turno tarde"};
   var abierto=!!(box.querySelector("details.tz")&&box.querySelector("details.tz").open);
