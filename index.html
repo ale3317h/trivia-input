@@ -2260,7 +2260,7 @@ function ask(){
   var bad=shuf(d.bad).slice(0,n-1);
   var opts=shuf([d.ok].concat(bad));
   $("h-lv").textContent="NIVEL "+(l+1)+" · "+L[0];$("h-hp").innerHTML=hearts();
-  $("h-q").textContent="Pregunta "+(qi+1)+" de "+(l===3?order.length:Math.min(totalQ()+(qi-cq),order.length));scoreHud();
+  $("h-q").textContent="Pregunta "+(cq+1)+" de "+(l===3?Math.max(cq+1,order.length-(qi-cq)):totalQ());   // el número solo sube con las respuestas correctas: un error no sumascoreHud();
   setQ(d.q);live();$("qcard").classList.remove("out");
   var o=$("opts");o.innerHTML="";o.classList.remove("done");
   opts.forEach(function(t,i){var b=document.createElement("button");b.className="opt";b.innerHTML="<b>"+String.fromCharCode(65+i)+"</b><span>"+esc(t)+"</span>";b.dataset.ok=(t===d.ok)?"1":"0";b.onclick=function(){pick(b)};o.appendChild(b)});
@@ -2288,7 +2288,7 @@ function reveal(b){
   if(b&&!good)b.classList.add("bad");
   if(!good){hp--;racha=0;crack();playSonido(b?"incorrecto":"tiempo")}
   $("opts").classList.add("done");$("tsec").classList.remove("low");$("h-hp").innerHTML=hearts();scoreHud(good);live();danger();
-  saveScore().then(refresh);qrIssue(lvOf(cq),qi+1);
+  saveScore().then(refresh);qrIssue(lvOf(cq),cq+1);
   var nb=$("next");nb.disabled=false;nb.classList.remove("off");
   nb.textContent=(hp<=0||qi+1>=order.length)?"VER RESULTADO →":"SIGUIENTE →";
 }
@@ -2328,7 +2328,7 @@ async function showPrize(){
 }
 function prizeExit(){go()}
 function expIntro(){
-  $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=qi+1;
+  $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=cq+1;
   show("s-exp");
 }
 function prizeGo(){expIntro()}
@@ -2466,12 +2466,12 @@ async function end(win){
   $("end-t").innerHTML=agot?"<span class=\"emj\">😢</span> SIN STOCK":!prize?"<span class=\"emj\">😢</span> LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
   $("end-pz").textContent=agot?"Lo siento, nos quedamos sin stock de este premio en este turno. ¡Gracias por jugar!":!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
-  $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
+  $("st-pts").textContent=0;$("st-q").textContent=win?cq:(cq+1);$("st-pos").textContent="–";
   $("end-badge").innerHTML="";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
-  if(prize)qrIssue(li,win?order.length:(qi+1));qrShow("end-qr");
+  if(prize)qrIssue(li,win?cq:(cq+1));qrShow("end-qr");
   show("s-end");countTo($("st-pts"),score,true);
   // terminó el modo experto: lo primero que se ve es la ventana para dejar el Gmail (aceptar o rechazar)
   (win||lvOf(cq)===3?mailGate():Promise.resolve("ya")).then(function(r){if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");if(good)confetti()});
