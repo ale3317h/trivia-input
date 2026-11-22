@@ -21,7 +21,7 @@ Todo el stock de premios sale de la **Planilla de Google "Plan de premios Muestr
 
 | Página | Qué hace |
 | --- | --- |
-| `premios.html` | Premios en gráficos (bolsitas, puestos) y pestaña **Stock en vivo** de los dos turnos. |
+| `premios.html` | Premios en gráficos (bolsitas, puestos). |
 | `ruleta-grande.html` | **Ruleta grande** (la de OBS) conectada a la planilla: premios y porciones de la hoja «Ruleta»; las porciones sin stock en el turno quedan grises y dicen «NADA». Descuenta al entregar y permite deshacer. |
 | `ruleta-pizarron.html` | **Ruleta pizarrón** (estética de los carteles de la muestra): misma conexión con la planilla y el stock que la ruleta grande. Tabla de premios a la izquierda con chance y stock (se activa o desactiva desde el panel), la ruleta se agranda al girar y vuelve al cerrar el premio, logo de tiza en el centro y simulador de tiradas con contraseña (no toca el stock real). Usa `fondo-pizarron.webp` y `logo-pizarron.webp`. |
 | `index.html` (trivia) | Si el premio ganado se agotó en el turno: «Lo siento, nos quedamos sin stock». Si falta el Grande pero queda Normal, entrega el Normal. |

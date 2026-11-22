@@ -54,9 +54,6 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
 .rf{font:inherit;font-size:.95rem;color:#fff;background:#ffffff1f;border:1px solid #ffffff40;border-radius:2rem;padding:.25rem .9rem;cursor:pointer}
 .rf:hover{background:#ffffff33}
 @media (max-width:700px){html{font-size:14px}body{padding:1.5rem 0.875rem 1.25rem}.row{grid-template-columns:minmax(0,1fr)}}
-#rowStock .bg{min-width:3rem}
-#rowStock .bar{flex:0 1 2.2rem;min-width:1rem}
-#rowStock .it{font-size:1.1rem}
 @media (max-width:1100px){.bar{min-width:0.75rem}.bg{min-width:3.5rem}.it{gap:0.5rem}}
 .grp{border:0.125rem solid #bfdbfe;border-left:0.45rem solid #2563eb;border-radius:0.875rem;padding:0.125rem 0.875rem 0.375rem 0.75rem;margin:0.875rem 0;background:#f6faff}
 .grp .it{border-bottom:0.0625rem dashed #cfe0fb;padding:0.5rem 0}
@@ -78,10 +75,6 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
   .it{padding:0.5rem 0}
   .foot{padding:0.5rem 1.375rem 1.125rem}
   .m b{font-size:2rem}
-  #rowStock{grid-template-columns:repeat(auto-fit,minmax(13.5rem,1fr))}
-  #rowStock .it{font-size:1rem}
-  #rowStock .head h2{font-size:1.6rem;padding-right:3rem}
-  #rowStock .emoji{font-size:2.25rem}
   .bottom{padding-top:0}
 }
 @media (min-width:1100px) and (min-aspect-ratio:4/3){
@@ -94,26 +87,19 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
   .bg b{font-size:1.4rem}.bg span{font-size:0.75rem}.lv{font-size:1.1rem}.lv small{font-size:0.78rem}
   .foot{padding:0.4rem 1.25rem 0.9rem}.m{padding:0.4rem 0.6rem}.m b{font-size:1.7rem}.m span{font-size:0.8rem}
   .grp{margin:0.55rem 0;padding:0 0.75rem 0.25rem 0.65rem}.grp .it{padding:0.3rem 0}.grp .inc{font-size:0.68rem;padding:0.3rem 0 0.05rem}
-  #rowStock .it{font-size:0.95rem;gap:0.45rem}#rowStock .ic{width:2rem;height:2rem;font-size:1.1rem}
-  #rowStock .bg b{font-size:1.25rem}#rowStock .bar{flex:0 1 1.2rem;min-width:0.5rem}#rowStock .bg{min-width:2.4rem}
-  #rowStock .head h2{font-size:1.45rem}#rowStock .head{padding:0.7rem 1.2rem 0.6rem}#rowStock .emoji{font-size:2rem}
-  #rowStock .foot{padding:0.3rem 1rem 0.7rem}#rowStock .m b{font-size:1.5rem}
 }
-@media (min-width:1100px) and (min-aspect-ratio:4/3){#rowStock .bar{display:none}#rowStock .it{gap:0.6rem}#rowStock .bg{min-width:3rem}}
-@media (min-width:1100px) and (min-aspect-ratio:4/3){#rowStock .it{font-size:0.9rem}#rowStock .items{padding-right:0.9rem;padding-left:1rem}}
 </style></head><body>
 <div class="deco d1"></div><div class="deco d2"></div>
 <div class="wrap">
 <div class="top">
  <div><h1>Plan de premios</h1><div class="sub">Muestra anual 2026 · bolsitas, ruleta, trivia y cámaras</div></div>
- <nav class="tabs" role="tablist" aria-label="Secciones"><button class="tab" id="tab1" role="tab" aria-selected="true" aria-controls="p1">Bolsitas</button><button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="p2">Puestos</button><button class="tab" id="tab3" role="tab" aria-selected="false" aria-controls="p3">Stock en vivo</button></nav>
+ <nav class="tabs" role="tablist" aria-label="Secciones"><button class="tab" id="tab1" role="tab" aria-selected="true" aria-controls="p1">Bolsitas</button><button class="tab" id="tab2" role="tab" aria-selected="false" aria-controls="p2">Puestos</button></nav>
  <div class="pill" id="turnos">2 turnos</div>
 </div>
 
-<div class="hint"><kbd>←</kbd> <kbd>→</kbd> o <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> cambian de pestaña · <kbd>↑</kbd> <kbd>↓</kbd> suben y bajan</div>
+<div class="hint"><kbd>←</kbd> <kbd>→</kbd> o <kbd>1</kbd> <kbd>2</kbd> cambian de pestaña · <kbd>↑</kbd> <kbd>↓</kbd> suben y bajan</div>
 <section class="panel" id="p1" role="tabpanel" aria-labelledby="tab1"><div class="row" id="rowBolsas"></div></section>
 <section class="panel" id="p2" role="tabpanel" aria-labelledby="tab2" hidden><div class="row" id="rowPuestos"></div></section>
-<section class="panel" id="p3" role="tabpanel" aria-labelledby="tab3" hidden><div class="row" id="rowStock"></div></section>
 
 <div class="bottom">
  <span class="live"><span class="dot" id="dot"></span><span id="estado">Cargando…</span><button class="rf" id="rf" type="button">Actualizar</button></span>
@@ -121,12 +107,6 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
 </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
-<script src="fb-config.js?v=18"></script>
-<script src="fb.js?v=18"></script>
-<script src="sheet-config.js?v=1"></script>
-<script src="sheet.js?v=4"></script>
 <script>
 (function(){
   var SHEET_ID='1jJ_WUHFocqyaO1RpoVkGBGoonnojCt6Y1u4OOrWFK2A';
@@ -239,7 +219,7 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     var max=Math.max.apply(null,rl.map(function(r){return r.t;}).concat([1]));
     var rb='';
     rl.forEach(function(r){
-      var nm=itemName((window.ST3Sheet&&ST3Sheet.nombre)?ST3Sheet.nombre(r.n):String(r.n).replace(/^llavero +grande$/i,"Logo grande"),1).text;
+      var nm=itemName(String(r.n).replace(/^llavero +grande$/i,"Logo grande"),1).text;
       rb+='<div class="it"><div class="ic">'+emojiFor(r.m||r.n)+'</div>'+esc(nm)+'<div class="bar"><i style="width:'+Math.max(4,Math.round(r.t/max*100))+'%"></i></div><div class="bg"><b>'+r.t+'</b><span>'+r.T+' en total</span></div></div>';
     });
     p+=card('#ea580c,#f59e0b','Ruleta','Premios previstos · '+sum(d.ruleta,'t')+' giros por turno','🎡',rb,'<div class="foot"><div class="m"><b>'+sum(d.ruleta,'t')+'</b><span>premios por turno</span></div><div class="m"><b>'+sum(d.ruleta,'T')+'</b><span>premios en total</span></div></div>');
@@ -330,46 +310,20 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     });
   }
 
-  /* Stock en vivo: planilla (stock de cada turno) menos lo entregado en Firebase */
-  var TNAME={manana:'Turno mañana',tarde:'Turno tarde'};
-  function stockCard(t,title,keys,grad,emoji,activo){
-    var body='',tot=0,tq=0;
-    keys.forEach(function(k){
-      var i=ST3Sheet.info(t,k),q=i?i.quedan:null,n=i?i.stock:null;
-      var pc=i&&n>0?Math.max(0,Math.min(100,Math.round(q/n*100))):0;
-      var col=q===null?'#cbd5e1':(q<=0?'#dc2626':(q<=5?'#f59e0b':'#16a34a'));
-      if(i){tot+=n;tq+=Math.max(0,q);}
-      body+='<div class="it"><div class="ic">'+emojiFor(k)+'</div>'+esc(String(ST3Sheet.nombre?ST3Sheet.nombre(k):k).replace(/ \(Ganar en vivo\)$/i,'').replace(/ \(reemplazo de .*\)$/i,' (si no hay)'))+'<div class="bar"><i style="width:'+pc+'%;background:'+col+'"></i></div><div class="bg"><b style="color:'+col+'">'+(q===null?'—':q)+'</b><span>'+(i?'de '+n+(i.manual?' (ajustado)':''):'sin datos')+'</span></div></div>';
-    });
-    return card(grad,title,(activo?'Turno activo · ':'')+TNAME[t],emoji,body,'<div class="foot"><div class="m"><b>'+tq+'</b><span>quedan</span></div><div class="m"><b>'+tot+'</b><span>stock del turno</span></div></div>');
-  }
-  function renderStock(){
-    var act=(window.FB&&FB.cfg&&FB.cfg().turno)||'manana',h='';
-    ['manana','tarde'].forEach(function(t){
-      h+=stockCard(t,'Bolsitas',ST3Sheet.PREMIOS,'#6d28d9,#8b5cf6','🎁',t===act);
-      h+=stockCard(t,'Ruleta',ST3Sheet.RULETA,'#ea580c,#f59e0b','🎡',t===act);
-      if(ST3Sheet.EXTRAS&&ST3Sheet.EXTRAS().length)h+=stockCard(t,'Extras del stream',ST3Sheet.EXTRAS(),'#2563eb,#38bdf8','📺',t===act);
-    });
-    document.getElementById('rowStock').innerHTML=h;
-  }
-  ST3Sheet.onChange(renderStock);
-  renderStock();
-
   var dot=document.getElementById('dot'),estado=document.getElementById('estado'),busy=false;
   function hora(){var n=new Date();return('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2);}
   function refresh(){
     if(busy)return;busy=true;
     estado.textContent='Actualizando…';dot.className='dot';
-    ST3Sheet.load();
     load().then(function(d){render(d);dot.className='dot on';estado.textContent='En vivo desde la planilla · actualizado '+hora();})
     .catch(function(){dot.className='dot off';estado.textContent='Sin conexión con la planilla · se muestran los últimos datos guardados';})
     .then(function(){busy=false;});
   }
 
   /* Pestañas y teclado */
-  var tabs=[document.getElementById('tab1'),document.getElementById('tab2'),document.getElementById('tab3')];
-  var panels=[document.getElementById('p1'),document.getElementById('p2'),document.getElementById('p3')];
-  var HASH=['bolsitas','puestos','stock'];
+  var tabs=[document.getElementById('tab1'),document.getElementById('tab2')];
+  var panels=[document.getElementById('p1'),document.getElementById('p2')];
+  var HASH=['bolsitas','puestos'];
   var cur=0;
   function show(n,keep){
     cur=(n+tabs.length)%tabs.length;
@@ -384,7 +338,6 @@ h1{font-size:clamp(2.125rem,4.4vw,3.5rem);font-weight:800;letter-spacing:-0.0625
     else if(e.key==='ArrowLeft'){e.preventDefault();show(cur-1);}
     else if(e.key==='1')show(0);
     else if(e.key==='2')show(1);
-    else if(e.key==='3')show(2);
     else if(e.key==='r'||e.key==='R')refresh();
   });
   document.getElementById('rf').addEventListener('click',refresh);
