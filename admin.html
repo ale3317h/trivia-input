@@ -1876,15 +1876,15 @@ function renderStock(){
     var c=q===null?"n":(q<=0?"z":(q<=5?"l":"k")),pc=i&&i.stock>0?Math.max(0,Math.min(100,Math.round(q/i.stock*100))):0;
     var tag=q===null?"sin datos":(q<=0?"SIN STOCK":(q<=5?"quedan pocos":""));
     var det=(i?'de <b>'+i.stock+'</b>'+(i.manual?' (ajustado)':(sv===null?'':'')):'stock —')+' · entregados <b>'+(i?i.entregados:"—")+'</b>'+(tag?' · '+tag:'');
-    return '<div class="si '+c+(ex?' x':'')+'"><i class="d"></i><div class="sn">'+esc(ST3Sheet.nombre(k))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
-      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+(ex?'<div class="sx"><button type="button" class="p" title="Entregué 1" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,-1)">−1</button><button type="button" class="p" title="Deshacer la última entrega" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,1)">+1</button></div>':'')+
+    return '<div class="si '+c+' x"><i class="d"></i><div class="sn">'+esc(String(ST3Sheet.nombre(k)).replace(/ \(Ganar en vivo\)$/i,'').replace(/ \(reemplazo de .*\)$/i,' (si no hay)'))+'<small>'+det+'</small></div><div class="sq">'+(q===null?"—":q)+'<small>quedan</small></div>'+
+      '<input type="number" inputmode="numeric" min="0" placeholder="—" title="Ajuste: corrige el stock sin tocar la planilla" value="'+(i&&i.manual?i.stock:"")+'" data-t="'+t+'" data-k="'+esc(k)+'" onchange="stkAdj(this)">'+('<div class="sx"><button type="button" class="p" title="Entregué 1" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,-1)">−1</button><button type="button" class="p" title="Deshacer la última entrega" data-t="'+t+'" data-k="'+esc(k)+'" onclick="stkEx(this,1)">+1</button></div>')+
       '<i class="sb" style="width:'+pc+'%"></i></div>';
   }
   function turno(t){
     var hd='<div class="stkh"><span></span><span>Premio</span><span>Quedan</span><span>Ajuste</span></div>';
     return '<div class="stg"><div>'+hd+'<div class="sg">BOLSITAS (trivia y cámaras)</div><div class="sl">'+ST3Sheet.PREMIOS.map(function(k){return card(t,k)}).join("")+'</div></div>'+
       '<div>'+hd+'<div class="sg">RULETA</div><div class="sl">'+ST3Sheet.RULETA.map(function(k){return card(t,k)}).join("")+'</div></div></div>'+
-      (ST3Sheet.EXTRAS().length?'<div class="sg">EXTRAS PARA QUIENES GANAN EN VIVO (−1 cuando lo entregás)</div><div class="stg1"><div class="sl">'+ST3Sheet.EXTRAS().map(function(k){return card(t,k,true)}).join("")+'</div></div>':'');
+      (ST3Sheet.EXTRAS().length?'<div class="sg">EXTRAS PARA QUIENES GANAN EN VIVO</div><div class="stg1"><div class="sl">'+ST3Sheet.EXTRAS().map(function(k){return card(t,k,true)}).join("")+'</div></div>':'');
   }
   var otro=act==="manana"?"tarde":"manana",nom=function(t){return t==="manana"?"☀️ Turno mañana":"🌙 Turno tarde"};
   var abierto=!!(box.querySelector("details.tz")&&box.querySelector("details.tz").open);
