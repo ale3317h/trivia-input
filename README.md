@@ -22,7 +22,7 @@ Todo el stock de premios sale de la **Planilla de Google "Plan de premios Muestr
 | Página | Qué hace |
 | --- | --- |
 | `premios.html` | Premios en gráficos (bolsitas, puestos) y pestaña **Stock en vivo** de los dos turnos. |
-| `ruleta.html` | Ruleta: las porciones y la probabilidad salen de lo que queda de cada premio; descuenta al girar y permite deshacer. |
+| `ruleta-grande.html` | **Ruleta grande** (la de OBS) conectada a la planilla: premios y porciones de la hoja «Ruleta»; las porciones sin stock en el turno quedan grises y dicen «NADA». Descuenta al entregar y permite deshacer. |
 | `index.html` (trivia) | Si el premio ganado se agotó en el turno: «Lo siento, nos quedamos sin stock». Si falta el Grande pero queda Normal, entrega el Normal. |
 | `saluda.html` (cámaras) | Si la bolsita Pequeño se agotó, muestra «Lo siento» en vez del QR. |
 | `admin.html` | Pestaña **Stock**: tabla en vivo de los dos turnos, ajustes y selector de turno. |

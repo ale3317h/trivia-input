@@ -3,3 +3,5 @@
    La planilla tiene que estar compartida como "cualquier persona con el enlace puede ver". */
 window.ST3_SHEET_ID = "1jJ_WUHFocqyaO1RpoVkGBGoonnojCt6Y1u4OOrWFK2A";
 window.ST3_TABS = { manana: "Hoja en vivo turno mañana", tarde: "Hoja en vivo turno tarde" };
+/* Hoja con los premios de la ruleta: nombre, material, cantidad por giro, porciones y stock por turno (filas desde la 8) */
+window.ST3_RULETA_TAB = "Ruleta";
