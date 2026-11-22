@@ -321,6 +321,14 @@ body.zoom .stage>.hint{opacity:0}
 .simbox tr.nada td{color:#bdbdbd}
 .simbox .res{margin-top:6px}
 .simbox .res b{color:var(--gold)}
+
+/* la rueda va sin íconos; los íconos de tiza van en el cartel del premio y en la tabla */
+.opt:has(#optIco){display:none}
+.wcard .em img{width:68%;height:68%;object-fit:contain;filter:brightness(1.35) saturate(1.2) contrast(1.1);pointer-events:none}
+.tabla .sw{width:clamp(28px,4.4vh,40px);height:clamp(28px,4.4vh,40px);border-radius:50%;background:#101010e6;box-shadow:none;border:2px solid var(--c);display:grid;place-items:center;overflow:hidden}
+.tabla .sw img{width:74%;height:74%;object-fit:contain;filter:brightness(1.35) saturate(1.2) contrast(1.1)}
+.tabla .sw b{display:block;width:46%;height:46%;border-radius:50%;background:var(--c)}
+.tabla li.ago .sw img{filter:grayscale(1) brightness(.9);opacity:.6}
 </style>
 </head>
 <body>
@@ -675,7 +683,7 @@ function draw(hi){
     const nada=isGone(it),a=A(i)+half,dark=lum(nada?GRIS:it.color)>.36;
     x.save();x.translate(c,c);x.rotate(a);
     let rT=R*.9;
-    if(st.icons&&it.emoji&&!nada){
+    if(false&&st.icons&&it.emoji&&!nada){
       const rE=R*.84,es=Math.min(R*.145,2*rE*Math.sin(half)*.92),ik=iconoDe(it.name),im=ik&&ICONOS[ik];
       x.save();x.translate(rE,0);x.rotate(Math.PI/2);
       if(im){
@@ -858,7 +866,7 @@ function terminar(){
     $('win').classList.add('show');pend=-1;ultimo=null;undoUI();
     return;
   }
-  $('wEm').textContent=it.emoji||'🎁';$('wNm').textContent=it.name||'Premio';
+  {const ik=iconoDe(it.name),u=ik&&ICONOS_SRC[ik];if(u)$('wEm').innerHTML='<img alt="" src="'+u+'">';else $('wEm').textContent=it.emoji||'🎁';}$('wNm').textContent=it.name||'Premio';
   $('wcard').style.setProperty('--c',it.color);$('wcard').classList.remove('nada');
   $('win').classList.add('show');
   pend=st.remove?idx:-1;
@@ -976,7 +984,7 @@ function tabla(){
     const pct=(p<10&&p>0?p.toFixed(1):Math.round(p))+'%';
     const qt=q===null?'stock: sin dato':(ago?'sin stock · sale NADA':'quedan '+q);
     return '<li class="'+(ago?'ago':(q!==null&&q<=3?'poco':''))+'" style="--c:'+esc(ago?GRIS:it.color)+'">'
-      +'<i class="sw"></i><span class="nm">'+esc(it.name)+'<small>'+esc(qt)+'</small></span><b class="pc">'+pct+'</b></li>';
+      +'<i class="sw">'+(ICONOS_SRC[iconoDe(it.name)]?'<img alt="" src="'+ICONOS_SRC[iconoDe(it.name)]+'">':'<b></b>')+'</i><span class="nm">'+esc(it.name)+'<small>'+esc(qt)+'</small></span><b class="pc">'+pct+'</b></li>';
   }).join('');
   $('tablaSub').textContent='chance de salir · stock '+(turnoNow()==='tarde'?'turno tarde':'turno mañana');
 }
