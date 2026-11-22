@@ -428,6 +428,7 @@ body.zoom .stage>.hint{opacity:0}
 
     <section class="sec">
       <h2><em><i>04</i>Opciones</em></h2>
+      <label class="opt"><input type="checkbox" id="optEq"> Equilibrar premios según el stock (que ninguno se acabe antes que los demás)</label>
       <label class="opt"><input type="checkbox" id="optTabla"> Mostrar la tabla de premios (chance y stock)</label>
       <label class="opt"><input type="checkbox" id="optIco"> Mostrar íconos en la ruleta</label>
       <label class="opt"><input type="checkbox" id="optSnd"> Sonido <input type="range" id="optVol" min="0" max="1" step="0.05"></label>
@@ -479,7 +480,7 @@ const mod=(a,n)=>((a%n)+n)%n;
 function rnd(){try{const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}catch(e){return Math.random();}}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
-function fresh(){return{title:'Ruleta de premios',tabla:true,sound:true,vol:.7,remove:false,panel:true,icons:false,items:EJEMPLO.map(o=>Object.assign({id:uid()},o)),order:[]};}
+function fresh(){return{title:'Ruleta de premios',tabla:true,eq:true,sound:true,vol:.7,remove:false,panel:true,icons:false,items:EJEMPLO.map(o=>Object.assign({id:uid()},o)),order:[]};}
 function load(){
   try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&Array.isArray(s.items))return Object.assign(fresh(),s);}catch(e){}
   return null;
@@ -794,7 +795,7 @@ function spin(){
   const n=sectors().length;if(n<2)return;
   frozen=new Set(sectors().filter(gone).map(i=>i.id));
   draw(-1);
-  const span=360/n,target=Math.floor(rnd()*n),off=span*(.14+rnd()*.72);
+  const span=360/n,target=elegirSector(stockDe),off=span*(.14+rnd()*.72);
   const want=mod(-(target*span+off),360);              // la flecha está arriba
   const delta=mod(want-mod(theta,360),360);
   A={t0:performance.now(),from:theta,total:(8+Math.floor(rnd()*4))*360+delta,W:10,wind:.35,dur:7.4+rnd()*1.6,span,prevTh:theta};
@@ -926,7 +927,7 @@ function renderPanel(){
   });
   probs();strip();tabla();
   $('tIn').value=st.title;$('titulo').textContent=st.title||'Ruleta de premios';
-  $('optSnd').checked=st.sound;$('optVol').value=st.vol;$('optRm').checked=st.remove;$('optIco').checked=st.icons;$('optTabla').checked=st.tabla!==false;
+  $('optSnd').checked=st.sound;$('optVol').value=st.vol;$('optRm').checked=st.remove;$('optIco').checked=st.icons;$('optTabla').checked=st.tabla!==false;$('optEq').checked=st.eq!==false;
 }
 function probs(){
   const T=total();
@@ -943,15 +944,41 @@ function probs(){
 }
 function tabla(){
   const ul=$('tablaList');if(!ul)return;
-  const T=total(),its=st.items.filter(i=>i.count>0);
+  const ch=chances(stockDe),its=st.items.filter(i=>i.count>0);
   ul.innerHTML=its.map(it=>{
-    const p=T?it.count/T*100:0,q=stockDe(it),ago=isGone(it);
+    const p=(ch.get(it.id)||0)*100,q=stockDe(it),ago=isGone(it);
     const pct=(p<10&&p>0?p.toFixed(1):Math.round(p))+'%';
     const qt=q===null?'stock: sin dato':(ago?'sin stock · sale NADA':'quedan '+q);
     return '<li class="'+(ago?'ago':(q!==null&&q<=3?'poco':''))+'" style="--c:'+esc(ago?GRIS:it.color)+'">'
       +'<i class="sw"></i><span class="nm">'+esc(it.name)+'<small>'+esc(qt)+'</small></span><b class="pc">'+pct+'</b></li>';
   }).join('');
   $('tablaSub').textContent='chance de salir · stock '+(turnoNow()==='tarde'?'turno tarde':'turno mañana');
+}
+/* Chance de cada premio.
+   - Normal: según las porciones (todas iguales).
+   - Equilibrado: según los giros que le quedan a cada premio (stock ÷ cantidad por giro).
+     Así todos se van acabando parejo y casi no sale "Nada" hasta el final.
+     Además se corrige el ritmo: el que va adelantado (se entregó más de su parte) sale menos.
+   stockOf(it) devuelve el stock que queda (o null si no hay dato). */
+function chances(stockOf){
+  const its=st.items.filter(it=>it.count>0),m=new Map();
+  const giros=it=>{const q=stockOf(it);return q===null?null:Math.max(0,Math.floor(q/(it.porGiro||1)));};
+  const eq=st.eq!==false&&its.length&&its.every(it=>giros(it)!==null);
+  // corrección de ritmo: si un premio se está yendo más rápido que el resto, baja su chance; si va atrasado, sube
+  const ini=it=>{const i=it.key?ST3Sheet.info(turnoNow(),it.key):null;return i&&i.stock>0?Math.floor(i.stock/(it.porGiro||1)):null;};
+  let T=0;its.forEach(it=>{const g=eq?giros(it):0,i0=eq?ini(it):null;const w=eq?g*(i0?Math.pow(Math.min(1,g/i0),4):1):it.count;m.set(it.id,w);T+=w;});
+  its.forEach(it=>m.set(it.id,T?m.get(it.id)/T:0));
+  m.eq=eq;return m;
+}
+/* Elige la porción donde va a caer la rueda: primero el premio (según chances), después una de sus porciones al azar */
+function elegirSector(stockOf){
+  const sec=sectors(),n=sec.length,ch=chances(stockOf);
+  if(!ch.eq)return Math.floor(rnd()*n);                 // modo normal: cualquier porción, todas igual de probables
+  let r=rnd(),pick=null;
+  for(const it of st.items){const p=ch.get(it.id)||0;if(p<=0)continue;if(r<p){pick=it;break;}r-=p;pick=it;}
+  if(!pick)return Math.floor(rnd()*n);                  // no queda nada: cae en cualquiera (sale "Nada")
+  const idx=[];sec.forEach((it,i)=>{if(it.id===pick.id)idx.push(i);});
+  return idx.length?idx[Math.floor(rnd()*idx.length)]:Math.floor(rnd()*n);
 }
 function strip(){$('strip').innerHTML=sectors().map(it=>'<i style="background:'+esc(isGone(it)?GRIS:it.color)+'" title="'+esc(it.name)+'"></i>').join('');}
 function cambio(){hideWin();mix();save();renderPanel();draw(-1);}
@@ -988,6 +1015,7 @@ function refreshSheet(){
   if(sig===sigPrev)return;
   sigPrev=sig;renderPanel();draw(-1);
 }
+$('optEq').addEventListener('change',e=>{st.eq=e.target.checked;save();renderPanel();});
 $('optTabla').addEventListener('change',e=>{st.tabla=e.target.checked;save();layout();});
 /* ---------- Simulador de tiradas (con contraseña; no toca el stock real) ---------- */
 const SIM_HASH='d92483016af5946ff366758ea8678df6dbaebf679513507ac77e9664b1bcf96b';
@@ -1008,22 +1036,23 @@ function simular(N){
   const sec=sectors(),n=sec.length;
   const q=new Map(),won=new Map(),agot=new Map();let nada=0;
   st.items.forEach(it=>{const v=stockDe(it);q.set(it.id,v===null?Infinity:v);won.set(it.id,0);});
+  const ch0=chances(stockDe);
   for(let k=0;k<N;k++){
-    const it=sec[Math.floor(rnd()*n)],need=it.porGiro||1,v=q.get(it.id);
+    const it=sec[elegirSector(x=>{const v=q.get(x.id);return v===Infinity?null:v;})],need=it.porGiro||1,v=q.get(it.id);
     if(v<need){nada++;continue;}
     q.set(it.id,v-need);won.set(it.id,won.get(it.id)+1);
     if(q.get(it.id)<need&&!agot.has(it.id))agot.set(it.id,k+1);
   }
-  return{N,n,q,won,agot,nada};
+  return{N,n,q,won,agot,nada,ch0};
 }
 function simMostrar(r){
   const T=total(),pc=x=>(x<10&&x>0?x.toFixed(1):Math.round(x))+'%';
   const filas=st.items.filter(it=>it.count>0).map(it=>{
     const w=r.won.get(it.id),ini=stockDe(it),fin=r.q.get(it.id);
     const stock=ini===null?'sin dato':(ini+' → '+(fin===Infinity?'—':fin)+(r.agot.has(it.id)?' (se acaba en la tirada '+r.agot.get(it.id)+')':''));
-    return '<tr><td><i style="background:'+esc(it.color)+'"></i>'+esc(it.name)+'</td><td class="n">'+w+'</td><td class="n">'+pc(w/r.N*100)+'</td><td class="n">'+pc(T?it.count/T*100:0)+'</td><td>'+esc(stock)+'</td></tr>';
+    return '<tr><td><i style="background:'+esc(it.color)+'"></i>'+esc(it.name)+'</td><td class="n">'+w+'</td><td class="n">'+pc(w/r.N*100)+'</td><td class="n">'+pc((r.ch0.get(it.id)||0)*100)+'</td><td>'+esc(stock)+'</td></tr>';
   }).join('');
-  $('simRes').innerHTML='<p class="res">Resultado de <b>'+r.N+'</b> tiradas (turno '+(turnoNow()==='tarde'?'tarde':'mañana')+'):</p>'
+  $('simRes').innerHTML='<p class="res">Resultado de <b>'+r.N+'</b> tiradas (turno '+(turnoNow()==='tarde'?'tarde':'mañana')+') · '+(r.ch0.eq?'<b>equilibrado</b> según stock':'según porciones')+':</p>'
     +'<table><thead><tr><th>Premio</th><th class="n">Salió</th><th class="n">Real</th><th class="n">Chance</th><th>Stock</th></tr></thead><tbody>'+filas
     +'<tr class="nada"><td><i style="background:'+GRIS+'"></i>Nada (sin stock)</td><td class="n">'+r.nada+'</td><td class="n">'+pc(r.nada/r.N*100)+'</td><td class="n">—</td><td></td></tr></tbody></table>';
 }
