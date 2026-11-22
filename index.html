@@ -510,6 +510,7 @@ body.exp:not(.xs):not(.xxs) .qt{font-size:clamp(1.1rem,3vh,1.35rem);padding:4px 
 @media (max-height:420px){.hero{padding:10px 12px;gap:6px}.hearts-big{font-size:1.9rem}.clock{width:84px}.slide .t{font-size:1.3rem}.steps{margin-bottom:6px}.hi{margin-bottom:4px}.chip{padding:4px 10px}}
 /* Pantalla final: título + ticket del premio con QR */
 .endh{text-align:center;margin:4px 0 14px;animation:up .5s var(--ease) both}
+.emj{font-style:normal;display:inline-block;transform:none}
 .endh .big{font:italic 900 clamp(2.2rem,11vw,3.2rem)/1.05 var(--disp);margin:0}
 .endh p{margin:6px 0 0;font-weight:700;color:var(--mut)}
 .endh.ok p{color:var(--tx)}
@@ -2462,7 +2463,7 @@ async function end(win){
   var good=prize;
   if(good)playSonido("tada");
   $("end-c").className="endh "+(good?"ok":"bad");
-  $("end-t").textContent=agot?"😢 SIN STOCK":!prize?"😢 LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
+  $("end-t").innerHTML=agot?"<span class=\"emj\">😢</span> SIN STOCK":!prize?"<span class=\"emj\">😢</span> LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
   $("end-pz").textContent=agot?"Lo siento, nos quedamos sin stock de este premio en este turno. ¡Gracias por jugar!":!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?order.length:(qi+1);$("st-pos").textContent="–";
