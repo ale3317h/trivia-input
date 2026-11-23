@@ -417,12 +417,13 @@ const isGone=it=>frozen?frozen.has(it.id):gone(it);
 let ultimo=null;                                                                // último premio entregado (para deshacer)
 function syncSheet(){
   const def=ST3Sheet.ruleta();if(!def)return false;
-  const hay=def.filter(p=>p.porciones>0);if(!hay.length)return false;
+  const porc=p=>p.porciones>0?p.porciones:(((ST3Sheet.sheetValue(turnoNow(),p.name)||p.stockTurno||0)>0)?1:0);   // un premio con stock siempre tiene al menos 1 porción
+  const hay=def.filter(p=>porc(p)>0);if(!hay.length)return false;
   let cambio_=false;const nuevos=[];
   hay.forEach((p,i)=>{
     let it=st.items.find(o=>normN(o.key||o.name)===normN(p.name));
-    if(!it){it={id:uid(),emoji:emojiDe(p.name),color:COL_PLAN[normN(p.name)]||PALETA[i%PALETA.length],count:p.porciones};cambio_=true;}
-    else if(it.count!==p.porciones){it.count=p.porciones;cambio_=true;}
+    if(!it){it={id:uid(),emoji:emojiDe(p.name),color:COL_PLAN[normN(p.name)]||PALETA[i%PALETA.length],count:porc(p)};cambio_=true;}
+    else if(it.count!==porc(p)){it.count=porc(p);cambio_=true;}
     it.name=p.name;it.key=p.name;it.porGiro=p.porGiro||1;
     nuevos.push(it);
   });
