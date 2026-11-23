@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="es"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Juego en vivo · Streaming Room T3</title>
+<meta name="theme-color" content="#151515">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<style>
+:root{--rojo:#ff3b3b;--rojo2:#ff8a8a;--azul:#2f7bff;--azul2:#8ab4ff;--amarillo:#f6d27a;--tiza:#efede6;--mut:#b9b5aa;--fondo:#161616;
+  --marker:"Permanent Marker","Fredoka",system-ui,sans-serif;--sans:"Fredoka",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:#151515;color:var(--tiza);font:500 16px/1.4 var(--sans)}
+body{background:#151515 url("fondo-pizarron.webp") center/cover fixed no-repeat}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(120% 90% at 50% 0%,#0000 0%,#0008 70%);pointer-events:none}
+.wrap{position:relative;max-width:1100px;margin:0 auto;padding:22px 16px 60px}
+.hide{display:none!important}
+
+/* encabezado tipo flyer */
+.top{text-align:center}
+.brand{font:600 12px/1 var(--sans);letter-spacing:.34em;color:var(--tiza);opacity:.85}
+.brand i{color:var(--amarillo);font-style:normal}
+h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:var(--amarillo);-webkit-text-stroke:.12em #101010;paint-order:stroke fill;
+  text-shadow:0 4px 0 #000a;letter-spacing:.02em}
+.line{width:min(520px,80%);height:5px;margin:4px auto 12px;border-radius:9px;background:var(--amarillo);opacity:.9}
+.live{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border:2.5px solid var(--rojo);border-radius:99px;font:700 14px var(--sans);
+  box-shadow:0 0 12px #ff3b3b88,inset 0 0 8px #ff3b3b55;background:#1a0b0bcc}
+.live b{width:10px;height:10px;border-radius:50%;background:var(--rojo);box-shadow:0 0 8px var(--rojo);animation:lat 1.2s ease-in-out infinite}
+@keyframes lat{50%{opacity:.35}}
+.sub{margin:14px auto 0;max-width:640px;font:400 clamp(15px,3.6vw,20px)/1.35 var(--marker);color:var(--amarillo);letter-spacing:.03em}
+.vs{display:flex;justify-content:center;align-items:center;gap:12px;margin:14px 0 4px;font:400 20px var(--marker)}
+.vs .r{color:var(--rojo2);text-shadow:0 0 10px var(--rojo)}.vs .a{color:var(--azul2);text-shadow:0 0 10px var(--azul)}
+.vs .v{width:40px;height:40px;border-radius:50%;border:3px solid var(--amarillo);display:grid;place-items:center;color:var(--amarillo);font-size:16px;box-shadow:0 0 10px #f6d27a66}
+
+/* mi lugar */
+.mine{margin:20px auto 0;max-width:640px;border:2.5px dashed var(--tiza);border-radius:18px;padding:14px 16px;background:#0f0f0fcc;text-align:center}
+.mine h2{margin:0 0 4px;font:400 22px var(--marker);color:var(--amarillo)}
+.mine p{margin:4px 0 10px;color:var(--tiza)}
+.mine .eq{font-weight:700}.mine .eq.r{color:var(--rojo2)}.mine .eq.a{color:var(--azul2)}
+.mine .btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.mine small{display:block;color:var(--mut);margin-top:8px}
+
+/* turnos y horarios */
+.turnos{display:grid;grid-template-columns:1fr;gap:18px;margin-top:22px}
+@media(min-width:900px){.turnos{grid-template-columns:1fr 1fr}}
+.turno{background:#0e0e0ecc;border:2px solid #ffffff22;border-radius:20px;padding:14px 12px 10px}
+.turno h3{margin:0 0 2px;text-align:center;font:400 24px var(--marker);color:var(--amarillo)}
+.turno .hr{text-align:center;color:var(--mut);font-size:14px;margin-bottom:10px}
+.cab{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;padding:0 4px 6px;font:700 12px var(--sans);letter-spacing:.08em;color:var(--mut);text-transform:uppercase}
+.cab .r{color:var(--rojo2);text-align:center}.cab .a{color:var(--azul2);text-align:center}
+.slot{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:stretch;padding:6px 4px;border-top:1px dashed #ffffff22}
+.hora{font:400 19px/1 var(--marker);color:var(--tiza);display:flex;align-items:center;justify-content:center}
+.team{border:2px solid;border-radius:14px;padding:7px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:76px;justify-content:center}
+.team.r{border-color:var(--rojo);box-shadow:0 0 10px #ff3b3b44,inset 0 0 8px #ff3b3b22;background:#2a0d0d66}
+.team.a{border-color:var(--azul);box-shadow:0 0 10px #2f7bff44,inset 0 0 8px #2f7bff22;background:#0b142a66}
+.asientos{display:flex;gap:6px}
+.as{width:22px;height:18px;border-radius:7px 7px 4px 4px;border:2px solid currentColor;position:relative}
+.as::after{content:"";position:absolute;left:3px;right:3px;bottom:-6px;height:4px;border-radius:2px;background:currentColor;opacity:.7}
+.team.r .as{color:var(--rojo2)}.team.a .as{color:var(--azul2)}
+.as.ocu{background:currentColor}
+.as.res{background:repeating-linear-gradient(45deg,currentColor 0 3px,transparent 3px 6px)}
+.team .lib{font-size:12.5px;color:var(--tiza);text-align:center;line-height:1.15}
+.team .lib b{font-weight:700}
+.unir{font:700 13px var(--sans);border-radius:99px;padding:5px 14px;border:0;cursor:pointer;color:#fff}
+.team.r .unir{background:var(--rojo);box-shadow:0 0 10px #ff3b3b88}
+.team.a .unir{background:var(--azul);box-shadow:0 0 10px #2f7bff88}
+.unir:disabled{background:#444!important;box-shadow:none!important;color:#aaa;cursor:default}
+.slot.yo .hora{color:var(--amarillo)}
+.team.yo{outline:3px solid var(--amarillo);outline-offset:2px}
+
+/* botones */
+.btn{font:700 16px var(--sans);border:0;border-radius:14px;padding:12px 18px;cursor:pointer;color:#151515;background:var(--amarillo)}
+.btn.sec{background:transparent;color:var(--tiza);border:2px solid #ffffff55}
+.btn.rojo{background:var(--rojo);color:#fff}.btn.azul{background:var(--azul);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* ventanas */
+.ov{position:fixed;inset:0;z-index:50;background:#000c;display:grid;place-items:center;padding:16px}
+.box{width:min(460px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#1c1c1c;border:3px solid var(--tiza);border-radius:22px;padding:20px 18px 16px;
+  box-shadow:0 0 0 6px #111,0 30px 80px -20px #000;text-align:center}
+.box h2{margin:0 0 6px;font:400 26px/1.1 var(--marker);color:var(--amarillo)}
+.box p{margin:6px 0 12px;color:var(--tiza)}
+.box .eq{font-weight:700}.box .eq.r{color:var(--rojo2)}.box .eq.a{color:var(--azul2)}
+.box input{width:100%;font:600 17px var(--sans);padding:13px 14px;border-radius:12px;border:2px solid #ffffff44;background:#0f0f0f;color:#fff;text-align:center}
+.box input:focus{outline:none;border-color:var(--amarillo)}
+.err{min-height:1.3em;margin:6px 0 2px;color:#ff8a8a;font-weight:700;font-size:14px}
+.ops{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.op{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border-radius:14px;border:2px solid #ffffff33;background:#111;color:var(--tiza);font:600 15px/1.3 var(--sans);cursor:pointer}
+.op:hover{border-color:var(--amarillo)}
+.op .e{font-size:26px;flex:none}
+.op small{display:block;color:var(--mut);font-weight:500;font-size:13px;margin-top:2px}
+.qr{width:min(240px,70vw);margin:8px auto 6px;background:#fff;border-radius:12px;padding:6px}
+.qr svg{display:block;width:100%;height:auto}
+.link{font-size:12px;color:var(--mut);word-break:break-all;margin:4px 0 8px}
+.timer{font:400 22px var(--marker);color:var(--amarillo)}
+.cerrar{margin-top:12px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0f2a17;border:2px solid #3ddc84;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:60;max-width:90vw;text-align:center}
+.pie{margin-top:22px;text-align:center;color:var(--mut);font-size:13px}
+</style>
+</head><body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><i>★</i> STREAMING ROOM T3 <i>★</i></div>
+    <h1>¿Querés jugar en el Juego en Vivo?</h1>
+    <div class="line"></div>
+    <span class="live"><b></b> EN STREAM</span>
+    <div class="vs"><span class="r">Equipo Rojo</span><span class="v">VS</span><span class="a">Equipo Azul</span></div>
+    <p class="sub">Elegí un horario y un equipo. Gana el equipo que sume más puntos, ¡y hay premios!</p>
+  </header>
+
+  <section class="mine hide" id="mine"></section>
+
+  <div class="turnos" id="turnos"></div>
+  <p class="pie" id="estado">Cargando lugares…</p>
+</div>
+
+<!-- Anotarse -->
+<div class="ov hide" id="ovUnir">
+  <div class="box">
+    <div id="paso1">
+      <h2>¡Sumate al juego!</h2>
+      <p>Te anotás en el <span class="eq" id="u-eq"></span> a las <b id="u-hora"></b>.</p>
+      <p>Dejanos tu Gmail y te avisamos <b>5 minutos antes</b> para que te acerques al stream.</p>
+      <input id="u-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
+      <div class="err" id="u-err"></div>
+      <button class="btn" id="u-sig" type="button" style="width:100%">Seguir</button>
+    </div>
+    <div id="paso2" class="hide">
+      <h2>¿Ya tenés con quién jugar?</h2>
+      <p>Cada equipo juega de a dos.</p>
+      <div class="ops">
+        <button class="op" type="button" id="op-res"><span class="e">⏳</span><span><b>Sí, guardale el lugar 5 minutos</b><small>Te damos un QR para que tu compañero se anote. Se puede usar una sola vez.</small></span></button>
+        <button class="op" type="button" id="op-cual"><span class="e">🤝</span><span><b>Que juegue cualquiera conmigo</b><small>El otro lugar queda libre para quien quiera sumarse.</small></span></button>
+      </div>
+      <div class="err" id="u-err2"></div>
+    </div>
+    <button class="btn sec cerrar" type="button" id="u-x">Cancelar</button>
+  </div>
+</div>
+
+<!-- Invitar -->
+<div class="ov hide" id="ovInv">
+  <div class="box">
+    <h2>Invitá a un compañero</h2>
+    <p>Que escanee este QR con la cámara del celular y ponga su Gmail: queda anotado en tu equipo.</p>
+    <div class="qr" id="i-qr"></div>
+    <div class="link" id="i-link"></div>
+    <div id="i-timer" class="hide"><span>Lugar guardado por</span> <span class="timer" id="i-t">5:00</span></div>
+    <p id="i-nota" style="font-size:13px;color:var(--mut)"></p>
+    <button class="btn sec cerrar" type="button" id="i-x">Listo</button>
+  </div>
+</div>
+
+<!-- Me invitaron -->
+<div class="ov hide" id="ovIn">
+  <div class="box">
+    <h2 id="in-t">¡Te invitaron a jugar!</h2>
+    <p id="in-p"></p>
+    <div id="in-form">
+      <p>Iniciá con tu Gmail y quedás anotado. Te avisamos 5 minutos antes.</p>
+      <input id="in-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
+      <div class="err" id="in-err"></div>
+      <button class="btn" id="in-ok" type="button" style="width:100%">Anotarme</button>
+    </div>
+    <button class="btn sec cerrar" type="button" id="in-x">Ver los horarios</button>
+  </div>
+</div>
+
+<div class="toast hide" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
+<script src="fb-config.js?v=18"></script>
+<script src="qr-lib.js?v=1"></script>
+<script>
+(function(){
+/* =============================================================
+   Juego en vivo: reserva de lugares por horario (equipo Rojo / Azul).
+   Datos en la base: cfg/jv
+     s/<horario>/<r|a>/<asiento>  = {st:'ok',u,t,h,e} jugador  ·  {st:'hold',by,exp,tok} lugar guardado 5 min
+     u/<uid>  = {s,q,k}  el lugar de cada celular (uno solo)
+     h/<hash del gmail> = uid  (un lugar por Gmail)
+     tok/<código> = {s,q,by,exp,used}  invitación (QR único, se usa una sola vez)
+   El Gmail se guarda CIFRADO: solo el admin (con su clave) puede leerlo.
+   ============================================================= */
+var CAP=2, HOLD_MS=5*60*1000;
+var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:30",ini:9*60+30,fin:11*60+30},
+            {id:"t",nom:"Turno tarde",desde:"13:30",hasta:"15:30",ini:13*60+30,fin:15*60+30}];
+var EQ={r:"Equipo Rojo",a:"Equipo Azul"};
+var PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
+var $=function(i){return document.getElementById(i)};
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function hhmm(m){return Math.floor(m/60)+":"+("0"+m%60).slice(-2)}
+var SLOTS=[];TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15)SLOTS.push({id:T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2),turno:T.id,hora:hhmm(m)})});
+function slotDe(id){for(var i=0;i<SLOTS.length;i++)if(SLOTS[i].id===id)return SLOTS[i];return null}
+
+/* ---------- base ---------- */
+var db=null,off=0,S={},MIO=null;
+try{var app;try{app=firebase.app()}catch(e){app=firebase.initializeApp(window.FB_CONFIG)}db=firebase.database()}catch(e){}
+function now(){return Date.now()+off}
+function uid(){var k="jv_uid",v=null;try{v=localStorage.getItem(k)}catch(e){}
+  if(!v){v=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():"u"+Date.now().toString(36)+Math.random().toString(36).slice(2,9);try{localStorage.setItem(k,v)}catch(e){}}return v}
+var UID=uid();
+function rnd(n){var a="abcdefghijkmnpqrstuvwxyz23456789",s="",r=new Uint32Array(n);crypto.getRandomValues(r);for(var i=0;i<n;i++)s+=a[r[i]%a.length];return s}
+function R(p){return db.ref("cfg/jv/"+p)}
+
+/* ---------- Gmail: validación, hash y cifrado ---------- */
+function lev(a,b){var p=[],i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.length;i++){var q=[i];for(j=1;j<=b.length;j++)q[j]=Math.min(p[j]+1,q[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=q}return p[b.length]}
+function gmailCheck(raw){
+  var v=String(raw||"").trim().toLowerCase();
+  if(!v)return{ok:false,msg:"Escribí tu Gmail."};
+  var m=v.match(/^([^@\s]+)@([^@\s]+)$/);
+  if(!m)return{ok:false,msg:"Eso no parece un mail. Ejemplo: tunombre@gmail.com"};
+  var u=m[1],d=m[2];if(d==="googlemail.com")d="gmail.com";
+  if(d!=="gmail.com")return{ok:false,msg:lev(d,"gmail.com")<=2?"Revisá cómo lo escribiste: tiene que terminar en @gmail.com.":"Tiene que ser un Gmail (termina en @gmail.com)."};
+  var base=u.split("+")[0],letras=base.replace(/\./g,"");
+  if(!/^[a-z0-9.]+$/.test(base)||letras.length<6||letras.length>30||base.charAt(0)==="."||base.slice(-1)==="."||base.indexOf("..")>-1)
+    return{ok:false,msg:"Ese Gmail no existe: los Gmail tienen entre 6 y 30 letras, números o puntos."};
+  if(/^(.)\1+$/.test(letras)||/^(test|tests|prueba|ejemplo|nombre|usuario|asdfgh|qwerty|123456|abcdef|micorreo)/.test(letras))
+    return{ok:false,msg:"Ese Gmail parece inventado. Escribí el tuyo."};
+  return{ok:true,mail:letras+"@gmail.com",ver:v};
+}
+function b64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
+async function hashMail(m){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("jv|"+m));return Array.from(new Uint8Array(b)).slice(0,12).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+async function cifrar(texto){
+  var pub=await crypto.subtle.importKey("jwk",PUB,{name:"ECDH",namedCurve:"P-256"},false,[]);
+  var eph=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]);
+  var k=await crypto.subtle.deriveKey({name:"ECDH",public:pub},eph.privateKey,{name:"AES-GCM",length:256},false,["encrypt"]);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var c=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(texto));
+  var j=await crypto.subtle.exportKey("jwk",eph.publicKey);
+  return{x:j.x,y:j.y,i:b64(iv),c:b64(c)};
+}
+
+/* ---------- estado de cada horario ---------- */
+function vivos(eq){var o={},k,v,t=now();for(k in (eq||{})){v=eq[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))o[k]=v}return o}
+function cuenta(eq){return Object.keys(vivos(eq)).length}
+
+function pintar(){
+  var h="";
+  TURNOS.forEach(function(T){
+    h+='<section class="turno"><h3>'+T.nom+'</h3><div class="hr">de '+T.desde+' a '+T.hasta+' · cada 15 minutos</div>'+
+       '<div class="cab"><span></span><span class="r">Rojo</span><span class="a">Azul</span></div>';
+    SLOTS.filter(function(s){return s.turno===T.id}).forEach(function(s){
+      var yo=MIO&&MIO.s===s.id;
+      h+='<div class="slot'+(yo?' yo':'')+'"><div class="hora">'+s.hora+'</div>'+equipo(s,"r")+equipo(s,"a")+'</div>';
+    });
+    h+='</section>';
+  });
+  $("turnos").innerHTML=h;
+  pintarMio();
+}
+function equipo(s,q){
+  var eq=(S[s.id]||{})[q],v=vivos(eq),ocu=0,res=0,k;for(k in v){if(v[k].st==="ok")ocu++;else res++}
+  var lib=Math.max(0,CAP-ocu-res),as="",i;
+  for(i=0;i<CAP;i++)as+='<span class="as'+(i<ocu?' ocu':(i<ocu+res?' res':''))+'"></span>';
+  var yo=MIO&&MIO.s===s.id&&MIO.q===q;
+  var txt=lib===2?'<b>2 lugares</b> libres':(lib===1?'<b>1 lugar</b> libre':(res?'Lugar guardado':'Completo'));
+  var dis=!!MIO||lib===0;
+  return '<div class="team '+q+(yo?' yo':'')+'"><div class="asientos">'+as+'</div><div class="lib">'+(yo?'<b>¡Acá estás vos!</b>':txt)+'</div>'+
+    (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
+}
+function pintarMio(){
+  var b=$("mine");
+  if(!MIO){b.classList.add("hide");return}
+  var s=slotDe(MIO.s);if(!s){b.classList.add("hide");return}
+  var eq=(S[MIO.s]||{})[MIO.q]||{},v=vivos(eq),comp=0,hold=null,k;
+  for(k in v){if(v[k].st==="ok"&&v[k].u!==UID)comp++;if(v[k].st==="hold"&&v[k].by===UID)hold=v[k]}
+  var estado=comp?'Ya tenés compañero 🙌':(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
+  b.innerHTML='<h2>¡Ya tenés tu lugar!</h2><p>Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+MIO.q+'">'+EQ[MIO.q]+'</span>.</p><p>'+estado+'</p>'+
+    '<div class="btns">'+(comp?'':'<button class="btn '+(MIO.q==="r"?"rojo":"azul")+'" type="button" id="b-inv">Invitá a un compañero</button>')+
+    '<button class="btn sec" type="button" id="b-lib">Liberar mi lugar</button></div><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
+  b.classList.remove("hide");
+  var bi=$("b-inv");if(bi)bi.onclick=invitar;
+  $("b-lib").onclick=liberar;
+}
+
+/* ---------- anotarse ---------- */
+var pend=null;
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".unir");if(!b||b.disabled)return;abrirUnir(b.dataset.s,b.dataset.q)});
+function abrirUnir(sid,q){
+  if(MIO){toast("Ya tenés un lugar anotado.");return}
+  pend={s:sid,q:q};$("u-eq").textContent=EQ[q];$("u-eq").className="eq "+q;$("u-hora").textContent=slotDe(sid).hora;
+  $("u-mail").value="";$("u-err").textContent="";$("u-err2").textContent="";$("paso1").classList.remove("hide");$("paso2").classList.add("hide");
+  $("ovUnir").classList.remove("hide");setTimeout(function(){$("u-mail").focus()},200);
+}
+$("u-x").onclick=function(){$("ovUnir").classList.add("hide");pend=null};
+$("u-mail").onkeydown=function(e){if(e.key==="Enter")$("u-sig").click()};
+$("u-sig").onclick=async function(){
+  var c=gmailCheck($("u-mail").value);if(!c.ok){$("u-err").textContent=c.msg;return}
+  pend.mail=c.mail;pend.h=await hashMail(c.mail);
+  var ya=(await R("h/"+pend.h).once("value")).val();
+  if(ya&&ya!==UID){$("u-err").textContent="Ese Gmail ya tiene un lugar anotado.";return}
+  var eq=(S[pend.s]||{})[pend.q];
+  $("paso1").classList.add("hide");$("paso2").classList.remove("hide");
+  // si solo queda 1 lugar, no tiene sentido guardar otro
+  $("op-res").disabled=cuenta(eq)>=CAP-1;
+  $("op-res").style.opacity=$("op-res").disabled?.45:1;
+};
+$("op-res").onclick=function(){if(!this.disabled)confirmar(true)};
+$("op-cual").onclick=function(){confirmar(false)};
+
+async function confirmar(guardar){
+  var p=pend;if(!p)return;$("u-err2").textContent="Anotando…";
+  try{
+    var e=await cifrar(p.mail),seat=rnd(8),tok=guardar?rnd(10):null,t=now(),ok=false;
+    var res=await R("s/"+p.s+"/"+p.q).transaction(function(cur){
+      cur=cur||{};var v=vivos(cur),k;for(k in cur)if(!v[k])delete cur[k];       // limpia lugares guardados vencidos
+      for(k in v)if(v[k].u===UID)return;                                          // ya estoy en este equipo
+      var n=Object.keys(v).length;if(n>=CAP)return;                               // sin lugar
+      cur[seat]={st:"ok",u:UID,t:t,h:p.h,e:e};
+      if(guardar&&n+1<CAP)cur["g"+seat]={st:"hold",by:UID,exp:t+HOLD_MS,tok:tok};
+      return cur;
+    });
+    if(!res.committed){$("u-err2").textContent="Uy, ese lugar se acaba de ocupar. Elegí otro horario.";return}
+    var up={};up["u/"+UID]={s:p.s,q:p.q,k:seat,h:p.h};up["h/"+p.h]=UID;
+    if(tok)up["tok/"+tok]={s:p.s,q:p.q,by:UID,exp:t+HOLD_MS,used:false,hold:"g"+seat,t:t};
+    await R("").update(up);
+    try{localStorage.setItem("jv_res_usada_"+UID,guardar?"1":"0")}catch(x){}
+    $("ovUnir").classList.add("hide");pend=null;
+    MIO={s:p.s,q:p.q,k:seat,h:p.h};pintar();
+    toast("¡Listo! Estás anotado.");
+    if(tok)mostrarQR(tok,t+HOLD_MS);
+  }catch(err){$("u-err2").textContent="No se pudo anotar ("+(err&&err.message||"sin conexión")+"). Probá de nuevo."}
+}
+
+/* ---------- invitar (QR único) ---------- */
+function qrSvg(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(unescape(encodeURIComponent(t)));q.make();var n=q.getModuleCount(),m=3,s=n+2*m,p="",x,y;
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
+  return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="QR para invitar"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
+function linkInv(tok){return location.origin+location.pathname+"?inv="+tok}
+var tmr=null;
+function mostrarQR(tok,exp){
+  var url=linkInv(tok);$("i-qr").innerHTML=qrSvg(url);$("i-link").textContent=url;
+  clearInterval(tmr);
+  if(exp){$("i-timer").classList.remove("hide");
+    $("i-nota").textContent="Este QR sirve una sola vez. Si pasan los 5 minutos, tu compañero igual puede usarlo mientras quede un lugar libre.";
+    var f=function(){var r=Math.max(0,exp-now());$("i-t").textContent=Math.floor(r/60000)+":"+("0"+Math.floor(r%60000/1000)).slice(-2);if(!r){clearInterval(tmr);pintar()}};f();tmr=setInterval(f,1000);
+  }else{$("i-timer").classList.add("hide");$("i-nota").textContent="Este QR sirve una sola vez, mientras quede un lugar libre en tu equipo."}
+  $("ovInv").classList.remove("hide");
+}
+$("i-x").onclick=function(){$("ovInv").classList.add("hide");clearInterval(tmr)};
+async function invitar(){
+  if(!MIO)return;
+  // reusa una invitación sin usar de este celular, si hay
+  var mine=(await R("tok").orderByChild("by").equalTo(UID).once("value")).val()||{},k,t=now();
+  for(k in mine)if(!mine[k].used&&mine[k].s===MIO.s&&mine[k].q===MIO.q){mostrarQR(k,mine[k].exp>t&&mine[k].hold?mine[k].exp:0);return}
+  var tok=rnd(10);
+  await R("tok/"+tok).set({s:MIO.s,q:MIO.q,by:UID,exp:0,used:false,hold:null,t:t});
+  mostrarQR(tok,0);
+}
+
+/* ---------- liberar ---------- */
+async function liberar(){
+  if(!MIO||!confirm("¿Seguro que querés liberar tu lugar?"))return;
+  var m=MIO;
+  await R("s/"+m.s+"/"+m.q).transaction(function(cur){cur=cur||{};var k;for(k in cur){var v=cur[k];if(v&&(v.u===UID||v.by===UID))delete cur[k]}return cur});
+  var up={};up["u/"+UID]=null;if(m.h)up["h/"+m.h]=null;await R("").update(up);
+  MIO=null;pintar();toast("Liberaste tu lugar.");
+}
+
+/* ---------- me invitaron (QR) ---------- */
+var INV=null;
+async function abrirInvitacion(tok){
+  var t=(await R("tok/"+tok).once("value")).val();
+  $("ovIn").classList.remove("hide");
+  if(!t){$("in-t").textContent="Esta invitación no existe";$("in-p").textContent="Revisá el QR o elegí un horario libre.";$("in-form").classList.add("hide");return}
+  if(t.used){$("in-t").textContent="Esta invitación ya se usó";$("in-p").textContent="Cada QR sirve una sola vez. Podés elegir otro horario libre.";$("in-form").classList.add("hide");return}
+  if(MIO){$("in-t").textContent="Ya tenés un lugar";$("in-p").textContent="Desde este celular ya hay alguien anotado.";$("in-form").classList.add("hide");return}
+  INV={tok:tok,s:t.s,q:t.q,hold:t.hold};var s=slotDe(t.s);
+  $("in-t").textContent="¡Te invitaron a jugar!";
+  $("in-p").innerHTML='Vas a jugar a las <b>'+(s?s.hora:"")+'</b> en el <span class="eq '+t.q+'">'+EQ[t.q]+'</span>.';
+  $("in-form").classList.remove("hide");$("in-err").textContent="";setTimeout(function(){$("in-mail").focus()},200);
+}
+$("in-mail").onkeydown=function(e){if(e.key==="Enter")$("in-ok").click()};
+$("in-x").onclick=function(){$("ovIn").classList.add("hide");INV=null;volverComun()};
+$("in-ok").onclick=async function(){
+  var c=gmailCheck($("in-mail").value);if(!c.ok){$("in-err").textContent=c.msg;return}
+  var I=INV;if(!I)return;$("in-err").textContent="Anotando…";
+  try{
+    var h=await hashMail(c.mail),ya=(await R("h/"+h).once("value")).val();
+    if(ya&&ya!==UID){$("in-err").textContent="Ese Gmail ya tiene un lugar anotado.";return}
+    // la invitación se marca como usada primero (así no se puede usar dos veces)
+    // (la primera pasada de una transacción puede venir vacía: se devuelve igual y Firebase reintenta con el dato real)
+    var tr=await R("tok/"+I.tok).transaction(function(t){if(t===null)return null;if(t.used)return;t.used=true;t.usedBy=UID;return t});
+    var tv=tr.snapshot&&tr.snapshot.val();
+    if(!tr.committed||!tv||tv.usedBy!==UID){$("in-err").textContent="Esta invitación ya se usó.";return}
+    var e=await cifrar(c.mail),seat=rnd(8),t=now();
+    var res=await R("s/"+I.s+"/"+I.q).transaction(function(cur){
+      cur=cur||{};var v=vivos(cur),k;for(k in cur)if(!v[k])delete cur[k];
+      if(I.hold&&cur[I.hold])delete cur[I.hold];                   // ocupa el lugar que le guardaron
+      if(Object.keys(vivos(cur)).length>=CAP)return;
+      cur[seat]={st:"ok",u:UID,t:t,h:h,e:e,inv:I.tok};return cur;
+    });
+    if(!res.committed){await R("tok/"+I.tok+"/used").set(false);$("in-err").textContent="Uy, ya no queda lugar en ese equipo. Elegí otro horario.";return}
+    var up={};up["u/"+UID]={s:I.s,q:I.q,k:seat,h:h};up["h/"+h]=UID;await R("").update(up);
+    MIO={s:I.s,q:I.q,k:seat,h:h};$("ovIn").classList.add("hide");INV=null;volverComun();pintar();
+    toast("¡Listo! Quedaste anotado con tu compañero.");
+  }catch(err){$("in-err").textContent="No se pudo anotar ("+(err&&err.message||"sin conexión")+")."}
+};
+function volverComun(){try{history.replaceState(null,"",location.pathname)}catch(e){}}
+
+/* ---------- arranque ---------- */
+var tt=null;
+function toast(m){var t=$("toast");t.textContent=m;t.classList.remove("hide");clearTimeout(tt);tt=setTimeout(function(){t.classList.add("hide")},3200)}
+if(!db){$("estado").textContent="No hay conexión con la base: probá recargar la página.";pintar();return}
+db.ref(".info/serverTimeOffset").on("value",function(s){off=s.val()||0});
+R("u/"+UID).on("value",function(s){MIO=s.val();pintar()});
+R("s").on("value",function(s){S=s.val()||{};$("estado").textContent="Los lugares se actualizan solos.";pintar()},
+  function(e){$("estado").textContent="No se pueden leer los lugares ("+e.message+")."});
+setInterval(pintar,30000);   // para que vuelvan los lugares guardados que vencen
+var qs=new URLSearchParams(location.search);if(qs.get("inv"))abrirInvitacion(qs.get("inv"));
+})();
+</script>
+</body></html>
