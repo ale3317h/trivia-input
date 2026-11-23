@@ -102,15 +102,67 @@ button.as:hover{transform:translateY(-2px)}
   box-shadow:0 0 0 3px #ff6b6b55,0 6px 0 #8a0f14,0 0 18px #ff3b3b88}
 .liberar:active{transform:translateY(3px);box-shadow:0 0 0 3px #ff6b6b55,0 3px 0 #8a0f14}
 .pie{margin-top:22px;text-align:center;color:var(--mut);font-size:13px}
+
+/* encabezado con la colocación nueva (misma estética de pizarrón) */
+.part{margin:16px 0 0;font:400 clamp(1rem,4.6vw,1.6rem)/1 var(--marker);letter-spacing:.3em;padding-left:.3em;color:var(--tiza)}
+h1.duelo{margin:6px 0 16px;display:flex;justify-content:center;align-items:center;gap:clamp(8px,3vw,28px);
+  font:400 clamp(2.6rem,14vw,6.4rem)/1 var(--marker);letter-spacing:.02em;-webkit-text-stroke:.06em #101010;paint-order:stroke fill;text-shadow:0 5px 0 #000a}
+.duelo .a{color:var(--azul2)}.duelo .r{color:var(--rojo2)}
+.duelo .v{flex:none;display:grid;place-items:center;width:clamp(38px,9vw,66px);height:clamp(38px,9vw,66px);border-radius:50%;border:3px solid var(--amarillo);
+  font:400 clamp(.9rem,3.2vw,1.5rem)/1 var(--marker);color:var(--amarillo);-webkit-text-stroke:0;text-shadow:none;background:#161616aa}
+
+/* brillo muy leve (estático) */
+.duelo .a{text-shadow:0 5px 0 #000a,0 0 14px #2f7bff66}
+.duelo .r{text-shadow:0 5px 0 #000a,0 0 14px #ff3b3b66}
+.duelo .v{box-shadow:0 0 10px #f6d27a55}
+.part{text-shadow:0 0 10px #efede633}
+.turno h3,.mine h2,.box h2{text-shadow:0 0 10px #f6d27a44}
+.turno{box-shadow:0 0 18px -8px #efede622}
+
+/* más brillo + bloque del título más angosto */
+h1.duelo{font-size:clamp(2.1rem,10.5vw,4.6rem);gap:clamp(6px,2vw,18px);letter-spacing:0}
+.duelo .a{text-shadow:0 5px 0 #000a,0 0 10px #2f7bffcc,0 0 26px #2f7bff99,0 0 50px #2f7bff55}
+.duelo .r{text-shadow:0 5px 0 #000a,0 0 10px #ff3b3bcc,0 0 26px #ff3b3b99,0 0 50px #ff3b3b55}
+.duelo .v{width:clamp(34px,7.5vw,54px);height:clamp(34px,7.5vw,54px);box-shadow:0 0 12px #f6d27a99,0 0 28px #f6d27a55,inset 0 0 10px #f6d27a33;text-shadow:0 0 10px #f6d27a99}
+.part{text-shadow:0 0 8px #efe6d6aa,0 0 22px #efe6d655}
+.turno h3,.mine h2,.box h2{text-shadow:0 0 10px #f6d27acc,0 0 26px #f6d27a66}
+.turno{box-shadow:0 0 26px -6px #efede644}
+.team.r{box-shadow:0 0 16px #ff3b3b77,inset 0 0 12px #ff3b3b33}.team.a{box-shadow:0 0 16px #2f7bff77,inset 0 0 12px #2f7bff33}
+
+/* ===== cambios: participá amarillo, persona en los lugares, globito, salir del juego ===== */
+.part{color:var(--amarillo)}
+.as{width:28px;height:28px;border:0;border-radius:0;background:none;position:relative;display:inline-block}
+.as::after{display:none}
+.as svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round;opacity:.8}
+.as.ocu,.as.res{background:none}
+.as.ocu svg{fill:currentColor;opacity:1}
+.as.res svg{fill:currentColor;fill-opacity:.28;stroke-dasharray:3 2.4;opacity:1}
+button.as{padding:0;margin:0;cursor:pointer;font:inherit}
+.asientos{gap:10px}
+.bub{position:fixed;z-index:70;max-width:min(260px,calc(100vw - 16px));padding:8px 14px;border-radius:16px;background:#1b1b1b;border:2px solid var(--tiza);
+  font:400 1.05rem/1.2 var(--marker);color:var(--tiza);text-align:center;box-shadow:0 8px 24px -6px #000,0 0 14px #efede622;pointer-events:none;animation:bubin .18s ease-out both;word-break:break-word}
+.bub.r{border-color:var(--rojo);color:var(--rojo2);box-shadow:0 8px 24px -6px #000,0 0 14px #ff3b3b55}
+.bub.a{border-color:var(--azul);color:var(--azul2);box-shadow:0 8px 24px -6px #000,0 0 14px #2f7bff55}
+.bub::after{content:"";position:absolute;left:var(--ax,50%);bottom:-8px;width:12px;height:12px;background:inherit;border:inherit;border-width:0 2px 2px 0;transform:translateX(-50%) rotate(45deg)}
+.bub.abajo::after{bottom:auto;top:-8px;border-width:2px 0 0 2px}
+@keyframes bubin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+.salirBar{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:26px 16px calc(12px + env(safe-area-inset-bottom,0px));pointer-events:none;
+  background:linear-gradient(to top,#151515 35%,#15151500)}
+.salir,.btn.morado{display:block;width:100%;max-width:420px;margin:0 auto;font:800 1.05rem var(--sans);letter-spacing:.03em;color:#fff;background:#8a4dff;border:2px solid #b98cff;border-radius:16px;padding:14px 18px;cursor:pointer;
+  box-shadow:0 0 16px #8a4dff88,0 5px 0 #4b229b;transition:transform .12s}
+.salir{pointer-events:auto}
+.salir:active,.btn.morado:active{transform:translateY(3px);box-shadow:0 0 16px #8a4dff88,0 2px 0 #4b229b}
+.btn.morado{color:#fff}
+body.tienelugar .wrap{padding-bottom:120px}
+body.tienelugar .toast{bottom:92px}
 </style>
 </head><body>
 <div class="wrap">
   <header class="top">
     <div class="brand"><i>★</i> STREAMING ROOM T3 <i>★</i></div>
-    <h1>¿Querés jugar en el Juego en Vivo?</h1>
-    <div class="line"></div>
+    <div class="part">PARTICIPÁ EN</div>
+    <h1 class="duelo"><span class="a">AZUL</span><span class="v">VS</span><span class="r">ROJO</span></h1>
     <span class="live"><b></b> EN STREAM</span>
-    <div class="vs"><span class="a">Equipo Azul</span><span class="v">VS</span><span class="r">Equipo Rojo</span></div>
     <p class="sub">Elegí un horario y un equipo. Gana el equipo que sume más puntos, ¡y hay premios!</p>
   </header>
 
@@ -176,16 +228,19 @@ button.as:hover{transform:translateY(-2px)}
   </div>
 </div>
 
-<!-- Confirmar liberar -->
+<!-- Confirmar salir del juego -->
 <div class="ov hide" id="ovLib">
   <div class="box">
-    <h2>¿Liberar tu lugar?</h2>
-    <p>Si lo liberás, otra persona puede ocuparlo y vas a tener que anotarte de nuevo.</p>
-    <button class="liberar" type="button" id="l-si">Sí, liberar mi lugar</button>
-    <button class="btn sec cerrar" type="button" id="l-no">No, me quedo</button>
+    <h2>¿Estás seguro?</h2>
+    <p>Si salís del juego perdés tu lugar: otra persona puede ocuparlo y, si después querés volver, vas a tener que anotarte de nuevo en un horario libre.</p>
+    <p>Si habías guardado un lugar para tu compañero, también se libera.</p>
+    <button class="btn morado" type="button" id="l-si" style="width:100%">Confirmar</button>
+    <button class="btn sec cerrar" type="button" id="l-no" style="width:100%">Cancelar</button>
   </div>
 </div>
 
+<div class="bub hide" id="bub" role="status"></div>
+<div class="salirBar hide" id="salirBar"><button class="salir" type="button" id="b-lib">Salir del juego</button></div>
 <div class="toast hide" id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
@@ -209,6 +264,7 @@ var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:00",ini:9*60+30,f
 var EQ={r:"Equipo Rojo",a:"Equipo Azul"};
 var PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 var $=function(i){return document.getElementById(i)};
+var PER='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.6" r="4"/><path d="M4.2 21c0-4.3 3.4-7 7.8-7s7.8 2.7 7.8 7z"/></svg>';
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function hhmm(m){return Math.floor(m/60)+":"+("0"+m%60).slice(-2)}
 var SLOTS=[];TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15)SLOTS.push({id:T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2),turno:T.id,hora:hhmm(m)})});
@@ -281,9 +337,9 @@ function equipo(s,q){
   lst.sort(function(x,y){return (x.st==="ok"?0:1)-(y.st==="ok"?0:1)||(x.t||x.exp||0)-(y.t||y.exp||0)});
   var lib=Math.max(0,CAP-ocu-res),as="",i;
   for(i=0;i<CAP;i++){var p=lst[i];
-    if(!p)as+='<span class="as" title="Lugar libre"></span>';
-    else if(p.st==="ok")as+='<button type="button" class="as ocu" data-quien="'+esc(p.n||"Alguien")+'" title="'+esc(p.n||"Ocupado")+'"></button>';
-    else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" title="Lugar guardado"></button>';}
+    if(!p)as+='<span class="as" aria-label="Lugar libre">'+PER+'</span>';
+    else if(p.st==="ok")as+='<button type="button" class="as ocu" data-quien="'+esc(p.n||"Alguien")+'" aria-label="Ocupado">'+PER+'</button>';
+    else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" aria-label="Lugar guardado">'+PER+'</button>';}
   var yo=MIO&&MIO.s===s.id&&MIO.q===q;
   var txt=lib===2?'<b>2 lugares</b> libres':(lib===1?'<b>1 lugar</b> libre':(res?'Lugar guardado':'Completo'));
   var dis=!!MIO||lib===0;
@@ -291,10 +347,24 @@ function equipo(s,q){
     (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
 }
 function nombreDe(eq,u){for(var k in (eq||{})){var v=eq[k];if(v&&v.st==="ok"&&v.u===u)return v.n||"alguien"}return "alguien"}
-document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".as");if(!b)return;
-  if(b.dataset.quien)toast("🪑 Acá está: "+b.dataset.quien);else if(b.dataset.res)toast("⏳ Lugar guardado para el compañero de "+b.dataset.res)});
+var bubT=null;
+function ocultarBub(){clearTimeout(bubT);$("bub").classList.add("hide")}
+function burbuja(btn,txt,q){
+  var b=$("bub");b.textContent=txt;b.className="bub "+q;
+  var r=btn.getBoundingClientRect(),w=b.offsetWidth,h=b.offsetHeight,cx=r.left+r.width/2;
+  var x=Math.max(8,Math.min(innerWidth-w-8,cx-w/2)),arriba=r.top-h-12>=8;
+  b.style.left=x+"px";b.style.top=(arriba?r.top-h-12:r.bottom+12)+"px";
+  b.style.setProperty("--ax",Math.max(14,Math.min(w-14,cx-x))+"px");
+  if(!arriba)b.classList.add("abajo");
+  clearTimeout(bubT);bubT=setTimeout(ocultarBub,2800);
+}
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".as");if(!b){ocultarBub();return}
+  var q=b.closest(".team").classList.contains("r")?"r":"a";
+  if(b.dataset.quien)burbuja(b,b.dataset.quien,q);else if(b.dataset.res)burbuja(b,"Lugar guardado para el compañero de "+b.dataset.res,q)});
+window.addEventListener("scroll",ocultarBub,{passive:true});
 function pintarMio(){
   var b=$("mine");
+  var tiene=!!(MIO&&slotDe(MIO.s));$("salirBar").classList.toggle("hide",!tiene);document.body.classList.toggle("tienelugar",tiene);
   if(!MIO){b.classList.add("hide");return}
   var s=slotDe(MIO.s);if(!s){b.classList.add("hide");return}
   var eq=(S[MIO.s]||{})[MIO.q]||{},v=vivos(eq),comp=0,cn="",hold=null,k;
@@ -302,11 +372,11 @@ function pintarMio(){
   var estado=comp?('Jugás con <b>'+esc(cn||"tu compañero")+'</b> 🙌'):(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
   b.innerHTML='<h2>¡Ya tenés tu lugar!</h2><p>Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+MIO.q+'">'+EQ[MIO.q]+'</span>.</p><p>'+estado+'</p>'+
     '<div class="btns">'+(comp?'':'<button class="btn '+(MIO.q==="r"?"rojo":"azul")+'" type="button" id="b-inv">Invitá a un compañero</button>')+
-    '</div><button class="liberar" type="button" id="b-lib">Liberar mi lugar</button><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
+    '</div><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
   b.classList.remove("hide");
   var bi=$("b-inv");if(bi)bi.onclick=invitar;
-  $("b-lib").onclick=function(){$("ovLib").classList.remove("hide")};
 }
+$("b-lib").onclick=function(){$("ovLib").classList.remove("hide")};
 
 /* ---------- anotarse ---------- */
 var pend=null;
@@ -395,7 +465,7 @@ async function liberar(){
   var m=MIO;
   await R("s/"+m.s+"/"+m.q).transaction(function(cur){cur=cur||{};var k;for(k in cur){var v=cur[k];if(v&&(v.u===UID||v.by===UID))delete cur[k]}return cur});
   var up={};up["u/"+UID]=null;if(m.h)up["h/"+m.h]=null;await R("").update(up);
-  MIO=null;pintar();toast("Liberaste tu lugar.");
+  MIO=null;pintar();toast("Saliste del juego.");
 }
 
 /* ---------- me invitaron (QR) ---------- */
