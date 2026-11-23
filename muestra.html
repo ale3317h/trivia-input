@@ -144,6 +144,25 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .play svg{width:22px;height:22px;margin-left:3px;fill:#fff}
 
 .lock,.pie3,.play{z-index:2}
+.pin{display:inline-flex;align-items:center;gap:5px;font:700 .78rem/1.2 var(--sans);color:#e2c8ff}
+.pin svg{width:14px;height:14px;flex:none;fill:#b86bff;filter:drop-shadow(0 0 4px #b86bff)}
+/* ventana de la ruleta con el mapa */
+.ov{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:16px;background:#05020acc;overflow:auto}
+.ov[hidden]{display:none}
+.ov.on{animation:ovIn .25s var(--ease) both}.ov.on .caja{animation:cajaIn .4s var(--spring) both}
+@keyframes ovIn{from{opacity:0}to{opacity:1}}
+@keyframes cajaIn{from{opacity:0;transform:translateY(18px) scale(.96)}to{opacity:1;transform:none}}
+.caja{position:relative;width:100%;max-width:460px;padding:20px 16px 16px;border-radius:22px;border:1.5px solid #b86bffcc;
+  background:linear-gradient(#0c0718e6,#0c0718e6),url("pizarra-chica.webp") center/cover;box-shadow:0 0 30px -8px #b86bff,0 24px 60px -20px #000;text-align:center}
+.caja .tt{color:#e2c8ff;text-shadow:0 3px 0 #000a,0 0 10px #b86bffcc,0 0 26px #b86bff66}
+.cerrar{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:1.5px solid #ffffff33;background:#ffffff0d;color:#fff;font:700 1.4rem/1 var(--sans);cursor:pointer}
+.pasos{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left}
+.pasos li{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:14px;background:#ffffff08;border:1px solid #ffffff14;font:600 .92rem/1.3 var(--sans)}
+.pasos li b{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#b86bff;color:#12091f;font:800 .8rem var(--disp)}
+.pasos strong{color:#ffe14d}
+.mapa{display:block;border-radius:14px;overflow:hidden;border:1.5px solid #ffffff22}
+.mapa img{display:block;width:100%;height:auto}
+.nota{margin:10px 0 0;font-size:.82rem;color:var(--mut)}
 .pie{margin-top:auto;padding-top:24px;text-align:center;font-size:.78rem;color:var(--mut);letter-spacing:.08em;animation:up .5s var(--ease) 1.5s both}
 
 @media (max-width:360px){.txt{max-width:62%}.rueda{width:146px;height:146px;margin-top:-73px;right:-34px}.quiz{width:132px;right:-24px}.play{right:14px}}
@@ -179,7 +198,7 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
       <span class="txt"><span class="tt">TRIVIA</span><span class="ds">Respondé preguntas y ganá premios</span><span class="go">Jugar</span></span>
     </a>
 
-    <a class="jg j2" style="--i:1" href="https://trivia-streamingroom-t3.web.app/ruleta-pizarron.html">
+    <a class="jg j2" style="--i:1" href="#ruleta" id="abrirRuleta" aria-haspopup="dialog">
       <span class="art" aria-hidden="true">
         <span class="rueda">
           <img class="cara" src="ruleta-cara.webp" alt="">
@@ -188,7 +207,7 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
           <svg class="ptr" viewBox="0 0 20 24"><path d="M2 2 L18 2 L10 21 Z" fill="#e23b2e" stroke="#111" stroke-width="2.2" stroke-linejoin="round"/></svg>
         </span>
       </span>
-      <span class="txt"><span class="tt">RULETA</span><span class="ds">Girá gratis y llevate un premio sorpresa</span><span class="go">Ir</span></span>
+      <span class="txt"><span class="tt">RULETA</span><span class="ds">Girá gratis y llevate un premio sorpresa</span><span class="pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>Acercate al puesto del Streaming para participar</span><span class="go">Ver mapa</span></span>
     </a>
 
     <a class="jg j3" style="--i:2" href="https://trivia-streamingroom-t3.web.app/juego.html">
@@ -204,7 +223,32 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
     </a>
   </nav>
 
+  <div class="ov" id="ovRuleta" role="dialog" aria-modal="true" aria-labelledby="ovT" hidden>
+    <div class="caja">
+      <button class="cerrar" type="button" aria-label="Cerrar">×</button>
+      <div class="tt" id="ovT">RULETA</div>
+      <ul class="pasos">
+        <li><b>1</b><span>Acercate al puesto del <strong>Streaming Room T3</strong></span></li>
+        <li><b>2</b><span>Girá la ruleta, es gratis y rápido</span></li>
+        <li><b>3</b><span>Llevate tu premio sorpresa</span></li>
+      </ul>
+      <a class="mapa" href="mapa-muestra.webp" target="_blank" rel="noopener"><img src="mapa-muestra.webp" alt="Mapa de la escuela: el puesto del Streaming Room T3 está a la izquierda, entrando, antes del Taller" loading="lazy"></a>
+      <p class="nota">El <b>📍</b> marca dónde estamos · tocá el mapa para verlo en grande</p>
+    </div>
+  </div>
+
   <p class="pie">STREAMING ROOM T3 · ¡GRACIAS POR VISITARNOS!</p>
 </main>
+<script>
+(function(){
+  var ov=document.getElementById('ovRuleta'),ab=document.getElementById('abrirRuleta'),x=ov.querySelector('.cerrar');
+  function abrir(e){if(e)e.preventDefault();ov.hidden=false;ov.classList.add('on');document.body.style.overflow='hidden';x.focus()}
+  function cerrar(){ov.hidden=true;ov.classList.remove('on');document.body.style.overflow='';ab.focus()}
+  ab.addEventListener('click',abrir);x.addEventListener('click',cerrar);
+  ov.addEventListener('click',function(e){if(e.target===ov)cerrar()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)cerrar()});
+  if(location.hash==='#ruleta')abrir();
+})();
+</script>
 </body>
 </html>
