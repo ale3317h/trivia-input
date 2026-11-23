@@ -22,7 +22,7 @@ Todo el stock de premios sale de la **Planilla de Google "Plan de premios Muestr
 | Página | Qué hace |
 | --- | --- |
 | `premios.html` | Premios en gráficos (bolsitas, puestos). |
-| `juego.html` | **Juego en vivo** (Rojo vs Azul): reserva de lugares por horario (turno mañana 9:30 a 11:30 y tarde 13:30 a 15:30, cada 15 min, 2 por equipo). Se anota con Gmail (guardado cifrado: solo se lee en el admin, pestaña Juego, con la clave), puede guardar el lugar 5 min para un compañero una sola vez e invitarlo con un QR único que se usa una vez. |
+| `juego.html` | **Juego en vivo** (Rojo vs Azul): reserva de lugares por horario (turno mañana 9:30 a 11:00 y tarde 14:30 a 16:00, cada 15 min, 2 por equipo). Se anota con nombre y Gmail (guardado cifrado: solo se lee en el admin, pestaña Juego, con la clave), puede guardar el lugar 5 min para un compañero una sola vez e invitarlo con un QR único que se usa una vez. |
 | `ruleta-grande.html` | **Ruleta grande** (la de OBS) conectada a la planilla: premios y porciones de la hoja «Ruleta»; las porciones sin stock en el turno quedan grises y dicen «NADA». Descuenta al entregar y permite deshacer. |
 | `ruleta-pizarron.html` | **Ruleta pizarrón** (estética de los carteles de la muestra): misma conexión con la planilla y el stock que la ruleta grande. Tabla de premios a la izquierda con chance y stock (se activa o desactiva desde el panel), la ruleta se agranda al girar y vuelve al cerrar el premio, logo de tiza en el centro y simulador de tiradas con contraseña (no toca el stock real). Usa `fondo-pizarron.webp` y `logo-pizarron.webp`. |
 | `index.html` (trivia) | Si el premio ganado se agotó en el turno: «Lo siento, nos quedamos sin stock». Si falta el Grande pero queda Normal, entrega el Normal. |

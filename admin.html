@@ -75,7 +75,8 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .jvp{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-top:1px dashed #ffffff14}
 .jvp .eq{font-weight:800;width:44px}.jvp .eq.r{color:#ff6b6b}.jvp .eq.a{color:#6ba1ff}
 .jvp .m{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.jvp button{margin:0;padding:4px 8px;font-size:11px;min-height:0}
+.jvp button{margin:0;padding:4px 8px;font-size:11px;min-height:0;flex:none}
+.jvp .m b{color:#fff}
 .si.x{grid-template-columns:8px 1fr auto 52px auto}
 .si .sx{display:flex;gap:4px}.si .sx button{width:34px;min-height:34px;padding:0;margin:0;font:900 15px system-ui,sans-serif;border-radius:8px}
 @media(min-width:900px){.stg1 .sl{max-width:720px}}
@@ -271,10 +272,14 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 
     <div id="t-jv" class="pane hide">
       <h2>Juego en vivo</h2>
-      <p class="small" style="margin-top:0">Reservas de la página <b>juego.html</b> (Rojo vs Azul, de a dos). Los Gmails se guardan cifrados: poné la clave para verlos y avisarle a cada horario 5 minutos antes.</p>
+      <p class="small" style="margin-top:0">Reservas de la página <b>juego.html</b> (Azul vs Rojo, de a dos). Los Gmails se guardan cifrados: poné la clave para verlos y avisarle a cada horario 5 minutos antes.</p>
       <div class="row"><input id="jv-pw" type="password" placeholder="Clave de los mails" autocomplete="off" style="margin:0"><button class="p" onclick="jvUnlock()" style="margin:0">VER MAILS</button></div>
       <div class="small" id="jv-st" style="margin:8px 0"></div>
+      <details style="margin:6px 0 10px"><summary class="small" style="cursor:pointer"><b>Mensaje de los mails</b> (se usa en ✉️ y en Avisar)</summary>
+        <textarea id="jv-tpl" rows="4" style="margin-top:8px" oninput="try{localStorage.setItem('jv_tpl',this.value)}catch(e){}"></textarea>
+        <p class="small" style="margin:4px 0 0">{nombre}, {hora} y {equipo} se completan solos para cada persona.</p></details>
       <div id="jv-box"></div>
+      <div id="jv-ban" style="margin-top:12px"></div>
       <div class="row" style="margin-top:12px"><button class="r" onclick="jvBorrarTodo()">BORRAR TODAS LAS RESERVAS</button></div>
     </div>
 
@@ -1887,7 +1892,10 @@ async function stkEx(b,dir){
 }
 /* ---------- Juego en vivo ---------- */
 var JV={s:{},key:null,dec:{}},JV_PRIV={"s":"Ev7y4oc7wvGQ9pNckt2TNw==","i":"MIz08NJ8tMhcKAuP","c":"REGlWvEaGj6LkRgD6EaGyQjmJbS3OAyK0/6cvbLSgyVo1VVcctlPE+DSYWFV+WQkWW/LKASY1r7QIQav0OK0UoOyIXJV7kvaNKp4KY/rTWkiWGr1Ik1ml0ILBxn/E51BpuLrt1CeWSTpC5L3zaxMtjEiJ2OFK9MZAW67Js3tZHyEl0b+6w/DYivR/nnA/0kWnxyJnXrDEJpAkb138WPpfrObQwkyh8WHAIa/LgbVJXYr/yQXGmAZcbNYijXBWiVNb0rXslejwEm6Nmw7KLVhIsdXHTXJuLF+8N94Mbqq/f8Y6SA="};
-var JV_TURNOS=[{id:"m",nom:"Turno mañana",ini:570,fin:690},{id:"t",nom:"Turno tarde",ini:810,fin:930}];
+var JV_TURNOS=[{id:"m",nom:"Turno mañana · 9:30 a 11:00",ini:570,fin:660},{id:"t",nom:"Turno tarde · 14:30 a 16:00",ini:870,fin:960}];
+var JV_TPL_DEF="¡Hola {nombre}! A las {hora} te toca jugar en el {equipo} del Juego en vivo de Streaming Room T3. Acercate al stream 5 minutos antes. ¡Te esperamos!";
+function jvTpl(){try{return localStorage.getItem("jv_tpl")||JV_TPL_DEF}catch(e){return JV_TPL_DEF}}
+function jvFill(t,p){return t.replace(/\{nombre\}/g,p.n||"").replace(/\{hora\}/g,p.hora||"").replace(/\{equipo\}/g,p.eq||"").replace(/¡Hola !/g,"¡Hola!")}
 function jvHora(id){return (+id.slice(1,3))+":"+id.slice(3,5)}
 function jvB(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
 async function jvUnlock(){
@@ -1918,18 +1926,47 @@ async function jvRender(){
       ["r","a"].forEach(function(q){var eq=sl[q]||{};for(var k in eq){var v=eq[k];if(!v)continue;if(v.st==="ok")ps.push({q:q,k:k,v:v});else if(v.st==="hold"&&v.exp>t)ps.push({q:q,k:k,v:v,hold:1})}});
       if(!ps.length)continue;tot+=ps.filter(function(p){return!p.hold}).length;
       var lines="";
-      for(var i=0;i<ps.length;i++){var p=ps[i],mail=p.hold?"(lugar guardado para un invitado hasta "+new Date(p.v.exp).toTimeString().slice(0,5)+")":(JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado");
-        lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m">'+mail+'</span><button class="p" onclick="jvQuitar(\''+id+'\',\''+p.q+'\',\''+p.k+'\')">Quitar</button></div>'}
+      ps.sort(function(a,b){return (a.q===b.q?0:(a.q==="a"?-1:1))||((a.v.t||0)-(b.v.t||0))});
+      for(var i=0;i<ps.length;i++){var p=ps[i],args="\'"+id+"\',\'"+p.q+"\',\'"+p.k+"\'";
+        if(p.hold){lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m">⏳ Guardado para un invitado hasta '+new Date(p.v.exp).toTimeString().slice(0,5)+'</span><button class="p" onclick="jvQuitar('+args+')">Quitar</button></div>';continue}
+        var mail=JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado";
+        lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(p.v.n||"(sin nombre)")+'</b> · '+mail+'</span>'+
+          (JV.key?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
+          '<button class="p" onclick="jvQuitar('+args+')">Quitar</button><button class="r" onclick="jvBan('+args+')">Bloquear</button></div>'}
       rows+='<div class="jvs"><div class="jh"><b>'+jvHora(id)+'</b><span class="bt">'+(JV.key?'<button class="p" onclick="jvCopiar(\''+id+'\')">Copiar mails</button><button class="g" onclick="jvAvisar(\''+id+'\')">✉️ Avisar</button>':'')+'</span></div>'+lines+'</div>';
     }
     h+='<div class="tn'+(ti===0?' on':'')+'" style="margin-top:12px">'+T.nom+'</div>'+(rows||'<div class="small">Sin reservas todavía.</div>');
   }
-  box.innerHTML=h;$("jv-st").textContent=tot+" personas anotadas"+(JV.key?"":" · los mails están cifrados: poné la clave para verlos");
+  box.innerHTML=h;jvBanRender();var ta=$("jv-tpl");if(ta&&!ta.value)ta.value=jvTpl();$("jv-st").textContent=tot+" personas anotadas"+(JV.key?"":" · los mails están cifrados: poné la clave para verlos");
 }
 async function jvMails(id){var sl=JV.s[id]||{},out=[];for(var q of ["r","a"]){var eq=sl[q]||{};for(var k in eq){var v=eq[k];if(v&&v.st==="ok"){var m=await jvMail(v.e);if(m&&m.indexOf("@")>0)out.push(m)}}}return out}
 async function jvCopiar(id){var m=await jvMails(id);try{await navigator.clipboard.writeText(m.join(", "));toast(m.length+" mails copiados")}catch(e){prompt("Copiá los mails:",m.join(", "))}}
 async function jvAvisar(id){var m=await jvMails(id);if(!m.length){toast("No hay mails en ese horario");return}
-  location.href="mailto:?bcc="+encodeURIComponent(m.join(","))+"&subject="+encodeURIComponent("¡En 5 minutos te toca el Juego en vivo!")+"&body="+encodeURIComponent("¡Hola! A las "+jvHora(id)+" te toca jugar en el Juego en vivo de Streaming Room T3. Acercate al stream que ya empieza. ¡Te esperamos!")}
+  location.href="mailto:?bcc="+encodeURIComponent(m.join(","))+"&subject="+encodeURIComponent("¡En 5 minutos te toca el Juego en vivo!")+"&body="+encodeURIComponent(jvFill(jvTpl(),{n:"",hora:jvHora(id),eq:"tu equipo"}))}
+function jvPersona(id,q,k){var v=((JV.s[id]||{})[q]||{})[k]||{};return{v:v,n:v.n||"",hora:jvHora(id),eq:q==="r"?"Equipo Rojo":"Equipo Azul"}}
+async function jvMailUno(id,q,k){
+  var p=jvPersona(id,q,k),m=await jvMail(p.v.e);if(!m||m.indexOf("@")<0){toast("No se pudo leer el mail");return}
+  location.href="mailto:"+encodeURIComponent(m)+"?subject="+encodeURIComponent("Juego en vivo · "+p.hora)+"&body="+encodeURIComponent(jvFill(jvTpl(),p));
+}
+async function jvBan(id,q,k){
+  var p=jvPersona(id,q,k);
+  if(!await askSteps([{icon:"⛔",title:"¿Bloquear a "+esc(p.n||"esta persona")+"?",text:"Se le saca el lugar de las "+p.hora+" y no se puede volver a anotar con ese Gmail ni desde ese celular. Se puede desbloquear después.",ok:"BLOQUEAR",danger:true}]))return;
+  var d=sdb(),v=p.v,up={},info={n:p.n||"",t:firebase.database.ServerValue.TIMESTAMP};
+  up["cfg/jv/s/"+id+"/"+q+"/"+k]=null;if(v.u){up["cfg/jv/u/"+v.u]=null;up["cfg/jv/banu/"+v.u]=info}if(v.h){up["cfg/jv/h/"+v.h]=null;up["cfg/jv/ban/"+v.h]=info}
+  try{await d.ref().update(up);toast((p.n||"La persona")+" quedó bloqueada")}catch(e){alert("No se pudo: "+e.message)}
+}
+function jvBanRender(){
+  var d=sdb(),b=$("jv-ban");if(!d||!b)return;
+  d.ref("cfg/jv/ban").once("value").then(function(x){var o=x.val()||{},ks=Object.keys(o);
+    if(!ks.length){b.innerHTML="";return}
+    b.innerHTML='<div class="sg">BLOQUEADOS ('+ks.length+')</div>'+ks.map(function(h){return '<div class="jvp"><span class="m"><b>'+esc(o[h].n||"(sin nombre)")+'</b></span><button class="p" onclick="jvDesban(\''+h+'\')">Desbloquear</button></div>'}).join("");
+  });
+}
+async function jvDesban(h){
+  var d=sdb();try{var bu=(await d.ref("cfg/jv/banu").once("value")).val()||{},ban=((await d.ref("cfg/jv/ban/"+h).once("value")).val())||{},up={};
+    up["cfg/jv/ban/"+h]=null;for(var u in bu)if(bu[u]&&bu[u].n===ban.n&&bu[u].t===ban.t)up["cfg/jv/banu/"+u]=null;
+    await d.ref().update(up);toast("Desbloqueado");jvBanRender()}catch(e){alert("No se pudo: "+e.message)}
+}
 async function jvQuitar(id,q,k){
   if(!confirm("¿Quitar este lugar de las "+jvHora(id)+"?"))return;
   var d=sdb(),v=((JV.s[id]||{})[q]||{})[k]||{},up={};up["cfg/jv/s/"+id+"/"+q+"/"+k]=null;

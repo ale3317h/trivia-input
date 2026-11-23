@@ -59,6 +59,8 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
 .as::after{content:"";position:absolute;left:3px;right:3px;bottom:-6px;height:4px;border-radius:2px;background:currentColor;opacity:.7}
 .team.r .as{color:var(--rojo2)}.team.a .as{color:var(--azul2)}
 .as.ocu{background:currentColor}
+button.as{padding:0;cursor:pointer;font:inherit}
+button.as:hover{transform:translateY(-2px)}
 .as.res{background:repeating-linear-gradient(45deg,currentColor 0 3px,transparent 3px 6px)}
 .team .lib{font-size:12.5px;color:var(--tiza);text-align:center;line-height:1.15}
 .team .lib b{font-weight:700}
@@ -96,6 +98,9 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
 .timer{font:400 22px var(--marker);color:var(--amarillo)}
 .cerrar{margin-top:12px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#0f2a17;border:2px solid #3ddc84;color:#fff;padding:10px 16px;border-radius:12px;font-weight:700;z-index:60;max-width:90vw;text-align:center}
+.liberar{display:block;width:100%;max-width:420px;margin:14px auto 0;font:800 19px var(--sans);letter-spacing:.02em;color:#fff;background:#e0242b;border:0;border-radius:16px;padding:15px 18px;cursor:pointer;
+  box-shadow:0 0 0 3px #ff6b6b55,0 6px 0 #8a0f14,0 0 18px #ff3b3b88}
+.liberar:active{transform:translateY(3px);box-shadow:0 0 0 3px #ff6b6b55,0 3px 0 #8a0f14}
 .pie{margin-top:22px;text-align:center;color:var(--mut);font-size:13px}
 </style>
 </head><body>
@@ -105,7 +110,7 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
     <h1>¿Querés jugar en el Juego en Vivo?</h1>
     <div class="line"></div>
     <span class="live"><b></b> EN STREAM</span>
-    <div class="vs"><span class="r">Equipo Rojo</span><span class="v">VS</span><span class="a">Equipo Azul</span></div>
+    <div class="vs"><span class="a">Equipo Azul</span><span class="v">VS</span><span class="r">Equipo Rojo</span></div>
     <p class="sub">Elegí un horario y un equipo. Gana el equipo que sume más puntos, ¡y hay premios!</p>
   </header>
 
@@ -122,6 +127,7 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
       <h2>¡Sumate al juego!</h2>
       <p>Te anotás en el <span class="eq" id="u-eq"></span> a las <b id="u-hora"></b>.</p>
       <p>Dejanos tu Gmail y te avisamos <b>5 minutos antes</b> para que te acerques al stream.</p>
+      <input id="u-nom" type="text" maxlength="20" autocomplete="given-name" placeholder="Tu nombre o apodo" style="margin-bottom:8px">
       <input id="u-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
       <div class="err" id="u-err"></div>
       <button class="btn" id="u-sig" type="button" style="width:100%">Seguir</button>
@@ -144,7 +150,9 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
   <div class="box">
     <h2>Invitá a un compañero</h2>
     <p>Que escanee este QR con la cámara del celular y ponga su Gmail: queda anotado en tu equipo.</p>
+    <p class="sub" id="i-msg" style="margin:4px 0 6px"></p>
     <div class="qr" id="i-qr"></div>
+    <button class="btn hide" type="button" id="i-share" style="width:100%;margin:6px 0">Compartir invitación</button>
     <div class="link" id="i-link"></div>
     <div id="i-timer" class="hide"><span>Lugar guardado por</span> <span class="timer" id="i-t">5:00</span></div>
     <p id="i-nota" style="font-size:13px;color:var(--mut)"></p>
@@ -159,11 +167,22 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
     <p id="in-p"></p>
     <div id="in-form">
       <p>Iniciá con tu Gmail y quedás anotado. Te avisamos 5 minutos antes.</p>
+      <input id="in-nom" type="text" maxlength="20" autocomplete="given-name" placeholder="Tu nombre o apodo" style="margin-bottom:8px">
       <input id="in-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
       <div class="err" id="in-err"></div>
       <button class="btn" id="in-ok" type="button" style="width:100%">Anotarme</button>
     </div>
     <button class="btn sec cerrar" type="button" id="in-x">Ver los horarios</button>
+  </div>
+</div>
+
+<!-- Confirmar liberar -->
+<div class="ov hide" id="ovLib">
+  <div class="box">
+    <h2>¿Liberar tu lugar?</h2>
+    <p>Si lo liberás, otra persona puede ocuparlo y vas a tener que anotarte de nuevo.</p>
+    <button class="liberar" type="button" id="l-si">Sí, liberar mi lugar</button>
+    <button class="btn sec cerrar" type="button" id="l-no">No, me quedo</button>
   </div>
 </div>
 
@@ -185,8 +204,8 @@ h1{margin:10px 0 4px;font:400 clamp(30px,7.5vw,64px)/1.05 var(--marker);color:va
    El Gmail se guarda CIFRADO: solo el admin (con su clave) puede leerlo.
    ============================================================= */
 var CAP=2, HOLD_MS=5*60*1000;
-var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:30",ini:9*60+30,fin:11*60+30},
-            {id:"t",nom:"Turno tarde",desde:"13:30",hasta:"15:30",ini:13*60+30,fin:15*60+30}];
+var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:00",ini:9*60+30,fin:11*60},
+            {id:"t",nom:"Turno tarde",desde:"14:30",hasta:"16:00",ini:14*60+30,fin:16*60}];
 var EQ={r:"Equipo Rojo",a:"Equipo Azul"};
 var PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 var $=function(i){return document.getElementById(i)};
@@ -221,7 +240,13 @@ function gmailCheck(raw){
     return{ok:false,msg:"Ese Gmail parece inventado. Escribí el tuyo."};
   return{ok:true,mail:letras+"@gmail.com",ver:v};
 }
+function nombreCheck(raw){var v=String(raw||"").replace(/\s+/g," ").trim();
+  if(v.length<2)return{ok:false,msg:"Escribí tu nombre (así te ven en la butaca)."};
+  if(v.length>20)return{ok:false,msg:"El nombre puede tener hasta 20 letras."};
+  if(!/^[\p{L}\p{N} .'-]+$/u.test(v))return{ok:false,msg:"Usá solo letras y números en el nombre."};
+  return{ok:true,nom:v}}
 function b64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
+async function baneado(h){try{var a=await Promise.all([R("ban/"+h).once("value"),R("banu/"+UID).once("value")]);return !!(a[0].val()||a[1].val())}catch(e){return false}}
 async function hashMail(m){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("jv|"+m));return Array.from(new Uint8Array(b)).slice(0,12).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
 async function cifrar(texto){
   var pub=await crypto.subtle.importKey("jwk",PUB,{name:"ECDH",namedCurve:"P-256"},false,[]);
@@ -241,10 +266,10 @@ function pintar(){
   var h="";
   TURNOS.forEach(function(T){
     h+='<section class="turno"><h3>'+T.nom+'</h3><div class="hr">de '+T.desde+' a '+T.hasta+' · cada 15 minutos</div>'+
-       '<div class="cab"><span></span><span class="r">Rojo</span><span class="a">Azul</span></div>';
+       '<div class="cab"><span></span><span class="a">Azul</span><span class="r">Rojo</span></div>';
     SLOTS.filter(function(s){return s.turno===T.id}).forEach(function(s){
       var yo=MIO&&MIO.s===s.id;
-      h+='<div class="slot'+(yo?' yo':'')+'"><div class="hora">'+s.hora+'</div>'+equipo(s,"r")+equipo(s,"a")+'</div>';
+      h+='<div class="slot'+(yo?' yo':'')+'"><div class="hora">'+s.hora+'</div>'+equipo(s,"a")+equipo(s,"r")+'</div>';
     });
     h+='</section>';
   });
@@ -252,28 +277,35 @@ function pintar(){
   pintarMio();
 }
 function equipo(s,q){
-  var eq=(S[s.id]||{})[q],v=vivos(eq),ocu=0,res=0,k;for(k in v){if(v[k].st==="ok")ocu++;else res++}
+  var eq=(S[s.id]||{})[q],v=vivos(eq),ocu=0,res=0,k,lst=[];for(k in v){lst.push(v[k]);if(v[k].st==="ok")ocu++;else res++}
+  lst.sort(function(x,y){return (x.st==="ok"?0:1)-(y.st==="ok"?0:1)||(x.t||x.exp||0)-(y.t||y.exp||0)});
   var lib=Math.max(0,CAP-ocu-res),as="",i;
-  for(i=0;i<CAP;i++)as+='<span class="as'+(i<ocu?' ocu':(i<ocu+res?' res':''))+'"></span>';
+  for(i=0;i<CAP;i++){var p=lst[i];
+    if(!p)as+='<span class="as" title="Lugar libre"></span>';
+    else if(p.st==="ok")as+='<button type="button" class="as ocu" data-quien="'+esc(p.n||"Alguien")+'" title="'+esc(p.n||"Ocupado")+'"></button>';
+    else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" title="Lugar guardado"></button>';}
   var yo=MIO&&MIO.s===s.id&&MIO.q===q;
   var txt=lib===2?'<b>2 lugares</b> libres':(lib===1?'<b>1 lugar</b> libre':(res?'Lugar guardado':'Completo'));
   var dis=!!MIO||lib===0;
   return '<div class="team '+q+(yo?' yo':'')+'"><div class="asientos">'+as+'</div><div class="lib">'+(yo?'<b>¡Acá estás vos!</b>':txt)+'</div>'+
     (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
 }
+function nombreDe(eq,u){for(var k in (eq||{})){var v=eq[k];if(v&&v.st==="ok"&&v.u===u)return v.n||"alguien"}return "alguien"}
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".as");if(!b)return;
+  if(b.dataset.quien)toast("🪑 Acá está: "+b.dataset.quien);else if(b.dataset.res)toast("⏳ Lugar guardado para el compañero de "+b.dataset.res)});
 function pintarMio(){
   var b=$("mine");
   if(!MIO){b.classList.add("hide");return}
   var s=slotDe(MIO.s);if(!s){b.classList.add("hide");return}
-  var eq=(S[MIO.s]||{})[MIO.q]||{},v=vivos(eq),comp=0,hold=null,k;
-  for(k in v){if(v[k].st==="ok"&&v[k].u!==UID)comp++;if(v[k].st==="hold"&&v[k].by===UID)hold=v[k]}
-  var estado=comp?'Ya tenés compañero 🙌':(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
+  var eq=(S[MIO.s]||{})[MIO.q]||{},v=vivos(eq),comp=0,cn="",hold=null,k;
+  for(k in v){if(v[k].st==="ok"&&v[k].u!==UID){comp++;cn=v[k].n||""}if(v[k].st==="hold"&&v[k].by===UID)hold=v[k]}
+  var estado=comp?('Jugás con <b>'+esc(cn||"tu compañero")+'</b> 🙌'):(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
   b.innerHTML='<h2>¡Ya tenés tu lugar!</h2><p>Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+MIO.q+'">'+EQ[MIO.q]+'</span>.</p><p>'+estado+'</p>'+
     '<div class="btns">'+(comp?'':'<button class="btn '+(MIO.q==="r"?"rojo":"azul")+'" type="button" id="b-inv">Invitá a un compañero</button>')+
-    '<button class="btn sec" type="button" id="b-lib">Liberar mi lugar</button></div><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
+    '</div><button class="liberar" type="button" id="b-lib">Liberar mi lugar</button><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
   b.classList.remove("hide");
   var bi=$("b-inv");if(bi)bi.onclick=invitar;
-  $("b-lib").onclick=liberar;
+  $("b-lib").onclick=function(){$("ovLib").classList.remove("hide")};
 }
 
 /* ---------- anotarse ---------- */
@@ -282,14 +314,16 @@ document.addEventListener("click",function(e){var b=e.target.closest&&e.target.c
 function abrirUnir(sid,q){
   if(MIO){toast("Ya tenés un lugar anotado.");return}
   pend={s:sid,q:q};$("u-eq").textContent=EQ[q];$("u-eq").className="eq "+q;$("u-hora").textContent=slotDe(sid).hora;
-  $("u-mail").value="";$("u-err").textContent="";$("u-err2").textContent="";$("paso1").classList.remove("hide");$("paso2").classList.add("hide");
-  $("ovUnir").classList.remove("hide");setTimeout(function(){$("u-mail").focus()},200);
+  $("u-mail").value="";$("u-nom").value=(function(){try{return localStorage.getItem("jv_nom")||""}catch(e){return""}})();$("u-err").textContent="";$("u-err2").textContent="";$("paso1").classList.remove("hide");$("paso2").classList.add("hide");
+  $("ovUnir").classList.remove("hide");setTimeout(function(){($("u-nom").value?$("u-mail"):$("u-nom")).focus()},200);
 }
 $("u-x").onclick=function(){$("ovUnir").classList.add("hide");pend=null};
 $("u-mail").onkeydown=function(e){if(e.key==="Enter")$("u-sig").click()};
 $("u-sig").onclick=async function(){
+  var nn=nombreCheck($("u-nom").value);if(!nn.ok){$("u-err").textContent=nn.msg;return}
   var c=gmailCheck($("u-mail").value);if(!c.ok){$("u-err").textContent=c.msg;return}
-  pend.mail=c.mail;pend.h=await hashMail(c.mail);
+  pend.mail=c.mail;pend.nom=nn.nom;pend.h=await hashMail(c.mail);try{localStorage.setItem("jv_nom",nn.nom)}catch(x){}
+  if(await baneado(pend.h)){$("u-err").textContent="No podés anotarte en el juego. Si creés que es un error, hablá con producción.";return}
   var ya=(await R("h/"+pend.h).once("value")).val();
   if(ya&&ya!==UID){$("u-err").textContent="Ese Gmail ya tiene un lugar anotado.";return}
   var eq=(S[pend.s]||{})[pend.q];
@@ -309,17 +343,17 @@ async function confirmar(guardar){
       cur=cur||{};var v=vivos(cur),k;for(k in cur)if(!v[k])delete cur[k];       // limpia lugares guardados vencidos
       for(k in v)if(v[k].u===UID)return;                                          // ya estoy en este equipo
       var n=Object.keys(v).length;if(n>=CAP)return;                               // sin lugar
-      cur[seat]={st:"ok",u:UID,t:t,h:p.h,e:e};
+      cur[seat]={st:"ok",u:UID,t:t,h:p.h,e:e,n:p.nom};
       if(guardar&&n+1<CAP)cur["g"+seat]={st:"hold",by:UID,exp:t+HOLD_MS,tok:tok};
       return cur;
     });
     if(!res.committed){$("u-err2").textContent="Uy, ese lugar se acaba de ocupar. Elegí otro horario.";return}
-    var up={};up["u/"+UID]={s:p.s,q:p.q,k:seat,h:p.h};up["h/"+p.h]=UID;
-    if(tok)up["tok/"+tok]={s:p.s,q:p.q,by:UID,exp:t+HOLD_MS,used:false,hold:"g"+seat,t:t};
+    var up={};up["u/"+UID]={s:p.s,q:p.q,k:seat,h:p.h,n:p.nom};up["h/"+p.h]=UID;
+    if(tok)up["tok/"+tok]={s:p.s,q:p.q,by:UID,n:p.nom,exp:t+HOLD_MS,used:false,hold:"g"+seat,t:t};
     await R("").update(up);
     try{localStorage.setItem("jv_res_usada_"+UID,guardar?"1":"0")}catch(x){}
     $("ovUnir").classList.add("hide");pend=null;
-    MIO={s:p.s,q:p.q,k:seat,h:p.h};pintar();
+    MIO={s:p.s,q:p.q,k:seat,h:p.h,n:p.nom};pintar();
     toast("¡Listo! Estás anotado.");
     if(tok)mostrarQR(tok,t+HOLD_MS);
   }catch(err){$("u-err2").textContent="No se pudo anotar ("+(err&&err.message||"sin conexión")+"). Probá de nuevo."}
@@ -332,7 +366,9 @@ function qrSvg(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(unescape(encodeURICompon
 function linkInv(tok){return location.origin+location.pathname+"?inv="+tok}
 var tmr=null;
 function mostrarQR(tok,exp){
-  var url=linkInv(tok);$("i-qr").innerHTML=qrSvg(url);$("i-link").textContent=url;
+  var url=linkInv(tok),yo=(MIO&&MIO.n)||"";$("i-qr").innerHTML=qrSvg(url);$("i-link").textContent=url;
+  $("i-msg").innerHTML='"<b>'+esc(yo||"Tu compañero")+'</b> te invitó a que te unas a su equipo"';
+  var sh=$("i-share");if(navigator.share){sh.classList.remove("hide");sh.onclick=function(){navigator.share({title:"Juego en vivo",text:(yo||"Alguien")+" te invitó a que te unas a su equipo en el Juego en vivo",url:url}).catch(function(){})}}else sh.classList.add("hide");
   clearInterval(tmr);
   if(exp){$("i-timer").classList.remove("hide");
     $("i-nota").textContent="Este QR sirve una sola vez. Si pasan los 5 minutos, tu compañero igual puede usarlo mientras quede un lugar libre.";
@@ -347,13 +383,15 @@ async function invitar(){
   var mine=(await R("tok").orderByChild("by").equalTo(UID).once("value")).val()||{},k,t=now();
   for(k in mine)if(!mine[k].used&&mine[k].s===MIO.s&&mine[k].q===MIO.q){mostrarQR(k,mine[k].exp>t&&mine[k].hold?mine[k].exp:0);return}
   var tok=rnd(10);
-  await R("tok/"+tok).set({s:MIO.s,q:MIO.q,by:UID,exp:0,used:false,hold:null,t:t});
+  await R("tok/"+tok).set({s:MIO.s,q:MIO.q,by:UID,n:MIO.n||"",exp:0,used:false,hold:null,t:t});
   mostrarQR(tok,0);
 }
 
 /* ---------- liberar ---------- */
+$("l-no").onclick=function(){$("ovLib").classList.add("hide")};
+$("l-si").onclick=function(){$("ovLib").classList.add("hide");liberar()};
 async function liberar(){
-  if(!MIO||!confirm("¿Seguro que querés liberar tu lugar?"))return;
+  if(!MIO)return;
   var m=MIO;
   await R("s/"+m.s+"/"+m.q).transaction(function(cur){cur=cur||{};var k;for(k in cur){var v=cur[k];if(v&&(v.u===UID||v.by===UID))delete cur[k]}return cur});
   var up={};up["u/"+UID]=null;if(m.h)up["h/"+m.h]=null;await R("").update(up);
@@ -369,17 +407,21 @@ async function abrirInvitacion(tok){
   if(t.used){$("in-t").textContent="Esta invitación ya se usó";$("in-p").textContent="Cada QR sirve una sola vez. Podés elegir otro horario libre.";$("in-form").classList.add("hide");return}
   if(MIO){$("in-t").textContent="Ya tenés un lugar";$("in-p").textContent="Desde este celular ya hay alguien anotado.";$("in-form").classList.add("hide");return}
   INV={tok:tok,s:t.s,q:t.q,hold:t.hold};var s=slotDe(t.s);
-  $("in-t").textContent="¡Te invitaron a jugar!";
-  $("in-p").innerHTML='Vas a jugar a las <b>'+(s?s.hora:"")+'</b> en el <span class="eq '+t.q+'">'+EQ[t.q]+'</span>.';
+  $("in-t").textContent=t.n?(t.n+" te invitó a que te unas a su equipo"):"¡Te invitaron a jugar!";
+  $("in-p").innerHTML='Jugás a las <b>'+(s?s.hora:"")+'</b> en el <span class="eq '+t.q+'">'+EQ[t.q]+'</span>.';
+  try{$("in-nom").value=localStorage.getItem("jv_nom")||""}catch(e){}
   $("in-form").classList.remove("hide");$("in-err").textContent="";setTimeout(function(){$("in-mail").focus()},200);
 }
 $("in-mail").onkeydown=function(e){if(e.key==="Enter")$("in-ok").click()};
 $("in-x").onclick=function(){$("ovIn").classList.add("hide");INV=null;volverComun()};
 $("in-ok").onclick=async function(){
+  var nn=nombreCheck($("in-nom").value);if(!nn.ok){$("in-err").textContent=nn.msg;return}
   var c=gmailCheck($("in-mail").value);if(!c.ok){$("in-err").textContent=c.msg;return}
-  var I=INV;if(!I)return;$("in-err").textContent="Anotando…";
+  var I=INV;if(!I)return;$("in-err").textContent="Anotando…";try{localStorage.setItem("jv_nom",nn.nom)}catch(x){}
   try{
-    var h=await hashMail(c.mail),ya=(await R("h/"+h).once("value")).val();
+    var h=await hashMail(c.mail);
+    if(await baneado(h)){$("in-err").textContent="No podés anotarte en el juego. Si creés que es un error, hablá con producción.";return}
+    var ya=(await R("h/"+h).once("value")).val();
     if(ya&&ya!==UID){$("in-err").textContent="Ese Gmail ya tiene un lugar anotado.";return}
     // la invitación se marca como usada primero (así no se puede usar dos veces)
     // (la primera pasada de una transacción puede venir vacía: se devuelve igual y Firebase reintenta con el dato real)
@@ -391,11 +433,11 @@ $("in-ok").onclick=async function(){
       cur=cur||{};var v=vivos(cur),k;for(k in cur)if(!v[k])delete cur[k];
       if(I.hold&&cur[I.hold])delete cur[I.hold];                   // ocupa el lugar que le guardaron
       if(Object.keys(vivos(cur)).length>=CAP)return;
-      cur[seat]={st:"ok",u:UID,t:t,h:h,e:e,inv:I.tok};return cur;
+      cur[seat]={st:"ok",u:UID,t:t,h:h,e:e,n:nn.nom,inv:I.tok};return cur;
     });
     if(!res.committed){await R("tok/"+I.tok+"/used").set(false);$("in-err").textContent="Uy, ya no queda lugar en ese equipo. Elegí otro horario.";return}
-    var up={};up["u/"+UID]={s:I.s,q:I.q,k:seat,h:h};up["h/"+h]=UID;await R("").update(up);
-    MIO={s:I.s,q:I.q,k:seat,h:h};$("ovIn").classList.add("hide");INV=null;volverComun();pintar();
+    var up={};up["u/"+UID]={s:I.s,q:I.q,k:seat,h:h,n:nn.nom};up["h/"+h]=UID;await R("").update(up);
+    MIO={s:I.s,q:I.q,k:seat,h:h,n:nn.nom};$("ovIn").classList.add("hide");INV=null;volverComun();pintar();
     toast("¡Listo! Quedaste anotado con tu compañero.");
   }catch(err){$("in-err").textContent="No se pudo anotar ("+(err&&err.message||"sin conexión")+")."}
 };
