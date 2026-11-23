@@ -559,11 +559,12 @@ const ICONOS={};
 Object.keys(ICONOS_SRC).forEach(k=>{const im=new Image();im.onload=()=>{ICONOS[k]=im;if(typeof draw==='function'&&typeof curHi!=='undefined')draw(curHi);};im.src=ICONOS_SRC[k];});
 function nombreVista(n){n=String(n);return /llavero +grande/i.test(n)?n.replace(/llavero +grande/i,"Logo grande"):n;}
 /* tamaño relativo de cada ícono dentro de su círculo (1 = normal): el vaso es alto y el llavero 3D llena toda su imagen */
+const ICONOS_DY={logo_3d:-8};   // corrimiento vertical (% de su alto) para centrar el dibujo
 const ICONOS_K={vaso:.84,llavero_3d:.78,logo_3d:1.3,lapicera:.9,lapicera_pers:.9,cuaderno:.9};
 function iconoImg(name,base){
   const k=iconoDe(name),u=k&&ICONOS_SRC[k];if(!u)return'';
   const p=(base*(ICONOS_K[k]||1)).toFixed(1);
-  return '<img alt="" src="'+u+'" style="width:'+p+'%;height:'+p+'%">';
+  return '<img alt="" src="'+u+'" style="width:'+p+'%;height:'+p+'%'+(ICONOS_DY[k]?';transform:translateY('+ICONOS_DY[k]+'%)':'')+'">';
 }
 function iconoDe(name){
   const n=normN(name);
