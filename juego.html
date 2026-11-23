@@ -101,6 +101,18 @@ button.as:hover{transform:translateY(-2px)}
 .liberar{display:block;width:100%;max-width:420px;margin:14px auto 0;font:800 19px var(--sans);letter-spacing:.02em;color:#fff;background:#e0242b;border:0;border-radius:16px;padding:15px 18px;cursor:pointer;
   box-shadow:0 0 0 3px #ff6b6b55,0 6px 0 #8a0f14,0 0 18px #ff3b3b88}
 .liberar:active{transform:translateY(3px);box-shadow:0 0 0 3px #ff6b6b55,0 3px 0 #8a0f14}
+.slot{position:relative}
+.hora small{display:block;font:500 10px/1.1 var(--sans);color:var(--mut);margin-top:3px}
+.hora{flex-direction:column}
+.slot.cerr .team{opacity:.38;filter:grayscale(.5)}
+.slot.cerr .hora{opacity:.6}
+.cartel{position:absolute;left:76px;right:8px;top:50%;transform:translateY(-50%) rotate(-3deg);z-index:2;pointer-events:none;text-align:center;
+  font:400 clamp(1.15rem,5vw,1.6rem)/1 var(--marker);letter-spacing:.06em;padding:6px 8px;border:3px solid;border-radius:10px;background:#111e}
+.cartel.pasado{color:#c9c5ba;border-color:#c9c5ba}
+.cartel.susp{color:#ffb347;border-color:#ffb347;box-shadow:0 0 12px #ffb34777}
+.cartel.lleno{color:#c084fc;border-color:#c084fc;box-shadow:0 0 12px #a855f777}
+.hr b{color:var(--amarillo);font-weight:600}
+.aviso{margin:8px 0 0;padding:8px 10px;border:2px solid #ffb347;border-radius:12px;color:#ffb347;font-weight:700;font-size:14px}
 .pie{margin-top:22px;text-align:center;color:var(--mut);font-size:13px}
 
 /* encabezado con la colocación nueva (misma estética de pizarrón) */
@@ -259,19 +271,19 @@ body.tienelugar .toast{bottom:92px}
    El Gmail se guarda CIFRADO: solo el admin (con su clave) puede leerlo.
    ============================================================= */
 var CAP=2, HOLD_MS=5*60*1000;
-var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:00",ini:9*60+30,fin:11*60},
-            {id:"t",nom:"Turno tarde",desde:"14:30",hasta:"16:00",ini:14*60+30,fin:16*60}];
+var TURNOS=[{id:"m",nom:"Turno mañana",desde:"9:30",hasta:"11:15",ini:9*60+30,fin:11*60+15},
+            {id:"t",nom:"Turno tarde",desde:"14:30",hasta:"16:15",ini:14*60+30,fin:16*60+15}];
 var EQ={r:"Equipo Rojo",a:"Equipo Azul"};
 var PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 var $=function(i){return document.getElementById(i)};
 var PER='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7.6" r="4"/><path d="M4.2 21c0-4.3 3.4-7 7.8-7s7.8 2.7 7.8 7z"/></svg>';
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
 function hhmm(m){return Math.floor(m/60)+":"+("0"+m%60).slice(-2)}
-var SLOTS=[];TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15)SLOTS.push({id:T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2),turno:T.id,hora:hhmm(m)})});
+var SLOTS=[];TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15)SLOTS.push({id:T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2),turno:T.id,hora:hhmm(m),fin:hhmm(m+15),min:m})});
 function slotDe(id){for(var i=0;i<SLOTS.length;i++)if(SLOTS[i].id===id)return SLOTS[i];return null}
 
 /* ---------- base ---------- */
-var db=null,off=0,S={},MIO=null;
+var db=null,off=0,S={},MIO=null,EST={},FECHA="";
 try{var app;try{app=firebase.app()}catch(e){app=firebase.initializeApp(window.FB_CONFIG)}db=firebase.database()}catch(e){}
 function now(){return Date.now()+off}
 function uid(){var k="jv_uid",v=null;try{v=localStorage.getItem(k)}catch(e){}
@@ -315,17 +327,29 @@ async function cifrar(texto){
 }
 
 /* ---------- estado de cada horario ---------- */
+function ahoraAR(){var d=new Date(now()-3*3600*1000);return{min:d.getUTCHours()*60+d.getUTCMinutes(),dia:d.toISOString().slice(0,10)}}
+// 'pasado' (ya terminó, si el admin puso el día) · 'susp' (suspendido a mano) · 'lleno' (a mano o porque están los 4 lugares) · '' (abierto)
+function estadoSlot(s){
+  var a=ahoraAR();
+  if(FECHA&&(a.dia>FECHA||(a.dia===FECHA&&a.min>=s.min+15)))return"pasado";
+  var m=EST[s.id];if(m==="susp")return"susp";
+  if(m==="lleno")return"lleno";
+  var sl=S[s.id]||{};if(cuenta(sl.a)>=CAP&&cuenta(sl.r)>=CAP)return"lleno";
+  return"";
+}
+function cerrado(s){var e=estadoSlot(s);return e==="pasado"||e==="susp"}
+var CARTEL={pasado:"YA PASÓ",susp:"SUSPENDIDO",lleno:"LLENO"};
 function vivos(eq){var o={},k,v,t=now();for(k in (eq||{})){v=eq[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))o[k]=v}return o}
 function cuenta(eq){return Object.keys(vivos(eq)).length}
 
 function pintar(){
   var h="";
   TURNOS.forEach(function(T){
-    h+='<section class="turno"><h3>'+T.nom+'</h3><div class="hr">de '+T.desde+' a '+T.hasta+' · cada 15 minutos</div>'+
+    h+='<section class="turno"><h3>'+T.nom+'</h3><div class="hr">de '+T.desde+' a '+T.hasta+' · cada 15 minutos<br><b>Último horario: '+hhmm(T.fin-15)+' (hasta las '+T.hasta+')</b></div>'+
        '<div class="cab"><span></span><span class="a">Azul</span><span class="r">Rojo</span></div>';
     SLOTS.filter(function(s){return s.turno===T.id}).forEach(function(s){
-      var yo=MIO&&MIO.s===s.id;
-      h+='<div class="slot'+(yo?' yo':'')+'"><div class="hora">'+s.hora+'</div>'+equipo(s,"a")+equipo(s,"r")+'</div>';
+      var yo=MIO&&MIO.s===s.id,es=estadoSlot(s);
+      h+='<div class="slot'+(yo?' yo':'')+(es?' cerr':'')+'"><div class="hora">'+s.hora+'<small>hasta '+s.fin+'</small></div>'+equipo(s,"a")+equipo(s,"r")+(es?'<div class="cartel '+es+'">'+CARTEL[es]+'</div>':'')+'</div>';
     });
     h+='</section>';
   });
@@ -342,7 +366,7 @@ function equipo(s,q){
     else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" aria-label="Lugar guardado">'+PER+'</button>';}
   var yo=MIO&&MIO.s===s.id&&MIO.q===q;
   var txt=lib===2?'<b>2 lugares</b> libres':(lib===1?'<b>1 lugar</b> libre':(res?'Lugar guardado':'Completo'));
-  var dis=!!MIO||lib===0;
+  var es=estadoSlot(s),dis=!!MIO||lib===0||es==='pasado'||es==='susp'||es==='lleno';
   return '<div class="team '+q+(yo?' yo':'')+'"><div class="asientos">'+as+'</div><div class="lib">'+(yo?'<b>¡Acá estás vos!</b>':txt)+'</div>'+
     (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
 }
@@ -372,7 +396,7 @@ function pintarMio(){
   var estado=comp?('Jugás con <b>'+esc(cn||"tu compañero")+'</b> 🙌'):(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
   b.innerHTML='<h2>¡Ya tenés tu lugar!</h2><p>Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+MIO.q+'">'+EQ[MIO.q]+'</span>.</p><p>'+estado+'</p>'+
     '<div class="btns">'+(comp?'':'<button class="btn '+(MIO.q==="r"?"rojo":"azul")+'" type="button" id="b-inv">Invitá a un compañero</button>')+
-    '</div><small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
+    '</div>'+(estadoSlot(s)==='susp'?'<div class="aviso">⚠️ Este horario fue suspendido. Elegí otro libre (primero tenés que salir del juego).</div>':'')+'<small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
   b.classList.remove("hide");
   var bi=$("b-inv");if(bi)bi.onclick=invitar;
 }
@@ -383,6 +407,7 @@ var pend=null;
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".unir");if(!b||b.disabled)return;abrirUnir(b.dataset.s,b.dataset.q)});
 function abrirUnir(sid,q){
   if(MIO){toast("Ya tenés un lugar anotado.");return}
+  if(estadoSlot(slotDe(sid))){toast("Ese horario ya no está disponible.");return}
   pend={s:sid,q:q};$("u-eq").textContent=EQ[q];$("u-eq").className="eq "+q;$("u-hora").textContent=slotDe(sid).hora;
   $("u-mail").value="";$("u-nom").value=(function(){try{return localStorage.getItem("jv_nom")||""}catch(e){return""}})();$("u-err").textContent="";$("u-err2").textContent="";$("paso1").classList.remove("hide");$("paso2").classList.add("hide");
   $("ovUnir").classList.remove("hide");setTimeout(function(){($("u-nom").value?$("u-mail"):$("u-nom")).focus()},200);
@@ -408,6 +433,7 @@ $("op-cual").onclick=function(){confirmar(false)};
 async function confirmar(guardar){
   var p=pend;if(!p)return;$("u-err2").textContent="Anotando…";
   try{
+    if(estadoSlot(slotDe(p.s))){$("u-err2").textContent="Ese horario ya no está disponible. Elegí otro.";return}
     var e=await cifrar(p.mail),seat=rnd(8),tok=guardar?rnd(10):null,t=now(),ok=false;
     var res=await R("s/"+p.s+"/"+p.q).transaction(function(cur){
       cur=cur||{};var v=vivos(cur),k;for(k in cur)if(!v[k])delete cur[k];       // limpia lugares guardados vencidos
@@ -476,6 +502,7 @@ async function abrirInvitacion(tok){
   if(!t){$("in-t").textContent="Esta invitación no existe";$("in-p").textContent="Revisá el QR o elegí un horario libre.";$("in-form").classList.add("hide");return}
   if(t.used){$("in-t").textContent="Esta invitación ya se usó";$("in-p").textContent="Cada QR sirve una sola vez. Podés elegir otro horario libre.";$("in-form").classList.add("hide");return}
   if(MIO){$("in-t").textContent="Ya tenés un lugar";$("in-p").textContent="Desde este celular ya hay alguien anotado.";$("in-form").classList.add("hide");return}
+  var s0=slotDe(t.s);if(s0&&cerrado(s0)){$("in-t").textContent="Ese horario ya no está disponible";$("in-p").textContent="Está suspendido o ya pasó. Elegí otro horario libre.";$("in-form").classList.add("hide");return}
   INV={tok:tok,s:t.s,q:t.q,hold:t.hold};var s=slotDe(t.s);
   $("in-t").textContent=t.n?(t.n+" te invitó a que te unas a su equipo"):"¡Te invitaron a jugar!";
   $("in-p").innerHTML='Jugás a las <b>'+(s?s.hora:"")+'</b> en el <span class="eq '+t.q+'">'+EQ[t.q]+'</span>.';
@@ -495,6 +522,7 @@ $("in-ok").onclick=async function(){
     if(ya&&ya!==UID){$("in-err").textContent="Ese Gmail ya tiene un lugar anotado.";return}
     // la invitación se marca como usada primero (así no se puede usar dos veces)
     // (la primera pasada de una transacción puede venir vacía: se devuelve igual y Firebase reintenta con el dato real)
+    if(cerrado(slotDe(I.s))){$("in-err").textContent="Ese horario ya no está disponible.";return}
     var tr=await R("tok/"+I.tok).transaction(function(t){if(t===null)return null;if(t.used)return;t.used=true;t.usedBy=UID;return t});
     var tv=tr.snapshot&&tr.snapshot.val();
     if(!tr.committed||!tv||tv.usedBy!==UID){$("in-err").textContent="Esta invitación ya se usó.";return}
@@ -519,6 +547,8 @@ function toast(m){var t=$("toast");t.textContent=m;t.classList.remove("hide");cl
 if(!db){$("estado").textContent="No hay conexión con la base: probá recargar la página.";pintar();return}
 db.ref(".info/serverTimeOffset").on("value",function(s){off=s.val()||0});
 R("u/"+UID).on("value",function(s){MIO=s.val();pintar()});
+R("est").on("value",function(s){EST=s.val()||{};pintar()});
+R("fecha").on("value",function(s){FECHA=s.val()||"";pintar()});
 R("s").on("value",function(s){S=s.val()||{};$("estado").textContent="Los lugares se actualizan solos.";pintar()},
   function(e){$("estado").textContent="No se pueden leer los lugares ("+e.message+")."});
 setInterval(pintar,30000);   // para que vuelvan los lugares guardados que vencen

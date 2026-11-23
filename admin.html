@@ -278,6 +278,16 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <details style="margin:6px 0 10px"><summary class="small" style="cursor:pointer"><b>Mensaje de los mails</b> (se usa en ✉️ y en Avisar)</summary>
         <textarea id="jv-tpl" rows="4" style="margin-top:8px" oninput="try{localStorage.setItem('jv_tpl',this.value)}catch(e){}"></textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {hora} y {equipo} se completan solos para cada persona.</p></details>
+      <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">➕ Anotar a alguien en el momento</b>
+        <p class="small" style="margin:4px 0 8px">Para quien no tiene celu o internet: queda anotado sin Gmail y se ve en la página con su nombre.</p>
+        <div class="row" style="flex-wrap:wrap;gap:6px">
+          <input id="jv-an" type="text" maxlength="20" placeholder="Nombre o apodo" autocomplete="off" style="margin:0;flex:2 1 140px">
+          <select id="jv-as" style="margin:0;flex:1 1 90px"></select>
+          <select id="jv-aq" style="margin:0;flex:1 1 90px"><option value="a">Azul</option><option value="r">Rojo</option></select>
+          <button class="p" onclick="jvAgregar()" style="margin:0">ANOTAR</button></div></div>
+      <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">📅 Día del juego</b>
+        <p class="small" style="margin:4px 0 8px">Con la fecha puesta, la página marca sola «YA PASÓ» cada horario cuando termina. Sin fecha no marca nada solo.</p>
+        <div class="row" style="gap:6px"><input id="jv-fe" type="date" style="margin:0"><button class="p" onclick="jvFecha(1)" style="margin:0">GUARDAR</button><button class="g" onclick="jvFecha(0)" style="margin:0">QUITAR</button></div></div>
       <div id="jv-box"></div>
       <div id="jv-ban" style="margin-top:12px"></div>
       <div class="row" style="margin-top:12px"><button class="r" onclick="jvBorrarTodo()">BORRAR TODAS LAS RESERVAS</button></div>
@@ -1892,7 +1902,7 @@ async function stkEx(b,dir){
 }
 /* ---------- Juego en vivo ---------- */
 var JV={s:{},key:null,dec:{}},JV_PRIV={"s":"Ev7y4oc7wvGQ9pNckt2TNw==","i":"MIz08NJ8tMhcKAuP","c":"REGlWvEaGj6LkRgD6EaGyQjmJbS3OAyK0/6cvbLSgyVo1VVcctlPE+DSYWFV+WQkWW/LKASY1r7QIQav0OK0UoOyIXJV7kvaNKp4KY/rTWkiWGr1Ik1ml0ILBxn/E51BpuLrt1CeWSTpC5L3zaxMtjEiJ2OFK9MZAW67Js3tZHyEl0b+6w/DYivR/nnA/0kWnxyJnXrDEJpAkb138WPpfrObQwkyh8WHAIa/LgbVJXYr/yQXGmAZcbNYijXBWiVNb0rXslejwEm6Nmw7KLVhIsdXHTXJuLF+8N94Mbqq/f8Y6SA="};
-var JV_TURNOS=[{id:"m",nom:"Turno mañana · 9:30 a 11:00",ini:570,fin:660},{id:"t",nom:"Turno tarde · 14:30 a 16:00",ini:870,fin:960}];
+var JV_TURNOS=[{id:"m",nom:"Turno mañana · 9:30 a 11:15",ini:570,fin:675},{id:"t",nom:"Turno tarde · 14:30 a 16:15",ini:870,fin:975}];
 var JV_TPL_DEF="¡Hola {nombre}! A las {hora} te toca jugar en el {equipo} del Juego en vivo de Streaming Room T3. Acercate al stream 5 minutos antes. ¡Te esperamos!";
 function jvTpl(){try{return localStorage.getItem("jv_tpl")||JV_TPL_DEF}catch(e){return JV_TPL_DEF}}
 function jvFill(t,p){return t.replace(/\{nombre\}/g,p.n||"").replace(/\{hora\}/g,p.hora||"").replace(/\{equipo\}/g,p.eq||"").replace(/¡Hola !/g,"¡Hola!")}
@@ -1916,7 +1926,31 @@ async function jvMail(e){
     JV.dec[id]=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:jvB(e.i)},k,jvB(e.c)));return JV.dec[id];
   }catch(x){return "(no se pudo leer)"}
 }
-function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
+function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;JV.est={};
+  var sel=$("jv-as");if(sel&&!sel.options.length){JV_TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15){var id=T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2);sel.add(new Option((T.id==="m"?"Mañana ":"Tarde ")+jvHora(id),id))}})}
+  d.ref("cfg/jv/est").on("value",function(x){JV.est=x.val()||{};jvRender()});
+  d.ref("cfg/jv/fecha").on("value",function(x){var f=$("jv-fe");if(f&&document.activeElement!==f)f.value=x.val()||""});
+  d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
+async function jvEst(id,val){
+  try{await sdb().ref("cfg/jv/est/"+id).set(val||null);toast(val==="susp"?"Horario suspendido":val==="lleno"?"Horario marcado como lleno":"Horario reabierto")}catch(e){alert("No se pudo: "+e.message)}
+}
+async function jvFecha(on){
+  var v=$("jv-fe").value;if(on&&!v){toast("Elegí una fecha");return}
+  try{await sdb().ref("cfg/jv/fecha").set(on?v:null);toast(on?"Día guardado: los horarios se marcan solos":"Sin fecha: no se marca nada solo");if(!on)$("jv-fe").value=""}catch(e){alert("No se pudo: "+e.message)}
+}
+function jvIr(id){var s=$("jv-as");if(s)s.value=id;var n=$("jv-an");if(n){n.scrollIntoView({block:"center"});n.focus()}}
+async function jvAgregar(){
+  var nom=$("jv-an").value.replace(/\s+/g," ").trim(),id=$("jv-as").value,q=$("jv-aq").value;
+  if(nom.length<2){toast("Escribí el nombre");return}
+  var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now();
+  try{
+    var res=await sdb().ref("cfg/jv/s/"+id+"/"+q).transaction(function(cur){
+      cur=cur||{};var n=0,k,v;for(k in cur){v=cur[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))n++;else delete cur[k]}
+      if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1};return cur});
+    if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(id));return}
+    $("jv-an").value="";toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
+  }catch(e){alert("No se pudo: "+e.message)}
+}
 async function jvRender(){
   var box=$("jv-box");if(!box)return;
   var t=Date.now(),h="",tot=0,ids=Object.keys(JV.s).sort();
@@ -1924,16 +1958,22 @@ async function jvRender(){
     for(var m=T.ini;m<T.fin;m+=15){
       var id=T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2),sl=JV.s[id]||{},ps=[];
       ["r","a"].forEach(function(q){var eq=sl[q]||{};for(var k in eq){var v=eq[k];if(!v)continue;if(v.st==="ok")ps.push({q:q,k:k,v:v});else if(v.st==="hold"&&v.exp>t)ps.push({q:q,k:k,v:v,hold:1})}});
-      if(!ps.length)continue;tot+=ps.filter(function(p){return!p.hold}).length;
+      tot+=ps.filter(function(p){return!p.hold}).length;
       var lines="";
       ps.sort(function(a,b){return (a.q===b.q?0:(a.q==="a"?-1:1))||((a.v.t||0)-(b.v.t||0))});
       for(var i=0;i<ps.length;i++){var p=ps[i],args="\'"+id+"\',\'"+p.q+"\',\'"+p.k+"\'";
         if(p.hold){lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m">⏳ Guardado para un invitado hasta '+new Date(p.v.exp).toTimeString().slice(0,5)+'</span><button class="p" onclick="jvQuitar('+args+')">Quitar</button></div>';continue}
-        var mail=JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado";
+        var adm=!!p.v.adm,mail=adm?"anotado en el momento":(JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado");
         lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(p.v.n||"(sin nombre)")+'</b> · '+mail+'</span>'+
-          (JV.key?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
-          '<button class="p" onclick="jvQuitar('+args+')">Quitar</button><button class="r" onclick="jvBan('+args+')">Bloquear</button></div>'}
-      rows+='<div class="jvs"><div class="jh"><b>'+jvHora(id)+'</b><span class="bt">'+(JV.key?'<button class="p" onclick="jvCopiar(\''+id+'\')">Copiar mails</button><button class="g" onclick="jvAvisar(\''+id+'\')">✉️ Avisar</button>':'')+'</span></div>'+lines+'</div>';
+          (JV.key&&!adm?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
+          '<button class="p" onclick="jvQuitar('+args+')">Quitar</button>'+(adm?'':'<button class="r" onclick="jvBan('+args+')">Bloquear</button>')+'</div>'}
+      var es=(JV.est||{})[id],tag=es==="susp"?' <span class="small" style="color:#ffb347;font-weight:800">⛔ SUSPENDIDO</span>':es==="lleno"?' <span class="small" style="color:#c084fc;font-weight:800">🈵 LLENO (a mano)</span>':'';
+      rows+='<div class="jvs"><div class="jh"><b>'+jvHora(id)+tag+'</b><span class="bt">'+
+        '<button class="p" onclick="jvIr(\''+id+'\')">➕ Anotar</button>'+
+        (es==="susp"?'':'<button class="p" onclick="jvEst(\''+id+'\',\'susp\')">Suspender</button>')+
+        (es==="lleno"?'':'<button class="p" onclick="jvEst(\''+id+'\',\'lleno\')">Lleno</button>')+
+        (es?'<button class="g" onclick="jvEst(\''+id+'\',null)">Reabrir</button>':'')+
+        (JV.key&&ps.length?'<button class="p" onclick="jvCopiar(\''+id+'\')">Copiar mails</button><button class="g" onclick="jvAvisar(\''+id+'\')">✉️ Avisar</button>':'')+'</span></div>'+lines+'</div>';
     }
     h+='<div class="tn'+(ti===0?' on':'')+'" style="margin-top:12px">'+T.nom+'</div>'+(rows||'<div class="small">Sin reservas todavía.</div>');
   }
