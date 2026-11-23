@@ -989,9 +989,9 @@ function probs(){
 }
 function tabla(){
   const ul=$('tablaList');if(!ul)return;
-  const ch=chances(stockDe),its=st.items.filter(i=>i.count>0);
+  const its=st.items.filter(i=>i.count>0),TP=its.reduce((a,i)=>a+i.count,0);   // chance PÚBLICA: fija, según las porciones de la rueda
   ul.innerHTML=its.map(it=>{
-    const p=(ch.get(it.id)||0)*100,q=stockDe(it),ago=isGone(it);
+    const p=TP?it.count/TP*100:0,q=stockDe(it),ago=isGone(it);
     const pct=(p<10&&p>0?p.toFixed(1):Math.round(p))+'%';
     const qt=q===null?'stock: sin dato':(ago?'sin stock · sale NADA':'quedan '+q);
     return '<li class="'+(ago?'ago':(q!==null&&q<=3?'poco':''))+'" style="--c:'+esc(ago?GRIS:it.color)+'">'
@@ -1095,11 +1095,11 @@ function simMostrar(r){
   const filas=st.items.filter(it=>it.count>0).map(it=>{
     const w=r.won.get(it.id),ini=stockDe(it),fin=r.q.get(it.id);
     const stock=ini===null?'sin dato':(ini+' → '+(fin===Infinity?'—':fin)+(r.agot.has(it.id)?' (se acaba en la tirada '+r.agot.get(it.id)+')':''));
-    return '<tr><td><i style="background:'+esc(it.color)+'"></i>'+esc(it.name)+'</td><td class="n">'+w+'</td><td class="n">'+pc(w/r.N*100)+'</td><td class="n">'+pc((r.ch0.get(it.id)||0)*100)+'</td><td>'+esc(stock)+'</td></tr>';
+    return '<tr><td><i style="background:'+esc(it.color)+'"></i>'+esc(it.name)+'</td><td class="n">'+w+'</td><td class="n">'+pc(w/r.N*100)+'</td><td class="n">'+pc(T?it.count/T*100:0)+'</td><td class="n">'+pc((r.ch0.get(it.id)||0)*100)+'</td><td>'+esc(stock)+'</td></tr>';
   }).join('');
   $('simRes').innerHTML='<p class="res">Resultado de <b>'+r.N+'</b> tiradas (turno '+(turnoNow()==='tarde'?'tarde':'mañana')+') · '+(r.ch0.eq?'<b>equilibrado</b> según stock':'según porciones')+':</p>'
-    +'<table><thead><tr><th>Premio</th><th class="n">Salió</th><th class="n">Real</th><th class="n">Chance</th><th>Stock</th></tr></thead><tbody>'+filas
-    +'<tr class="nada"><td><i style="background:'+GRIS+'"></i>Nada (sin stock)</td><td class="n">'+r.nada+'</td><td class="n">'+pc(r.nada/r.N*100)+'</td><td class="n">—</td><td></td></tr></tbody></table>';
+    +'<table><thead><tr><th>Premio</th><th class="n">Salió</th><th class="n">Real</th><th class="n">Pública</th><th class="n">Interna</th><th>Stock</th></tr></thead><tbody>'+filas
+    +'<tr class="nada"><td><i style="background:'+GRIS+'"></i>Nada (sin stock)</td><td class="n">'+r.nada+'</td><td class="n">'+pc(r.nada/r.N*100)+'</td><td class="n">—</td><td class="n">—</td><td></td></tr></tbody></table>';
 }
 $('simB').addEventListener('click',simAbrir);
 $('simX').addEventListener('click',simCerrar);
