@@ -5,7 +5,7 @@
    (esos pedidos pasan directo): para eso cada página tiene su propia copia de datos y su cola de pendientes.
 
    Subí el número de VERSION si se agrega un archivo nuevo a la lista de abajo. */
-var VERSION = "st3-v2";
+var VERSION = "st3-v3";
 var PAGINAS = ["./", "index.html", "admin.html", "saluda.html", "ranking.html", "juego.html", "ruleta-pizarron.html",
   "ruleta-grande.html", "premio.html", "premios.html", "girar.html", "muestra.html"];
 var ARCHIVOS = ["fb.js", "fb-config.js", "sheet.js", "sheet-config.js", "qr-lib.js", "questions.js",

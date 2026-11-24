@@ -252,6 +252,8 @@ function slotDe(id){for(var i=0;i<SLOTS.length;i++)if(SLOTS[i].id===id)return SL
 /* ---------- base ---------- */
 var db=null,off=0,S={},MIO=null,EST={},FECHA="";
 try{var app;try{app=firebase.app()}catch(e){app=firebase.initializeApp(window.FB_CONFIG)}db=firebase.database()}catch(e){}
+// pestaña oculta unos minutos: se libera la conexión con la base (vuelve sola al abrir de nuevo)
+try{if(db){var idleT=0;document.addEventListener("visibilitychange",function(){if(document.hidden){idleT=setTimeout(function(){try{db.goOffline()}catch(e){}},180000)}else{clearTimeout(idleT);try{db.goOnline()}catch(e){}}})}}catch(e){}
 function now(){return Date.now()+off}
 function uid(){var k="jv_uid",v=null;try{v=localStorage.getItem(k)}catch(e){}
   if(!v){v=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():"u"+Date.now().toString(36)+Math.random().toString(36).slice(2,9);try{localStorage.setItem(k,v)}catch(e){}}return v}

@@ -423,9 +423,9 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
-<script src="fb.js?v=21"></script>
+<script src="fb.js?v=22"></script>
 <script src="sheet-config.js?v=1"></script>
-<script src="sheet.js?v=5"></script>
+<script src="sheet.js?v=6"></script>
 <script src="qr-lib.js?v=1"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
@@ -1891,6 +1891,7 @@ function offParseQR(t){
   var P=pz[1].trim(),L=nz(P).indexOf("EXPERTO")===0?3:(nz(P).indexOf("DIFICIL")===0?2:(nz(P).indexOf("MEDIO")===0?1:0));
   return{name:nm[1].trim(),prize:P,li:L,score:+pt[1],q:qq?+qq[1]:0}
 }
+function offVerificado(code,t){var p=offParseQR(t);return !!(p&&offSigOk(code,p))}
 function offSigOk(code,p){var id=code.slice(0,9),sig=code.slice(10);return ("0000"+adminHH("st3room-2026"+id+"|"+p.name+"|"+p.li+"|"+p.score).toString(36)).slice(-4).toUpperCase()===sig}
 function offAddPz(code,p){
   var id=code.slice(0,9),z={id:id,gen:FB.cfg().gen,name:String(p.name||"(sin datos)").slice(0,20),code:code,li:p.li|0,prize:p.prize,score:p.score|0,q:p.q|0,ts:Date.now(),_loc:1};
@@ -1900,7 +1901,7 @@ function resolveOffline(code,qrText){
   var p=offParseQR(qrText);
   if(p&&offSigOk(code,p)){
     var z=offAddPz(code,p);cur=z.id;
-    return showSheet("pend",'<div class="tt">SIN INTERNET · QR VERIFICADO</div>'+card(z)+'<div class="warn">ℹ Este jugador no estaba en la copia de este dispositivo. El código es auténtico (firma correcta). Al volver internet se sube como reclamado.</div><button class="g" id="cbtn" onclick="confirmClaim()">ENTREGADO · MARCAR RECLAMADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
+    return showSheet("pend",'<div class="tt">'+(enLinea()?'QR VERIFICADO · TODAVÍA NO LLEGÓ A LA BASE':'SIN INTERNET · QR VERIFICADO')+'</div>'+card(z)+'<div class="warn">ℹ Este jugador todavía no figura en la lista de este dispositivo. El código es auténtico (firma correcta): se puede entregar y queda reclamado en cuanto se sube.</div><button class="g" id="cbtn" onclick="confirmClaim()">ENTREGADO · MARCAR RECLAMADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
   }
   cur=code;
   showSheet("pend",'<div class="tt">SIN INTERNET · CÓDIGO NO VERIFICADO</div><div class="big">❓</div><div class="pr">'+esc(code)+'</div><div class="warn">Este código no está en la copia de este dispositivo y no se pudo comprobar. Si igual lo vas a entregar, elegí qué premio llevó:</div>'+
@@ -1962,6 +1963,7 @@ async function boot(){
   await Promise.race([FB.readCfg().then(function(){cfgOk=true}),new Promise(function(r){setTimeout(r,4500)})]);
   if(!cfgOk&&FB.loadCachedCfg)FB.loadCachedCfg();   // sin internet: la última configuración guardada
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
+  try{caches.keys().then(function(ks){var v=ks.filter(function(k){return /^st3-v/.test(k)})[0];if(v)$("mode").textContent+=" · versión "+v})}catch(e){}
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
   loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();
   setTimeout(admHydrate,2500);setTimeout(admHydrate,6000);offPaint();
@@ -2581,7 +2583,7 @@ async function doClaim(id,via){
   if(!x)return{ok:false,msg:"No encontré ese premio."};
   if(x._v)return{ok:false,dup:true,msg:"Este premio fue anulado."};
   if(x._c)return{ok:false,dup:true,msg:"Ya estaba reclamado."};
-  if(!enLinea())return offClaim(x,via);   // sin internet: se guarda en este dispositivo y se sube al volver
+  if(!enLinea()||x._loc)return offClaim(x,via);   // sin internet (o un premio verificado por firma que todavía no está en la base): se guarda y se sube enseguida
   try{
     if(x.claimed||OVP[id]){   // la base ya lo tiene como reclamado (o hubo una reversión): la nueva entrega se anota aparte
       var r=await sdb().ref("cfg/ovp/"+id).transaction(function(c){if(c&&c.s==="c")return;return{s:"c",t:firebase.database.ServerValue.TIMESTAMP,via:via||"manual"}});
@@ -2632,7 +2634,7 @@ function badSheet(t,m){showSheet("bad",'<div class="big">⛔</div><div class="tt
 function resolve(code,qrText){
   if(!FB.shared())return badSheet("SIN BASE","No hay conexión con la base de datos.");
   var id=code.slice(0,9),x=PR.filter(function(p){return p.id===id})[0];
-  if(!x&&!enLinea())return resolveOffline(code,qrText);
+  if(!x&&(!enLinea()||offVerificado(code,qrText)))return resolveOffline(code,qrText);   // sin internet, o con internet pero el premio todavía no llegó a la base y el código es auténtico
   if(!x)return resolveSa(code);
   if(x._v)return badSheet("QR ANULADO","Producción anuló este premio y este QR. No entregar.");
   if(pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");

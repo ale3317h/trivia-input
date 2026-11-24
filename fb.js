@@ -17,6 +17,17 @@ var FB = (function () {
     }
   } catch (e) { lastError = e.message; }
 
+  /* Celular con la pantalla apagada o la pestaña oculta: a los pocos minutos se libera su conexión con la base (se reconecta solo al volver). */
+  try {
+    if (db && window.FB_IDLE_MS && typeof document !== "undefined") {
+      var idleT = 0;
+      document.addEventListener("visibilitychange", function () {
+        if (document.hidden) { idleT = setTimeout(function () { try { db.goOffline(); } catch (e) { } }, window.FB_IDLE_MS); }
+        else { clearTimeout(idleT); try { db.goOnline(); } catch (e) { } }
+      });
+    }
+  } catch (e) { }
+
   function norm(v) {
     v = v || {};
     return {
@@ -133,7 +144,11 @@ var FB = (function () {
     okc = ok; pend = {};
     for (u in tiene) if (!ok[u]) pend[u] = true;
   }
-  function loadPend(gen) { return db.ref("prizes/" + gen).once("value").then(calcPend); }
+  var pendAt = 0, pendGen = null;
+  function loadPend(gen) {   // la lista de premios se baja como mucho una vez cada 30 s (antes, en cada refresco de cada celular)
+    if (pendGen === gen && Date.now() - pendAt < 30000) return Promise.resolve();
+    return db.ref("prizes/" + gen).once("value").then(function (s) { pendAt = Date.now(); pendGen = gen; calcPend(s); });
+  }
   function isClaimed(u) { return !!okc[u || uid()]; }
   function isPending(u) { return !!pend[u || uid()]; }
 

@@ -11,7 +11,7 @@
 (function () {
   var PREMIOS = ["Normal", "Grande", "Especial", "Pequeño"];
   var RULETA = ["Stickers", "Llavero 3D", "Lapicera", "Cuaderno", "Vaso", "Llavero plano", "Llavero grande", "Lapicera personalizada"];
-  var POLL_MS = 15000;
+  var POLL_MS = window.ST3_POLL_MS || 15000;   // las páginas de jugadores usan un intervalo más largo (ST3_POLL_MS)
   var ruletaDef = null, extrasDef = [];
   var sheet = { manana: null, tarde: null }, okAt = 0, listeners = [], timer = null, seq = 0, started = false;
   try { var c0 = JSON.parse(localStorage.getItem("st3_stock") || "null"); if (c0) sheet = c0; } catch (e) {}
@@ -69,6 +69,7 @@
   }
   function load() {
     var tabs = window.ST3_TABS || {}, ks = ["manana", "tarde"];
+    if (window.ST3_ONLY_ACTIVE) { var act = (window.FB && FB.cfg && FB.cfg().turno === "tarde") ? "tarde" : "manana"; ks = [act]; }   // jugadores: solo la hoja del turno activo
     var rt = window.ST3_RULETA_TAB ? gv(window.ST3_RULETA_TAB, "A8:G30", 0).then(parseRuleta).catch(function () { return null; }) : Promise.resolve(null);
     return Promise.all(ks.map(function (k) {
       return gv(tabs[k]).then(parse).catch(function () { return null; });
