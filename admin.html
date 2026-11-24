@@ -75,6 +75,9 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .jvm{position:fixed;inset:0;z-index:60;background:#000c;display:grid;place-items:center;padding:14px;overflow:auto}
 .jvmb{width:min(440px,100%);background:#14091f;border:2px solid #5a2f80;border-radius:18px;padding:18px 18px 14px;box-shadow:0 30px 80px -20px #000}
 .jvmb h3{margin:0 0 4px;font:800 19px system-ui,sans-serif;color:#fff}
+.jvqr{width:min(60vw,260px);aspect-ratio:1;margin:6px auto;background:#fff;border-radius:12px;padding:8px}.jvqr svg{width:100%;height:100%;display:block}.jvlink{word-break:break-all;opacity:.7;margin:2px 0 6px}
+#tb-jv{position:relative}
+.jvbaja{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;padding:10px 12px;border-radius:12px;background:#4a1d00;border:2px solid #ffb347;color:#fff}.jvbaja b{color:#ffd9a0}.jvbaja .t{flex:1 1 200px}.jvbaja button{margin:0}
 .jvno{display:block;width:100%;margin:8px 0 0}
 .jvm label{display:block;font:700 14px system-ui,sans-serif;margin:12px 0 4px;color:#fff}
 .jvm input[type=text],.jvm input[type=email]{margin:0;font-size:17px;padding:12px 14px}
@@ -285,6 +288,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 
     <div id="t-jv" class="pane hide">
       <h2>Juego en vivo</h2>
+      <div id="jv-baja"></div>
       <p class="small" style="margin-top:0">Reservas de la página <b>juego.html</b> (Azul vs Rojo, de a dos). Los Gmails se guardan cifrados: poné la clave para verlos y avisarle a cada horario 5 minutos antes.</p>
       <div class="row"><input id="jv-pw" type="password" placeholder="Clave de los mails" autocomplete="off" style="margin:0"><button class="p" onclick="jvUnlock()" style="margin:0">VER MAILS</button></div>
       <div class="small" id="jv-st" style="margin:8px 0"></div>
@@ -298,7 +302,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <div id="jv-box"></div>
       <div class="jvm hide" id="jv-md" onclick="if(event.target===this)jvCerrar()">
         <div class="jvmb" role="dialog" aria-modal="true" aria-labelledby="jv-mh">
-          <h3 id="jv-mh">Anotar</h3>
+          <div id="jv-form"><h3 id="jv-mh">Anotar</h3>
           <label for="jv-an">Apodo o nombre <span class="small">(el que se ve en la página)</span></label>
           <input id="jv-an" type="text" maxlength="20" placeholder="Ej: Juli" autocomplete="off">
           <label for="jv-am">Gmail <span class="small">(le avisamos 5 minutos antes)</span></label>
@@ -308,7 +312,15 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
           <label>Equipo</label>
           <div class="jvq"><button type="button" id="jv-qa" class="on a" onclick="jvEq('a')">AZUL</button><button type="button" id="jv-qr" class="r" onclick="jvEq('r')">ROJO</button></div>
           <button class="p jvgo" type="button" onclick="jvAgregar()">✅ ANOTAR</button>
-          <button class="g jvno" type="button" onclick="jvCerrar()">Cancelar</button>
+          <button class="g jvno" type="button" onclick="jvCerrar()">Cancelar</button></div>
+          <div id="jv-ok" class="hide" style="text-align:center">
+            <h3 id="jv-ok-t">✅ Anotado/a</h3>
+            <p class="small" id="jv-ok-d" style="margin:4px 0 8px"></p>
+            <div class="jvqr" id="jv-qrb"></div>
+            <p class="small" style="margin:8px 0 2px">Que la persona lo escanee con su celular: ve en qué turno juega y con qué nombre, y puede <b>cancelar su participación</b> (acá te sale un aviso).</p>
+            <div class="jvlink small" id="jv-lk"></div>
+            <button class="p jvgo" type="button" onclick="jvCerrar()">Listo</button>
+          </div>
         </div>
       </div>
       <div id="jv-ban" style="margin-top:12px"></div>
@@ -393,7 +405,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <button id="tb-ok" onclick="tab('ok')"><i>✅</i>Reclamados</button>
       <button id="tb-rk" onclick="tab('rk')"><i>🏆</i>Ranking</button>
       <button id="tb-stk" onclick="tab('stk')"><i>📦</i>Stock</button>
-      <button id="tb-jv" onclick="tab('jv')"><i>🎮</i>Juego</button>
+      <button id="tb-jv" onclick="tab('jv')"><i>🎮</i>Juego<span class="bd hide" id="bd-jv">0</span></button>
       <button id="tb-set" onclick="tab('set')"><i>⚙️</i>Ajustes</button>
     </nav>
     <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('sal');hideAlert()">VER</button></div>
@@ -411,6 +423,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 <script src="fb.js?v=18"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=4"></script>
+<script src="qr-lib.js?v=1"></script>
 <script>
 /* Premios (QR): extiende FB sin tocar fb.js */
 (function(){
@@ -1833,7 +1846,7 @@ async function boot(){
   await FB.readCfg();
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
-  loadCfgUI();loadRank();watchRs();watchPr();watchSa();qs=await FB.loadQuestions();renderQs();
+  loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();qs=await FB.loadQuestions();renderQs();
   FB.watchCfg(function(){loadCfgUI();watchPr();watchRank()});
 }
 
@@ -1986,9 +1999,37 @@ function jvCerrar(){var m=$("jv-md");if(m)m.classList.add("hide")}
 function jvIr(id){
   $("jv-as").value=id;$("jv-an").value="";$("jv-am").value="";
   $("jv-mh").textContent="Anotar a las "+jvHora(id)+" ("+(id.charAt(0)==="m"?"turno mañana":"turno tarde")+")";
-  jvForm();var m=$("jv-md");if(m.parentNode!==document.body)document.body.appendChild(m);   // fuera de los paneles, para que quede fija y no mueva la página
+  $("jv-form").classList.remove("hide");$("jv-ok").classList.add("hide");jvForm();var m=$("jv-md");if(m.parentNode!==document.body)document.body.appendChild(m);   // fuera de los paneles, para que quede fija y no mueva la página
   m.classList.remove("hide");setTimeout(function(){$("jv-an").focus({preventScroll:true})},50)}
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("jv-md")&&!$("jv-md").classList.contains("hide"))jvCerrar();if(e.key==="Enter"&&(e.target.id==="jv-an"||e.target.id==="jv-am")){e.preventDefault();if(e.target.id==="jv-an")$("jv-am").focus();else jvAgregar()}});
+function jvRnd(n){var a="abcdefghijkmnpqrstuvwxyz23456789",s="",r=new Uint32Array(n),i;crypto.getRandomValues(r);for(i=0;i<n;i++)s+=a[r[i]%a.length];return s}
+function jvQrSvg(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(unescape(encodeURIComponent(t)));q.make();var n=q.getModuleCount(),m=2,s=n+2*m,p="",x,y;
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
+  return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="QR de participación"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
+function jvLinkMi(tk){var base=/(^|\.)web\.app$/.test(location.hostname)?new URL("juego.html",location.href).href:"https://trivia-streamingroom-t3.web.app/juego.html";return base+"?mi="+tk}
+/* QR de participación: la persona lo escanea y ve en qué turno juega, con qué nombre, y puede cancelar */
+function jvMostrarQR(tk,nom,id,q){
+  var m=$("jv-md");if(m.parentNode!==document.body)document.body.appendChild(m);
+  var u=jvLinkMi(tk);$("jv-qrb").innerHTML=jvQrSvg(u);$("jv-lk").textContent=u;
+  $("jv-ok-t").textContent="✅ "+(nom||"Persona")+" · "+(q==="r"?"Rojo":"Azul");
+  $("jv-ok-d").textContent="Juega a las "+jvHora(id)+" ("+(id.charAt(0)==="m"?"turno mañana":"turno tarde")+")";
+  $("jv-form").classList.add("hide");$("jv-ok").classList.remove("hide");m.classList.remove("hide")}
+async function jvQR(id,q,k){
+  var v=((JV.s[id]||{})[q]||{})[k]||{},tk=v.tk,d=sdb();
+  if(!tk){tk=jvRnd(10);var up={};up["cfg/jv/s/"+id+"/"+q+"/"+k+"/tk"]=tk;up["cfg/jv/mi/"+tk]={s:id,q:q,k:k,n:v.n||"",h:v.h||null,t:Date.now()};
+    try{await d.ref().update(up)}catch(e){alert("No se pudo: "+e.message);return}}
+  jvMostrarQR(tk,v.n,id,q)}
+/* Avisos de que alguien se bajó (cancelaron desde su celular) */
+function jvBajaWatch(){var d=sdb();if(!d||JV.bw)return;JV.bw=1;JV.baja={};var primera=true;
+  d.ref("cfg/jv/baja").on("value",function(x){var o=x.val()||{},k;
+    if(!primera)for(k in o)if(!JV.baja[k])toast("⚠️ "+(o[k].n||"Alguien")+" se bajó del juego ("+(o[k].q==="r"?"Rojo":"Azul")+" "+jvHora(o[k].s||"m0000")+")");
+    primera=false;JV.baja=o;jvBajaRender()},function(){})}
+function jvBajaRender(){
+  var ks=Object.keys(JV.baja||{}).sort(function(a,b){return (JV.baja[b].t||0)-(JV.baja[a].t||0)}),b=$("bd-jv"),box=$("jv-baja");
+  if(b){b.textContent=ks.length;b.classList.toggle("hide",!ks.length)}
+  if(!box)return;
+  box.innerHTML=ks.map(function(k){var x=JV.baja[k];return '<div class="jvbaja"><span class="t">⚠️ <b>'+esc(x.n||"Alguien")+'</b> se bajó del juego · <b>'+(x.q==="r"?"Rojo":"Azul")+'</b> a las <b>'+jvHora(x.s||"m0000")+'</b>'+(x.t?' · '+hm(x.t):'')+'</span><button class="p" onclick="jvBajaOk(\''+k+'\')">Entendido</button></div>'}).join("")}
+function jvBajaOk(k){var d=sdb();if(d)d.ref("cfg/jv/baja/"+k).remove().catch(function(e){alert("No se pudo: "+e.message)})}
 var JV_PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 function jvB64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
 async function jvCifrar(texto){
@@ -2018,16 +2059,16 @@ async function jvAgregar(){
   var g=jvGmail($("jv-am").value);if(!g.ok){toast(g.msg);return}
   var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now(),d=sdb();
   try{
-    var hs=await jvHash(g.mail);
+    var hs=await jvHash(g.mail),tk=jvRnd(10);
     if((await d.ref("cfg/jv/ban/"+hs).once("value")).val()){toast("Ese Gmail está bloqueado");return}
     if((await d.ref("cfg/jv/h/"+hs).once("value")).val()){toast("Ese Gmail ya tiene un lugar anotado");return}
     var e=await jvCifrar(g.mail);
     var res=await d.ref("cfg/jv/s/"+id+"/"+q).transaction(function(cur){
       cur=cur||{};var n=0,k,v;for(k in cur){v=cur[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))n++;else delete cur[k]}
-      if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1,h:hs,e:e};return cur});
+      if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1,h:hs,e:e,tk:tk};return cur});
     if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(id));return}
-    await d.ref("cfg/jv/h/"+hs).set("adm-"+seat);
-    $("jv-an").value="";$("jv-am").value="";jvCerrar();toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
+    var up={};up["cfg/jv/h/"+hs]="adm-"+seat;up["cfg/jv/mi/"+tk]={s:id,q:q,k:seat,n:nom,h:hs,t:t};await d.ref().update(up);
+    $("jv-an").value="";$("jv-am").value="";jvMostrarQR(tk,nom,id,q);toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
   }catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvRender(){
@@ -2044,7 +2085,7 @@ async function jvRender(){
         if(p.hold){lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m">⏳ Guardado para un invitado hasta '+new Date(p.v.exp).toTimeString().slice(0,5)+'</span><button class="p" onclick="jvQuitar('+args+')">Quitar</button></div>';continue}
         var adm=!!p.v.adm&&!p.v.e,mail=adm?"anotado en el momento (sin Gmail)":(JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado");
         lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(p.v.n||"(sin nombre)")+'</b> · '+mail+'</span>'+
-          (JV.key&&!adm?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
+          '<button class="g" title="QR para que la persona vea su turno y pueda cancelar" onclick="jvQR('+args+')">QR</button>'+(JV.key&&!adm?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
           '<button class="p" onclick="jvQuitar('+args+')">Quitar</button>'+(adm?'':'<button class="r" onclick="jvBan('+args+')">Bloquear</button>')+'</div>'}
       var es=(JV.est||{})[id],tag=es==="susp"?' <span class="small" style="color:#ffb347;font-weight:800">⛔ SUSPENDIDO</span>':es==="lleno"?' <span class="small" style="color:#c084fc;font-weight:800">🈵 LLENO (a mano)</span>':es==="jug"?' <span class="small" style="color:#4ade80;font-weight:800">✅ JUGADO</span>':'';
       rows+='<div class="jvs"><div class="jh"><b>'+jvHora(id)+tag+'</b><span class="bt">'+
@@ -2090,7 +2131,7 @@ async function jvDesban(h){
 async function jvQuitar(id,q,k){
   if(!confirm("¿Quitar este lugar de las "+jvHora(id)+"?"))return;
   var d=sdb(),v=((JV.s[id]||{})[q]||{})[k]||{},up={};up["cfg/jv/s/"+id+"/"+q+"/"+k]=null;
-  if(v.u){up["cfg/jv/u/"+v.u]=null}if(v.h){up["cfg/jv/h/"+v.h]=null}
+  if(v.u){up["cfg/jv/u/"+v.u]=null}if(v.h){up["cfg/jv/h/"+v.h]=null}if(v.tk)up["cfg/jv/mi/"+v.tk]=null;
   try{await d.ref().update(up);toast("Lugar liberado")}catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvBorrarTodo(){

@@ -179,6 +179,7 @@ body.tienelugar .toast{bottom:92px}
     <p class="sub">Mirá los horarios con posición libre. Para unirte, acercate al stand. Gana el equipo que sume más puntos, ¡y hay premios!</p>
   </header>
 
+  <section class="mine hide" id="mi2"></section>
   <section class="mine hide" id="mine"></section>
 
   <div class="turnos" id="turnos"></div>
@@ -192,6 +193,16 @@ body.tienelugar .toast{bottom:92px}
     <p id="u-txt">Para unirte a este turno acercate al stand: ahí te anotamos.</p>
     <p style="font-size:14px;color:var(--mut)">Decile al stand tu <b>nombre o apodo</b> (el que se ve en la pantalla) y el <b>Gmail</b> donde te avisamos 5 minutos antes para que estés en el stream.</p>
     <button class="btn cerrar" type="button" id="u-x" style="width:100%">Entendido</button>
+  </div>
+</div>
+
+<!-- Cancelar mi participación -->
+<div class="ov hide" id="ovMi">
+  <div class="box">
+    <h2>¿Cancelar tu participación?</h2>
+    <p>Vas a perder tu lugar y el stand recibe un aviso de que te bajaste. Otra persona puede ocuparlo.</p>
+    <button class="btn morado" type="button" id="mi-si" style="width:100%">Sí, cancelar</button>
+    <button class="btn sec cerrar" type="button" id="mi-no" style="width:100%">No, me quedo</button>
   </div>
 </div>
 
@@ -298,6 +309,7 @@ var CARTEL={jug:"JUGADO ✓",pasado:"YA PASÓ",susp:"SUSPENDIDO",lleno:"LLENO"};
 function vivos(eq){var o={},k,v,t=now();for(k in (eq||{})){v=eq[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))o[k]=v}return o}
 function cuenta(eq){return Object.keys(vivos(eq)).length}
 
+var MI=null,Sok=false;
 function pintar(){
   var h="";
   TURNOS.forEach(function(T){
@@ -310,7 +322,7 @@ function pintar(){
     h+='</section>';
   });
   $("turnos").innerHTML=h;
-  pintarMio();
+  pintarMio();pintarMi();
 }
 function equipo(s,q){
   var eq=(S[s.id]||{})[q],v=vivos(eq),ocu=0,res=0,k,lst=[];for(k in v){lst.push(v[k]);if(v[k].st==="ok")ocu++;else res++}
@@ -364,6 +376,42 @@ function stand(sid,q){var s=sid&&slotDe(sid);
 function abrirUnir(sid,q){if(sid&&estadoSlot(slotDe(sid))){toast("Ese horario ya no está disponible.");return}stand(sid,q)}
 $("u-x").onclick=function(){$("ovUnir").classList.add("hide");volverComun()};
 
+/* ---------- mi participación (QR que da el stand) ---------- */
+var miMsg="";
+function miTok(){var q=new URLSearchParams(location.search).get("mi");
+  if(q){q=q.replace(/[^a-z0-9]/gi,"");try{localStorage.setItem("jv_mi",q)}catch(e){}return q}
+  try{return localStorage.getItem("jv_mi")||""}catch(e){return ""}}
+function miOlvidar(msg){try{localStorage.removeItem("jv_mi")}catch(e){}MI=null;miMsg=msg||"";volverComun();pintarMi()}
+async function cargarMi(){
+  var tk=miTok();if(!tk){return}
+  try{var m=(await R("mi/"+tk).once("value")).val();
+    if(!m){miOlvidar("Este QR ya no es válido: la participación se canceló o el stand la quitó.");return}
+    MI=Object.assign({tk:tk},m);pintarMi()}
+  catch(e){miMsg="No pudimos cargar tu participación. Revisá tu conexión.";pintarMi()}
+}
+function pintarMi(){
+  var b=$("mi2");
+  if(!MI){if(miMsg){b.innerHTML='<h2>Participación</h2><p>'+esc(miMsg)+'</p><div class="btns"><button class="btn sec" type="button" id="mi-ok">Entendido</button></div>';b.classList.remove("hide");$("mi-ok").onclick=function(){miMsg="";pintarMi()}}else b.classList.add("hide");return}
+  var s=slotDe(MI.s),seat=((S[MI.s]||{})[MI.q]||{})[MI.k];
+  if(!s||(Sok&&(!seat||seat.st!=="ok"))){miOlvidar("Tu lugar ya no está anotado. Si querés jugar, acercate al stand.");return}
+  var es=estadoSlot(s),cerr=es==="jug"||es==="pasado",tn=MI.s.charAt(0)==="m"?"Turno mañana":"Turno tarde";
+  b.innerHTML='<h2>¡Estás participando!</h2>'+
+    '<p><b>'+tn+'</b> · a las <b>'+s.hora+'</b> (hasta '+s.fin+')</p>'+
+    '<p>Jugás en el <span class="eq '+MI.q+'">'+EQ[MI.q]+'</span> con el nombre <b>'+esc(MI.n||"")+'</b>.</p>'+
+    (es==="jug"?'<p>✅ Este horario ya se jugó. ¡Gracias por participar!</p>':es==="pasado"?'<p>Este horario ya pasó.</p>':es==="susp"?'<div class="aviso">⚠️ Este horario fue suspendido. Consultá en el stand.</div>':'<small>Acercate al stream 5 minutos antes. ¡Te esperamos!</small>')+
+    (cerr?'':'<div class="btns"><button class="btn sec" type="button" id="mi-x">Cancelar mi participación</button></div>');
+  b.classList.remove("hide");
+  var x=$("mi-x");if(x)x.onclick=function(){$("ovMi").classList.remove("hide")};
+}
+$("mi-no").onclick=function(){$("ovMi").classList.add("hide")};
+$("mi-si").onclick=async function(){
+  var m=MI;$("ovMi").classList.add("hide");if(!m)return;
+  var up={};up["s/"+m.s+"/"+m.q+"/"+m.k]=null;if(m.h)up["h/"+m.h]=null;up["mi/"+m.tk]=null;
+  up["baja/"+rnd(8)]={n:m.n||"",s:m.s,q:m.q,t:now()};
+  try{await R("").update(up);miOlvidar("Cancelaste tu participación. Ya le avisamos al stand.");toast("Participación cancelada")}
+  catch(e){toast("No se pudo cancelar. Probá de nuevo o hablá con el stand.")}
+};
+
 /* ---------- liberar ---------- */
 $("l-no").onclick=function(){$("ovLib").classList.add("hide")};
 $("l-si").onclick=function(){$("ovLib").classList.add("hide");liberar()};
@@ -387,10 +435,11 @@ db.ref(".info/serverTimeOffset").on("value",function(s){off=s.val()||0});
 R("u/"+UID).on("value",function(s){MIO=s.val();pintar()});
 R("est").on("value",function(s){EST=s.val()||{};pintar()});
 R("fecha").on("value",function(s){FECHA=s.val()||"";pintar()});
-R("s").on("value",function(s){S=s.val()||{};$("estado").textContent="Los lugares se actualizan solos.";pintar()},
+R("s").on("value",function(s){S=s.val()||{};Sok=true;$("estado").textContent="Los lugares se actualizan solos.";pintar()},
   function(e){$("estado").textContent="No se pueden leer los lugares ("+e.message+")."});
 setInterval(pintar,30000);   // para que vuelvan los lugares guardados que vencen
 var qs=new URLSearchParams(location.search);if(qs.get("inv"))abrirInvitacion(qs.get("inv"));
+cargarMi();
 })();
 </script>
 </body></html>
