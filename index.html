@@ -2214,9 +2214,46 @@ Array.prototype.forEach.call($("dots").children,function(d,k){d.onclick=function
   v.addEventListener("touchstart",function(e){x=e.touches[0].clientX},{passive:true});
   v.addEventListener("touchend",function(e){if(x===null)return;var d=e.changedTouches[0].clientX-x;x=null;if(Math.abs(d)>45)howGo(howI+(d<0?1:-1))},{passive:true});
 })();
+/* ---- Filtro de malas palabras en el nombre ----
+   Entiende letras cambiadas por números o símbolos (p*ta, m1erda, put@), letras repetidas (puuuta),
+   letras separadas (p u t a) y acentos. Para agregar o sacar palabras, editá estas dos listas (sin acentos).
+   MALAS_SUB: se rechazan aunque estén pegadas a otras letras. MALAS_TOK: solo si son una palabra entera
+   (así no se bloquean nombres como "Conchita" o palabras como "computadora"). */
+var MALAS_SUB=["mierda","pelotud","boludo","conchudo","hijodeputa","hijadeputa","chupapija","maricon","mogolico","mongolico","fuck","shit","nigger","nigga","faggot","bitch","asshole","whore","pedofil","violador","cogete","andate a la"];
+var MALAS_TOK=["puta","puto","putas","putos","putita","putito","carajo","forro","forra","concha","culo","culiado","pija","pijudo","verga","sorete","trolo","trola","cagon","cagona","hdp","lpm","ctm","sexo","sex","porn","porno","dick","cock","pussy","slut","rape","nazi","hitler","imbecil","idiota","estupido","estupida","mamon","chota","orto","garca","cabron","cojudo","pendejo","pendeja","marica","maricon","negro de mierda","sudaca","retrasado","retrasada"];
+function limpiarNom(s){
+  s=String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  var m={"0":"o","1":"i","3":"e","4":"a","5":"s","7":"t","8":"b","@":"a","$":"s","!":"i","|":"i","€":"e","v":"u","w":"u","k":"c","z":"s","y":"i"};
+  var o="",i,c;
+  for(i=0;i<s.length;i++){c=s.charAt(i);
+    if(/\s/.test(c)){o+=" ";continue}
+    if(m[c]){o+=m[c];continue}
+    if(/[a-z]/.test(c)){o+=c;continue}
+    if(/[.\-',]/.test(c))continue;       // puntos y guiones entre letras no cuentan
+    o+="?"}                              // cualquier otro símbolo: letra tapada (p*ta)
+  return o;
+}
+function colapsa(s){return s.replace(/([a-z])\1+/g,"$1")}
+function malaPalabra(n){
+  var L=limpiarNom(n),tk=L.split(/\s+/).filter(Boolean),t2=[],i,j,run="";
+  for(i=0;i<tk.length;i++){                // letras sueltas seguidas ("p u t a") se juntan
+    if(tk[i].length===1)run+=tk[i];else{if(run){t2.push(run);run=""}t2.push(tk[i])}}
+  if(run)t2.push(run);
+  var junto=colapsa(tk.join("")),ok=function(w,t){            // t (con "?" = letra tapada) contra w, hasta 1 letra tapada
+    t=colapsa(t);w=colapsa(w);if(t.length!==w.length)return false;
+    var tapadas=0;for(var k=0;k<w.length;k++){if(t.charAt(k)===w.charAt(k))continue;if(t.charAt(k)==="?"&&w.length>=4){tapadas++;continue}return false}
+    return tapadas<=1};
+  for(i=0;i<MALAS_SUB.length;i++){var w=colapsa(limpiarNom(MALAS_SUB[i]).replace(/\s+/g,""));
+    if(junto.indexOf(w)>=0)return true;
+    for(j=0;j+w.length<=junto.length;j++)if(ok(w,junto.substr(j,w.length)))return true}
+  for(i=0;i<MALAS_TOK.length;i++){var ws=limpiarNom(MALAS_TOK[i]).split(/\s+/);
+    if(ws.length>1){if(colapsa(t2.join("")).indexOf(colapsa(ws.join("")))>=0)return true;continue}
+    for(j=0;j<t2.length;j++)if(ok(ws[0],t2[j]))return true}
+  return false}
 function start(){
   var n=$("nom").value.trim();
   if(!n){$("err").textContent="Falta el nombre";return}
+  if(malaPalabra(n)){$("err").textContent="Ese nombre no está permitido. Elegí otro 🙂";return}
   if(hasPlayed()){renderStart();return}
   name=n;ls("name",n);$("hi").textContent=n;$("err").textContent="";show("s-how");howGo(0);
 }
