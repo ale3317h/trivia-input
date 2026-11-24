@@ -38,6 +38,7 @@ h1 span{color:var(--yel)}
 #foot{margin-top:10px;font:700 11px/1 var(--mono);letter-spacing:.1em;color:var(--mut);display:flex;justify-content:space-between}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
 <body>
 <div id="panel">
@@ -50,7 +51,7 @@ h1 span{color:var(--yel)}
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
-<script src="fb.js?v=20"></script>
+<script src="fb.js?v=21"></script>
 <script>
 var q=new URLSearchParams(location.search);
 var N=Math.max(1,Math.min(30,+(q.get("n")||8)));

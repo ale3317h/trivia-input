@@ -78,6 +78,7 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .jvqr{width:min(60vw,260px);aspect-ratio:1;margin:6px auto;background:#fff;border-radius:12px;padding:8px}.jvqr svg{width:100%;height:100%;display:block}.jvlink{word-break:break-all;opacity:.7;margin:2px 0 6px}
 #tb-jv{position:relative}
 .jvbaja{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;padding:10px 12px;border-radius:12px;background:#4a1d00;border:2px solid #ffb347;color:#fff}.jvbaja b{color:#ffd9a0}.jvbaja .t{flex:1 1 200px}.jvbaja button{margin:0}
+.offbar{position:fixed;left:0;right:0;top:0;z-index:90;padding:8px 12px;text-align:center;font:800 13px system-ui,sans-serif;background:#7f1d1d;color:#fff;border-bottom:2px solid #ffb347}.offbar.ok{background:#14532d;border-color:#4ade80}.offbar[hidden]{display:none}
 .jvno{display:block;width:100%;margin:8px 0 0}
 .jvm label{display:block;font:700 14px system-ui,sans-serif;margin:12px 0 4px;color:#fff}
 .jvm input[type=text],.jvm input[type=email]{margin:0;font-size:17px;padding:12px 14px}
@@ -202,6 +203,7 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
 .cfm.psh .st{margin-left:0}
 .cfm.psh .sc{font:700 11px "JetBrains Mono","Courier New",monospace;letter-spacing:2px;color:var(--mut)}
 </style>
+<script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
 <body>
 <div class="wrap">
@@ -398,6 +400,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
     <p class="small">Recordá: los cambios se ven en vivo para todos. El juego y el ranking leen la misma base.</p>
     </div>
 
+    <div class="offbar" id="offbar" hidden></div>
     <nav class="tabs">
       <button id="tb-scan" class="on" onclick="tab('scan')"><i>📷</i>Escanear</button>
       <button id="tb-pen" onclick="tab('pen')"><i>⏳</i>Pendientes<span class="bd hide" id="bd-pen">0</span></button>
@@ -420,7 +423,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
-<script src="fb.js?v=18"></script>
+<script src="fb.js?v=21"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=5"></script>
 <script src="qr-lib.js?v=1"></script>
@@ -1842,11 +1845,128 @@ function adm(){
 }
 $("pw").onkeydown=function(e){if(e.key==="Enter")adm()};
 
+/* ---------- SIN INTERNET ----------
+   Solo se usa cuando no hay conexión: con internet el panel funciona igual que siempre.
+   · Copia local: lo último que se vio (premios, saludos, ranking, configuración, Rojo vs Azul) para poder abrir y trabajar sin internet.
+   · Premios reclamados sin internet (LCL): quedan como reclamados en este dispositivo y se suben solos al volver la conexión.
+   · Cambios de Rojo vs Azul sin internet (OQ): se guardan y se suben en orden al reconectar.
+   · El stock gastado ya lo guarda sheet.js (ST3Sheet.consume): usa el mismo código, así que si otro dispositivo lo reclama online no se descuenta dos veces. */
+function lsJ(k,d){try{var v=JSON.parse(localStorage.getItem(k)||"null");return v==null?d:v}catch(e){return d}}
+function lsS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+var lsT={};function lsLater(k,v){clearTimeout(lsT[k]);lsT[k]=setTimeout(function(){lsS(k,v)},1200)}
+function enLinea(){return !!(window.ST3Sheet&&ST3Sheet.enLinea&&ST3Sheet.enLinea())}
+var LCL=lsJ("adm_lcl",{}),LPZ=lsJ("adm_lpz",[]),OQ=lsJ("adm_oq",[]);
+function allPR(){var ids={};PRraw.forEach(function(x){ids[x.id]=1});return PRraw.concat(LPZ.filter(function(z){return !ids[z.id]})).map(effP)}
+function offPend(){return Object.keys(LCL).length+OQ.length+((window.ST3Sheet&&ST3Sheet.pendientes&&ST3Sheet.pendientes())||0)}
+function offPaint(){
+  var b=$("offbar");if(!b)return;var n=offPend(),on=enLinea();
+  if(!on){b.hidden=false;b.className="offbar";b.textContent="⚠ Sin internet · trabajando con la copia de este dispositivo"+(n?" · "+n+" cambio"+(n>1?"s":"")+" por subir":"")}
+  else if(n){b.hidden=false;b.className="offbar ok";b.textContent="↻ Subiendo "+n+" cambio"+(n>1?"s":"")+" guardado"+(n>1?"s":"")+" sin internet…"}
+  else b.hidden=true;
+}
+/* abre el panel con la última copia guardada cuando no hay conexión */
+function admHydrate(){
+  if(enLinea())return;
+  var raw=(FB.loadCachedCfg&&FB.loadCachedCfg())||{};
+  if(!PRraw.length){var l=lsJ("adm_pr",null);if(l)PRraw=l}
+  if(!SAraw.length){var s=lsJ("adm_sa",null);if(s)SAraw=s}
+  if(!RK.length){var r=lsJ("adm_rk",null);if(r)RK=r}
+  var rs=raw.rs||{};RS={rc:+rs.rc||0,cj:+rs.cj||0,all:+rs.all||0,allGen:+rs.allGen||0};OVP=raw.ovp||{};OVS=raw.ovs||{};PV=raw.pv||{};PX=raw.px||{};
+  var jv=raw.jv||{};if(!Object.keys(JV.s||{}).length)JV.s=jv.s||{};if(!Object.keys(JV.est||{}).length)JV.est=jv.est||{};if(!Object.keys(JV.baja||{}).length)JV.baja=jv.baja||{};
+  jvReapply();
+  try{rebuild();renderRk();loadCfgUI();renderStock();jvRender();jvBajaRender()}catch(e){}
+  offPaint();
+}
+/* --- reclamar un premio sin internet --- */
+function offClaim(x,via){
+  LCL[x.id]={ts:Date.now(),via:via||"manual",gen:x.gen!=null?x.gen:FB.cfg().gen};lsS("adm_lcl",LCL);
+  sheetSync("entregar",x);rebuild();offPaint();
+  return{ok:true,offline:true}
+}
+function adminHH(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
+/* El QR trae el nombre, el premio y los puntos: con eso se comprueba la firma del código (la misma cuenta que hace la trivia), sin internet */
+function offParseQR(t){
+  t=String(t||"");var nm=t.match(/Jugador:\s*([^\n\r]+)/i),pz=t.match(/Premio:\s*([^\n\r]+)/i),pt=t.match(/Puntos:\s*(\d+)/i),qq=t.match(/Pregunta\s*(\d+)/i);
+  if(!nm||!pz||!pt)return null;
+  var P=pz[1].trim(),L=nz(P).indexOf("EXPERTO")===0?3:(nz(P).indexOf("DIFICIL")===0?2:(nz(P).indexOf("MEDIO")===0?1:0));
+  return{name:nm[1].trim(),prize:P,li:L,score:+pt[1],q:qq?+qq[1]:0}
+}
+function offSigOk(code,p){var id=code.slice(0,9),sig=code.slice(10);return ("0000"+adminHH("st3room-2026"+id+"|"+p.name+"|"+p.li+"|"+p.score).toString(36)).slice(-4).toUpperCase()===sig}
+function offAddPz(code,p){
+  var id=code.slice(0,9),z={id:id,gen:FB.cfg().gen,name:String(p.name||"(sin datos)").slice(0,20),code:code,li:p.li|0,prize:p.prize,score:p.score|0,q:p.q|0,ts:Date.now(),_loc:1};
+  LPZ=LPZ.filter(function(y){return y.id!==id}).concat([z]);lsS("adm_lpz",LPZ);PR=allPR();return z
+}
+function resolveOffline(code,qrText){
+  var p=offParseQR(qrText);
+  if(p&&offSigOk(code,p)){
+    var z=offAddPz(code,p);cur=z.id;
+    return showSheet("pend",'<div class="tt">SIN INTERNET · QR VERIFICADO</div>'+card(z)+'<div class="warn">ℹ Este jugador no estaba en la copia de este dispositivo. El código es auténtico (firma correcta). Al volver internet se sube como reclamado.</div><button class="g" id="cbtn" onclick="confirmClaim()">ENTREGADO · MARCAR RECLAMADO</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
+  }
+  cur=code;
+  showSheet("pend",'<div class="tt">SIN INTERNET · CÓDIGO NO VERIFICADO</div><div class="big">❓</div><div class="pr">'+esc(code)+'</div><div class="warn">Este código no está en la copia de este dispositivo y no se pudo comprobar. Si igual lo vas a entregar, elegí qué premio llevó:</div>'+
+    '<button class="g" onclick="offManual(\''+esc(code)+'\',\'Normal\')">ENTREGAR NORMAL</button><button class="g" onclick="offManual(\''+esc(code)+'\',\'Grande\')">ENTREGAR GRANDE</button><button class="g" onclick="offManual(\''+esc(code)+'\',\'Especial\')">ENTREGAR ESPECIAL</button><button class="p" onclick="closeSheet()">CANCELAR</button>');
+}
+async function offManual(code,k){
+  var p=k==="Normal"?{li:2,prize:"DIFÍCIL · Premio Normal"}:(k==="Grande"?{li:3,prize:"EXPERTO · Premio Grande"}:{li:3,prize:"🏆 Premio Especial"});
+  p.name="(sin verificar)";p.score=0;p.q=0;
+  var z=offAddPz(code,p);cur=z.id;
+  var r=await doClaim(z.id,"offline-manual");
+  if(r.ok)showSheet("ok",'<div class="tt">✓ RECLAMADO (sin internet)</div>'+card(z)+'<button class="g" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+  else showSheet("dup",'<div class="tt">'+esc(r.msg||"").toUpperCase()+'</div><button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+}
+/* --- Rojo vs Azul sin internet --- */
+function jvLocalApply(paths){
+  JV.s=JV.s||{};JV.est=JV.est||{};
+  Object.keys(paths).forEach(function(p){var v=paths[p],m=p.match(/^cfg\/jv\/s\/([^\/]+)\/([^\/]+)\/([^\/]+)$/);
+    if(m){var sl=JV.s[m[1]]=JV.s[m[1]]||{},eq=sl[m[2]]=sl[m[2]]||{};if(v===null)delete eq[m[3]];else eq[m[3]]=v;return}
+    m=p.match(/^cfg\/jv\/s\/([^\/]+)\/([^\/]+)\/([^\/]+)\/tk$/);
+    if(m){var st=((JV.s[m[1]]||{})[m[2]]||{})[m[3]];if(st)st.tk=v;return}
+    m=p.match(/^cfg\/jv\/est\/([^\/]+)$/);if(m){if(v===null)delete JV.est[m[1]];else JV.est[m[1]]=v}
+  })
+}
+function jvReapply(){OQ.forEach(function(e){jvLocalApply(e.p)})}
+async function jvWrite(paths){
+  var d=sdb();
+  if(d&&enLinea()){await d.ref().update(paths);return{ok:true}}
+  OQ.push({p:paths,ts:Date.now()});lsS("adm_oq",OQ);jvLocalApply(paths);jvRender();offPaint();
+  return{ok:true,queued:true}
+}
+function jvOnline(){if(enLinea())return true;toast("Sin internet: esto se puede hacer cuando vuelva la conexión");return false}
+/* --- subir todo lo guardado cuando vuelve la conexión --- */
+var admFlushing=false;
+async function admFlush(){
+  if(admFlushing||!enLinea())return;var d=sdb();if(!d)return;
+  if(!Object.keys(LCL).length&&!OQ.length)return;
+  admFlushing=true;
+  try{
+    var ids=Object.keys(LCL);
+    for(var i=0;i<ids.length;i++){
+      var id=ids[i],c=LCL[id],ref=d.ref("prizes/"+c.gen+"/"+id),v=(await ref.once("value")).val();
+      if(!v){var z=LPZ.filter(function(p){return p.id===id})[0];
+        if(z)await ref.set({name:z.name,code:z.code,li:z.li|0,prize:z.prize,score:z.score|0,q:z.q|0,ts:z.ts,claimed:true,claimedAt:c.ts,via:(c.via||"manual")+"-sin-internet"})}
+      else if(v.claimed===true)toast("⚠ "+(v.name||"Un premio")+" ya figuraba reclamado por otro dispositivo (el stock se descontó una sola vez)");
+      else await ref.update({claimed:true,claimedAt:c.ts,via:(c.via||"manual")+"-sin-internet"});
+      delete LCL[id];lsS("adm_lcl",LCL);
+    }
+    LPZ=LPZ.filter(function(z){return LCL[z.id]});lsS("adm_lpz",LPZ);
+    while(OQ.length){var e=OQ[0];await d.ref().update(e.p);OQ.shift();lsS("adm_oq",OQ)}
+    toast("Cambios guardados sin internet: subidos ✓");
+  }catch(e){}
+  admFlushing=false;try{rebuild()}catch(e){}offPaint();
+}
+setInterval(function(){offPaint();admFlush()},3000);
+ST3Sheet.onChange(function(){offPaint();if(enLinea())admFlush()});
+
 async function boot(){
-  await FB.readCfg();
+  var cfgOk=false;
+  await Promise.race([FB.readCfg().then(function(){cfgOk=true}),new Promise(function(r){setTimeout(r,4500)})]);
+  if(!cfgOk&&FB.loadCachedCfg)FB.loadCachedCfg();   // sin internet: la última configuración guardada
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
-  loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();qs=await FB.loadQuestions();renderQs();
+  loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();
+  setTimeout(admHydrate,2500);setTimeout(admHydrate,6000);offPaint();
+  var qOk=await Promise.race([FB.loadQuestions().then(function(q){lsS("adm_qs",q);return q}),new Promise(function(r){setTimeout(function(){r(null)},4000)})]);
+  qs=qOk||lsJ("adm_qs",null)||(window.SEED||[]).map(function(a,i){return{id:"q"+(i+1),q:a[0],ok:a[1],bad:a[2]||[]}});renderQs();
   FB.watchCfg(function(){loadCfgUI();watchPr();watchRank()});
 }
 
@@ -1963,10 +2083,10 @@ async function jvMail(e){
     JV.dec[id]=new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:jvB(e.i)},k,jvB(e.c)));return JV.dec[id];
   }catch(x){return "(no se pudo leer)"}
 }
-function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;JV.est={};
-  d.ref("cfg/jv/est").on("value",function(x){JV.est=x.val()||{};jvRender()});
+function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;JV.est=JV.est||{};
+  d.ref("cfg/jv/est").on("value",function(x){JV.est=x.val()||{};jvReapply();jvRender()});
   d.ref("cfg/jv/fecha").on("value",function(x){var f=$("jv-fe");if(f&&document.activeElement!==f)f.value=x.val()||""});
-  d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};JV.got=1;jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
+  d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};jvReapply();JV.got=1;jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
 /* Juego jugado: descuenta del stock del turno de ese horario 1 bolsita Normal (participar), 1 Grande (ganar en vivo) y
    los extras de "Ganar en vivo" que figuran en la planilla (vaso, cuaderno premium, y su reemplazo si se acabó el principal…).
    Códigos fijos por horario: marcar dos veces no descuenta dos veces; al reabrir se devuelve todo. */
@@ -1977,7 +2097,7 @@ function jvExtras(){   // extras de "Ganar en vivo": {k: principal, r: reemplazo
   return main.map(function(k){var base=k.replace(/ \(.*\)$/,"");return{k:k,r:rep[base]||null,c:k.replace(/[^a-z0-9]+/gi,"_")}});
 }
 function jvNom(k){return String(ST3Sheet.nombre(k)).replace(/ \((Ganar en vivo|reemplazo de .*)\)$/i,"")}
-function jvUsado(t,k,code){var f=((FB.cfg().stk||{})[t])||{},n=k.replace(/ñ/g,"n").replace(/\s+/g,"_");return !!(((f[n]||{}).used||{})[code])}
+function jvUsado(t,k,code){return !!(k&&ST3Sheet.fueUsado(t,k,code))}
 function jvDescontado(id){var t=jvTurnoDe(id);
   if(!(jvUsado(t,"Normal","jv-"+id+"-participar")&&jvUsado(t,"Grande","jv-"+id+"-ganar")))return false;
   return jvExtras().every(function(x){var c="jv-"+id+"-ex-"+x.c;return jvUsado(t,x.k,c)||(x.r&&jvUsado(t,x.r,c))})}
@@ -2007,13 +2127,14 @@ async function jvEst(id,val){
     }else if(prev==="jug"){
       await jvDevolver(id);
     }
-    await sdb().ref("cfg/jv/est/"+id).set(val||null);
+    var pe={};pe["cfg/jv/est/"+id]=val||null;await jvWrite(pe);
     if(val==="jug"){await new Promise(function(r){setTimeout(r,800)});alert("✅ Marcado como jugado.\n\nSe descontó del "+stkNom(t)+":\n· "+lst.join("\n· ")+"\n\nQuedan: Normal "+((ST3Sheet.info(t,"Normal")||{}).quedan||"—")+" · Grande "+((ST3Sheet.info(t,"Grande")||{}).quedan||"—"))}
     toast(val==="jug"?"Marcado como jugado: se descontó "+lst.join(", "):val==="susp"?"Horario suspendido":val==="lleno"?"Horario marcado como lleno":prev==="jug"?"Horario reabierto: stock devuelto":"Horario reabierto");
     renderStock();
   }catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvFecha(on){
+  if(!jvOnline())return;
   var v=$("jv-fe").value;if(on&&!v){toast("Elegí una fecha");return}
   try{await sdb().ref("cfg/jv/fecha").set(on?v:null);toast(on?"Día guardado: los horarios se marcan solos":"Sin fecha: no se marca nada solo");if(!on)$("jv-fe").value=""}catch(e){alert("No se pudo: "+e.message)}
 }
@@ -2043,12 +2164,12 @@ function jvMostrarQR(tk,nom,id,q){
   var m=$("jv-md");if(m.parentNode!==document.body)document.body.appendChild(m);
   var u=jvLinkMi(tk);$("jv-qrb").innerHTML=jvQrSvg(u);$("jv-lk").textContent=u;
   $("jv-ok-t").textContent="✅ "+(nom||"Persona")+" · "+(q==="r"?"Rojo":"Azul");
-  $("jv-ok-d").textContent="Juega a las "+jvHora(id)+" ("+(id.charAt(0)==="m"?"turno mañana":"turno tarde")+")";
+  $("jv-ok-d").textContent="Juega a las "+jvHora(id)+" ("+(id.charAt(0)==="m"?"turno mañana":"turno tarde")+")"+(enLinea()?"":" · el QR funciona cuando este dispositivo recupere internet");
   $("jv-form").classList.add("hide");$("jv-ok").classList.remove("hide");m.classList.remove("hide")}
 async function jvQR(id,q,k){
   var v=((JV.s[id]||{})[q]||{})[k]||{},tk=v.tk,d=sdb();
   if(!tk){tk=jvRnd(10);var up={};up["cfg/jv/s/"+id+"/"+q+"/"+k+"/tk"]=tk;up["cfg/jv/mi/"+tk]={s:id,q:q,k:k,n:v.n||"",h:v.h||null,t:Date.now()};
-    try{await d.ref().update(up)}catch(e){alert("No se pudo: "+e.message);return}}
+    try{await jvWrite(up)}catch(e){alert("No se pudo: "+e.message);return}}
   jvMostrarQR(tk,v.n,id,q)}
 /* Avisos de que alguien se bajó (cancelaron desde su celular) */
 function jvBajaWatch(){var d=sdb();if(!d||JV.bw)return;JV.bw=1;JV.baja={};var primera=true;
@@ -2060,7 +2181,7 @@ function jvBajaRender(){
   if(b){b.textContent=ks.length;b.classList.toggle("hide",!ks.length)}
   if(!box)return;
   box.innerHTML=ks.map(function(k){var x=JV.baja[k];return '<div class="jvbaja"><span class="t">⚠️ <b>'+esc(x.n||"Alguien")+'</b> se bajó del juego · <b>'+(x.q==="r"?"Rojo":"Azul")+'</b> a las <b>'+jvHora(x.s||"m0000")+'</b>'+(x.t?' · '+hm(x.t):'')+'</span><button class="p" onclick="jvBajaOk(\''+k+'\')">Entendido</button></div>'}).join("")}
-function jvBajaOk(k){var d=sdb();if(d)d.ref("cfg/jv/baja/"+k).remove().catch(function(e){alert("No se pudo: "+e.message)})}
+function jvBajaOk(k){if(!jvOnline())return;var d=sdb();if(d)d.ref("cfg/jv/baja/"+k).remove().catch(function(e){alert("No se pudo: "+e.message)})}
 var JV_PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 function jvB64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
 async function jvCifrar(texto){
@@ -2089,6 +2210,17 @@ async function jvAgregar(){
   if(nom.length>20){toast("El nombre puede tener hasta 20 letras");return}
   var g=jvGmail($("jv-am").value);if(!g.ok){toast(g.msg);return}
   var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now(),d=sdb();
+  if(!enLinea()){   // sin internet: se controla con la copia local y se sube al volver la conexión
+    try{
+      var hs0=await jvHash(g.mail),tk0=jvRnd(10),yaH=false;
+      Object.keys(JV.s||{}).forEach(function(i){["a","r"].forEach(function(qq){var eq=(JV.s[i]||{})[qq]||{};Object.keys(eq).forEach(function(k){if(eq[k]&&eq[k].st==="ok"&&eq[k].h===hs0)yaH=true})})});
+      if(yaH){toast("Ese Gmail ya tiene un lugar anotado");return}
+      if(jvCupo(id,q)>=2){toast("Ese equipo ya está completo a las "+jvHora(id));return}
+      var e0=await jvCifrar(g.mail),p0={};
+      p0["cfg/jv/s/"+id+"/"+q+"/"+seat]={st:"ok",n:nom,t:t,adm:1,h:hs0,e:e0,tk:tk0};p0["cfg/jv/h/"+hs0]="adm-"+seat;p0["cfg/jv/mi/"+tk0]={s:id,q:q,k:seat,n:nom,h:hs0,t:t};
+      await jvWrite(p0);$("jv-an").value="";$("jv-am").value="";jvMostrarQR(tk0,nom,id,q);toast(nom+" anotado/a (sin internet: se sube al volver la conexión)");
+    }catch(e){alert("No se pudo: "+e.message)}
+    return}
   try{
     var hs=await jvHash(g.mail),tk=jvRnd(10);
     if((await d.ref("cfg/jv/ban/"+hs).once("value")).val()){toast("Ese Gmail está bloqueado");return}
@@ -2141,6 +2273,7 @@ async function jvMailUno(id,q,k){
   location.href="mailto:"+encodeURIComponent(m)+"?subject="+encodeURIComponent("Juego en vivo · "+p.hora)+"&body="+encodeURIComponent(jvFill(jvTpl(),p));
 }
 async function jvBan(id,q,k){
+  if(!jvOnline())return;
   var p=jvPersona(id,q,k);
   if(!await askSteps([{icon:"⛔",title:"¿Bloquear a "+esc(p.n||"esta persona")+"?",text:"Se le saca el lugar de las "+p.hora+" y no se puede volver a anotar con ese Gmail ni desde ese celular. Se puede desbloquear después.",ok:"BLOQUEAR",danger:true}]))return;
   var d=sdb(),v=p.v,up={},info={n:p.n||"",t:firebase.database.ServerValue.TIMESTAMP};
@@ -2163,9 +2296,10 @@ async function jvQuitar(id,q,k){
   if(!confirm("¿Quitar este lugar de las "+jvHora(id)+"?"))return;
   var d=sdb(),v=((JV.s[id]||{})[q]||{})[k]||{},up={};up["cfg/jv/s/"+id+"/"+q+"/"+k]=null;
   if(v.u){up["cfg/jv/u/"+v.u]=null}if(v.h){up["cfg/jv/h/"+v.h]=null}if(v.tk)up["cfg/jv/mi/"+v.tk]=null;
-  try{await d.ref().update(up);toast("Lugar liberado")}catch(e){alert("No se pudo: "+e.message)}
+  try{await jvWrite(up);toast("Lugar liberado")}catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvBorrarTodo(){
+  if(!jvOnline())return;
   if(!await askSteps([{icon:"🎮",title:"¿Borrar todas las reservas del Juego en vivo?",text:"Se liberan todos los horarios y se anulan las invitaciones. No se puede deshacer.",ok:"BORRAR TODO",danger:true}]))return;
   try{await sdb().ref("cfg/jv").remove();toast("Reservas borradas")}catch(e){alert("No se pudo: "+e.message)}
 }
@@ -2219,7 +2353,7 @@ function watchPr(){
   $("mode2").textContent=FB.shared()?"Base conectada":"Sin base compartida";$("mode2").style.color=FB.shared()?"var(--grn)":"var(--red)";
   if(!FB.shared()){$("l-pen").textContent="Sin base compartida: no hay registro de premios.";return}
   if(pOff)return;   // una sola vez: ya no depende de la ronda del ranking
-  pOff=FB.watchAllPrizes(function(l){PRraw=l;PR=l.map(effP);renderLists();renderRk()});
+  pOff=FB.watchAllPrizes(function(l){PRraw=l;lsLater("adm_pr",l);PR=allPR();renderLists();renderRk()});
 }
 function tab(n){
   ["scan","pen","sal","ok","rk","stk","jv","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
@@ -2228,7 +2362,7 @@ function tab(n){
 function hm(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
 function row(x,done){
   var li=x.li|0,rd=(x.gen!=null&&String(x.gen)!==String(FB.cfg().gen))?' · ronda '+esc(x.gen):'';
-  return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b>'+(done?'<span class="tg tr">TRIVIA</span>':'')+' <span class="small">· '+x.score+' pts'+rd+'</span></div>'+
+  return '<div class="pz'+(done?' done':'')+'"><div class="em">'+PE[li]+'</div><div><b>'+esc(x.name)+'</b>'+(done?'<span class="tg tr">TRIVIA</span>':'')+(x._loc?'<span class="tg" style="background:#ffb347;color:#000">SIN SUBIR</span>':'')+' <span class="small">· '+x.score+' pts'+rd+'</span></div>'+
     '<div class="small"><span style="color:'+PC[li]+';font-weight:700">'+esc(x.prize||"")+'</span> · <span class="cd">'+esc(x.code)+'</span></div>'+
     '<div class="act">'+(done?'<span class="badge ok">✓ '+hm(x._t)+'</span><button class="p rv" onclick="revertPrize(\''+esc(x.id)+'\')">↩ REVERTIR</button>':'<button class="g" onclick="claimRow(\''+esc(x.id)+'\')">MARCAR</button><button class="r" onclick="voidPrize(\''+esc(x.id)+'\')">✖ ANULAR</button>')+'</div></div>';
 }
@@ -2243,13 +2377,14 @@ function nz(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperC
 var RS={rc:0,cj:0,all:0,allGen:0},OVP={},OVS={},PV={},PX={},rsOff=null,okF="all",PRraw=[],SAraw=[];
 function effP(x){var o=OVP[x.id];x._v=!!PV[x.id];
   if(o&&o.s==="p"){x._c=false;x._t=0}else if(o&&o.s==="c"){x._c=true;x._t=+o.t||0}else{x._c=!!x.claimed;x._t=+x.claimedAt||0}
+  if(!x._c&&LCL[x.id]){x._c=true;x._t=LCL[x.id].ts;x._loc=1}   // reclamado en este dispositivo sin internet, todavía sin subir
   return x}
 function effS(x){var o=OVS[x.id];x._s=x.status;x._t=+(x.status==="redeemed"?x.redeemedAt:x.rejectedAt)||0;
   if(o&&o.s==="v"&&x.status==="redeemed"){x._s="validated";x._t=+x.validatedAt||0}
   else if(o&&o.s==="r"&&(x.status==="redeemed"||x.status==="validated")){x._s="redeemed";x._t=+o.t||0}
   if(PV[x.id]&&x.status!=="redeemed"){x._s="rejected";x._t=+PV[x.id]||0}   // cancelado por producción (se anota en cfg/pv, la base no deja cambiar un saludo ya validado)
   return x}
-function rebuild(){PR=PRraw.map(effP);SA=SAraw.map(effS);renderLists();renderSa();renderResets();renderRk()}
+function rebuild(){PR=allPR();SA=SAraw.map(effS);renderLists();renderSa();renderResets();renderRk()}
 function watchRs(){
   var d=sdb();if(!d||rsOff)return;
   var ref=d.ref("cfg"),h=ref.on("value",function(s){var v=s.val()||{},r=v.rs||{};
@@ -2308,7 +2443,7 @@ function watchRank(){
   if(rkOff)rkOff();rkGen=g;
   var ref=d.ref("scores/"+g).orderByChild("score").limitToLast(400),
       h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,lvl:v.lvl||1,ts:v.ts||0})});
-        o.sort(function(a,b){return b.score-a.score||a.ts-b.ts});RK=o;renderRk()},
+        o.sort(function(a,b){return b.score-a.score||a.ts-b.ts});RK=o;lsLater("adm_rk",o);renderRk()},
         function(e){var l=$("rk-list");if(l)l.textContent="No se pudo leer el ranking: "+(e&&e.message)});
   rkOff=function(){ref.off("value",h)};
 }
@@ -2446,6 +2581,7 @@ async function doClaim(id,via){
   if(!x)return{ok:false,msg:"No encontré ese premio."};
   if(x._v)return{ok:false,dup:true,msg:"Este premio fue anulado."};
   if(x._c)return{ok:false,dup:true,msg:"Ya estaba reclamado."};
+  if(!enLinea())return offClaim(x,via);   // sin internet: se guarda en este dispositivo y se sube al volver
   try{
     if(x.claimed||OVP[id]){   // la base ya lo tiene como reclamado (o hubo una reversión): la nueva entrega se anota aparte
       var r=await sdb().ref("cfg/ovp/"+id).transaction(function(c){if(c&&c.s==="c")return;return{s:"c",t:firebase.database.ServerValue.TIMESTAMP,via:via||"manual"}});
@@ -2458,6 +2594,9 @@ async function doClaim(id,via){
 async function revertPrize(id){
   var x=PR.filter(function(p){return p.id===id})[0];if(!x||!x._c)return;
   if(!await askSteps([{icon:"↩️",title:"¿Revertir este premio?",text:"<b>"+esc(x.name)+"</b> ("+esc(x.prize||"")+") vuelve a <b>Pendientes</b> y su QR vale de nuevo. Queda anotado que se revirtió.",ok:"REVERTIR RECLAMADO",danger:true}]))return;
+  if(LCL[id]){   // reclamado sin internet y todavía sin subir: se cancela acá nomás
+    delete LCL[id];lsS("adm_lcl",LCL);sheetSync("revertir",x);rebuild();offPaint();toast("Reclamo sin subir cancelado ✓");return}
+  if(!enLinea()){alert("Sin internet: un premio que ya se subió se puede revertir cuando vuelva la conexión.");return}
   try{await sdb().ref("cfg/ovp/"+id).set({s:"p",t:firebase.database.ServerValue.TIMESTAMP});toast("Premio de "+x.name+" vuelto a pendiente ✓");sheetSync("revertir",x)}catch(e){alert("No se pudo revertir: "+(e&&e.message))}
 }
 async function voidPrize(id){
@@ -2493,6 +2632,7 @@ function badSheet(t,m){showSheet("bad",'<div class="big">⛔</div><div class="tt
 function resolve(code,qrText){
   if(!FB.shared())return badSheet("SIN BASE","No hay conexión con la base de datos.");
   var id=code.slice(0,9),x=PR.filter(function(p){return p.id===id})[0];
+  if(!x&&!enLinea())return resolveOffline(code,qrText);
   if(!x)return resolveSa(code);
   if(x._v)return badSheet("QR ANULADO","Producción anuló este premio y este QR. No entregar.");
   if(pAll(x))return badSheet("QR DE ANTES DEL REINICIO","Este premio es de antes del último «Reiniciar todo»: ya no vale. No entregar.");
@@ -2524,7 +2664,7 @@ function watchSa(){
     var o=[];s.forEach(function(c){var v=c.val()||{};v.id=c.key;o.push(v)});
     var fresh=o.filter(function(x){return x.status==="pending"&&!saSeen[x.id]&&!sAll(x)});
     o.forEach(function(x){saSeen[x.id]=1});
-    SAraw=o;SA=o.map(effS);renderSa();renderLists();
+    SAraw=o;lsLater("adm_sa",o);SA=o.map(effS);renderSa();renderLists();
     if(saInit&&fresh.length)saAlert(fresh);
     saInit=true;
   },function(e){$("sa-pen").textContent="No se pudo leer la base: "+(e&&e.message)});

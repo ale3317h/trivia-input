@@ -14,6 +14,23 @@
 
 Las direcciones de GitHub Pages (`ale3317h.github.io/trivia-input/...`) siguen funcionando con los mismos datos, como respaldo.
 
+## Sin conexión (solo cuando no hay internet)
+
+Todas las páginas se pueden abrir sin internet (`sw.js`, un service worker). **Con internet todo funciona igual que siempre**: se pide primero a la red y la copia guardada solo se usa si la red falla.
+
+**Antes del evento (con internet):** en cada dispositivo del staff, abrir una vez cada página que se vaya a usar (admin, ruleta pizarrón, etc.) con la misma dirección que se va a usar después. Desde ahí la página queda guardada en el dispositivo y se actualiza sola cada vez que se abre con internet.
+
+**Panel admin sin internet** (cartel rojo arriba: «Sin internet · trabajando con la copia de este dispositivo»):
+- Abre con la última copia de premios, saludos, ranking, stock y Rojo vs Azul.
+- **Reclamar premios:** con el escáner o escribiendo el código. Si el jugador está en la copia, queda reclamado en ese dispositivo (etiqueta «SIN SUBIR»). Si no estaba y el QR se escanea con la cámara, se comprueba la firma del código sin internet y se reclama; si no se puede comprobar, el staff elige qué premio llevó (Normal, Grande o Especial).
+- **Stock:** se descuenta en el dispositivo (también lo que gasta la ruleta) y se sube al volver la conexión. El código es el mismo, así que si otro dispositivo lo reclama con internet no se descuenta dos veces.
+- **Rojo vs Azul:** anotar, quitar, marcar jugado/lleno/suspendido (descuenta el stock) y QR de cada persona (funciona cuando el dispositivo recupere internet).
+- **Al volver la conexión** todo se sube solo, en orden. Si otro dispositivo ya había reclamado el mismo premio, avisa.
+- Lo que necesita internet (reiniciar, anular, bloquear, revertir un premio ya subido, saludos de las cámaras, editar preguntas) avisa que no se puede en este momento.
+- Límite: si dos dispositivos trabajan sin internet a la vez no se ven entre sí; con un solo dispositivo por función no hay conflictos.
+
+**Ruleta pizarrón:** abre sin internet; ver «Modo sin internet» en el panel (P).
+
 ## Base de datos global del stock (planilla + Firebase)
 
 Todo el stock de premios sale de la **Planilla de Google "Plan de premios Muestra anual 2026"** y se muestra en vivo en todas las páginas:

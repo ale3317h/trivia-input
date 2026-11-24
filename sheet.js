@@ -146,6 +146,12 @@
     if (!enLinea() || qLoad().length) { encolar(op, turno, key, code); flush(); return Promise.resolve({ queued: true }); }
     return conTope(enviar(op, turno, key, code), 5000).catch(function () { encolar(op, turno, key, code); return { queued: true }; });
   }
+  /* ¿ya se descontó este código? (en la base o guardado en este dispositivo sin subir) */
+  function fueUsado(turno, key, code) {
+    var f = cfgStk()[turno], p = f && f[fkey(key)], c = safe(code), r = !!(p && p.used && p.used[c]);
+    qLoad().forEach(function (x) { if (x.t === turno && fkey(x.k) === fkey(key) && safe(x.c) === c) r = (x.op === "c"); });
+    return r;
+  }
   function consume(turno, key, code) { return hacer("c", turno, key, code); }
   function release(turno, key, code) { return hacer("r", turno, key, code); }
   function setManual(turno, key, n) {
@@ -173,7 +179,7 @@
   window.ST3Sheet = {
     PREMIOS: PREMIOS, RULETA: RULETA,
     start: start, load: load, info: info, quedan: quedan, agotado: agotado,
-    consume: consume, release: release, pendientes: function () { return qLoad().length; }, enLinea: enLinea, setManual: setManual,
+    consume: consume, release: release, pendientes: function () { return qLoad().length; }, enLinea: enLinea, fueUsado: fueUsado, setManual: setManual,
     onChange: function (f) { listeners.push(f); },
     ruleta: function () { return ruletaDef; },
     EXTRAS: function () { return extrasDef.slice(); },

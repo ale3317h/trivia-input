@@ -209,6 +209,7 @@ body.sheetmode .row .step{pointer-events:none}
 #toastS{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);opacity:0;pointer-events:none;color:#fff;padding:11px 18px;border-radius:12px;font:700 15px/1.3 "DM Sans",system-ui,sans-serif;z-index:99;max-width:90vw;text-align:center;transition:opacity .25s,transform .25s}
 #toastS.on{opacity:1;transform:translate(-50%,0)}
 </style>
+<script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
 <body>
 <div class="app" id="app">
@@ -315,7 +316,7 @@ body.sheetmode .row .step{pointer-events:none}
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
-<script src="fb.js?v=18"></script>
+<script src="fb.js?v=21"></script>
 <script src="sheet-config.js?v=2"></script>
 <script src="sheet.js?v=5"></script>
 <script>

@@ -51,17 +51,27 @@ var FB = (function () {
   }
 
   /* ---------- CONFIG ---------- */
+  /* Copia de la configuración en el dispositivo: sirve para abrir el panel sin internet (nunca se usa si hay conexión). */
+  var guardaT = 0;
+  function guardarCfg(v) {
+    clearTimeout(guardaT);
+    guardaT = setTimeout(function () { try { localStorage.setItem("st3_cfg", JSON.stringify(v || {})); } catch (e) { } }, 800);
+  }
+  function loadCachedCfg() {
+    try { var v = JSON.parse(localStorage.getItem("st3_cfg") || "null"); if (v) { cfg = norm(v); return v; } } catch (e) { }
+    return null;
+  }
   function readCfg() {
     if (!db) return Promise.resolve(cfg);
     return db.ref("cfg").once("value").then(function (s) {
-      cfg = norm(s.val());
+      cfg = norm(s.val()); guardarCfg(s.val());
       return cfg;
     }).catch(function () { return cfg; });
   }
 
   function watchCfg(cb) {
     if (!db) { cb(cfg); return; }
-    db.ref("cfg").on("value", function (s) { cfg = norm(s.val()); cb(cfg); },
+    db.ref("cfg").on("value", function (s) { cfg = norm(s.val()); guardarCfg(s.val()); cb(cfg); },
       function (e) { lastError = e.message; });
   }
 
@@ -179,6 +189,7 @@ var FB = (function () {
     error: function () { return lastError; },
     uid: uid,
     readCfg: readCfg,
+    loadCachedCfg: loadCachedCfg,
     watchCfg: watchCfg,
     setCfg: setCfg,
     resetRank: resetRank,

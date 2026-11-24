@@ -51,6 +51,7 @@ button:active{transform:scale(.98)}
 @keyframes fall{to{transform:translateY(110vh) rotate(720deg);opacity:.8}}
 @media (prefers-reduced-motion:reduce){.hand,.wait i,.conf{animation:none}}
 </style>
+<script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
 <body>
 <div class="conn" id="conn">Sin conexión… reconectando</div>
@@ -62,7 +63,7 @@ button:active{transform:scale(.98)}
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
-<script src="fb.js?v=18"></script>
+<script src="fb.js?v=21"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=5"></script>
 <script>
