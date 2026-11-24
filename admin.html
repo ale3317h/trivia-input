@@ -49,7 +49,7 @@ td.s{font-family:"JetBrains Mono","Courier New",monospace;color:var(--yel);font-
 body.app-on{padding-bottom:84px}
 .ah{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
 .pane{animation:pin .3s ease both}@keyframes pin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-#t-scan,#t-pen,#t-ok,#t-sal{max-width:540px;margin:0 auto}
+#t-scan,#t-pen,#t-ok{max-width:540px;margin:0 auto}
 .tn{margin:12px 0 4px;display:flex;align-items:center;gap:8px;font:800 15px system-ui,sans-serif}.tn small{font:700 10px system-ui,sans-serif;padding:2px 8px;border-radius:99px;background:#ffffff14;color:var(--mut);letter-spacing:.05em}.tn.on{color:var(--grn)}.tn.on small{background:#3dff8a22;color:var(--grn)}
 details.tz{margin-top:10px;border:1px solid #ffffff1f;border-radius:12px;padding:2px 10px 6px}
 details.tz summary{cursor:pointer;font:800 14px system-ui,sans-serif;color:var(--mut);padding:8px 0;list-style:none}
@@ -146,7 +146,7 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .pz .act .camtag{margin:0 8px 0 0;display:inline-block}
 .sabanner b{flex:1}.sabanner button{margin:0;width:auto;background:transparent;border:0;font-size:22px;padding:0 4px}
 .tabs .bd.blink{animation:redblink .8s ease-in-out infinite;box-shadow:0 0 10px 2px var(--red)}
-#tb-sal.pending i{animation:redblink .8s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--red))}
+#tb-pen.pending i{animation:redblink .8s ease-in-out infinite;filter:drop-shadow(0 0 6px var(--red))}
 .mrow{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #ffffff14;cursor:pointer}
 .mrow input[type=checkbox]{width:22px;height:22px;flex:none;margin:0 12px 0 0;padding:0}
 .mrow{flex-wrap:wrap;gap:6px 0}.mrow .mwho{flex:1;min-width:150px}.mrow .mmail{flex:1 1 210px;max-width:300px;margin:0 0 0 8px;padding:8px 10px;font-size:13px}
@@ -238,21 +238,15 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
 
     <div id="t-pen" class="pane hide">
       <h2 style="margin-top:6px">Pendientes <span class="small" id="pc1"></span></h2>
-      <p class="small" style="margin-top:0">Jugaron pero todavía no retiraron su premio. También figuran los saludos validados con QR que esperan canje.</p>
+      <div class="sabanner hide" id="sabanner"></div>
+      <h3 style="margin:10px 0 4px">👋 Saludos para validar <span class="small" id="sc1"></span></h3>
+      <p class="small" style="margin-top:0">Quien escanea el QR de la cámara 1 o 2 aparece acá, con su etiqueta. Enfocala y, cuando salude, tocá <b>VALIDAR DESAFÍO</b>: en su celular le aparece el QR del premio.</p>
+      <div id="sa-pen" class="small">Conectando…</div>
+      <h3 style="margin:20px 0 4px">🎁 Premios por entregar</h3>
+      <p class="small" style="margin-top:0">Jugaron pero todavía no retiraron su premio. También figuran los saludos validados que esperan canje. Para entregar, usá <b>Escanear</b> (o tocá <b>MARCAR</b>).</p>
       <input id="p-q" placeholder="Buscar por nombre o código" oninput="renderLists()" autocomplete="off" style="margin-bottom:10px">
       <div id="l-pen">Cargando…</div>
-    </div>
-
-    <div id="t-sal" class="pane hide">
-      <h2 style="margin-top:6px">👋 Saludá a la cámara <span class="small" id="sc1"></span></h2>
-      <p class="small" style="margin-top:0">Cada persona que escanea el QR de una cámara (cámara 1 o cámara 2) aparece acá, con su etiqueta. Enfocala con la cámara y, cuando salude, tocá <b>VALIDAR DESAFÍO</b>: en su celular le aparece el QR del premio. Para canjearlo usá la pestaña <b>Escanear</b> (o escribí el código).</p>
-      <div class="sabanner hide" id="sabanner"></div>
-      <div class="row" id="sachips" style="margin-bottom:6px"></div>
-      <div id="sa-pen" class="small">Conectando…</div>
-      <h3 style="margin-top:18px">Validados, esperando canje</h3>
-      <div id="sa-val" class="small"></div>
-      <h3 style="margin-top:18px">Historial</h3>
-      <div id="sa-his" class="small"></div>
+      <div class="row hide" id="sachips"></div><div id="sa-val" class="hide"></div><div id="sa-his" class="hide"></div>
     </div>
 
     <div id="t-ok" class="pane hide">
@@ -403,15 +397,14 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
     <div class="offbar" id="offbar" hidden></div>
     <nav class="tabs">
       <button id="tb-scan" class="on" onclick="tab('scan')"><i>📷</i>Escanear</button>
-      <button id="tb-pen" onclick="tab('pen')"><i>⏳</i>Pendientes<span class="bd hide" id="bd-pen">0</span></button>
-      <button id="tb-sal" onclick="tab('sal')"><i>👋</i>Saludos<span class="bd hide" id="bd-sal">0</span></button>
-      <button id="tb-ok" onclick="tab('ok')"><i>✅</i>Reclamados</button>
-      <button id="tb-rk" onclick="tab('rk')"><i>🏆</i>Ranking</button>
-      <button id="tb-stk" onclick="tab('stk')"><i>📦</i>Stock</button>
       <button id="tb-jv" onclick="tab('jv')"><i>🎮</i>Juego<span class="bd hide" id="bd-jv">0</span></button>
+      <button id="tb-pen" onclick="tab('pen')"><i>⏳</i>Pendientes<span class="bd hide" id="bd-pen">0</span></button>
+      <button id="tb-ok" onclick="tab('ok')"><i>✅</i>Reclamados</button>
+      <button id="tb-stk" onclick="tab('stk')"><i>📦</i>Stock</button>
+      <button id="tb-rk" onclick="tab('rk')"><i>🏆</i>Ranking</button>
       <button id="tb-set" onclick="tab('set')"><i>⚙️</i>Ajustes</button>
     </nav>
-    <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('sal');hideAlert()">VER</button></div>
+    <div class="salert" id="salert"><span style="font-size:28px">👋</span><b id="salertt">Nuevo saludo</b><button onclick="tab('pen');hideAlert()">VER</button></div>
     <div class="sheet" id="sheet"><div id="sbody"></div></div>
     <div class="cfm" id="cfm"><div class="box" id="cfm-b"></div></div>
     <div class="cfm psh" id="psh"><div class="box" id="psh-b"></div></div>
@@ -2358,7 +2351,7 @@ function watchPr(){
   pOff=FB.watchAllPrizes(function(l){PRraw=l;lsLater("adm_pr",l);PR=allPR();renderLists();renderRk()});
 }
 function tab(n){
-  ["scan","pen","sal","ok","rk","stk","jv","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
+  ["scan","jv","pen","ok","stk","rk","set"].forEach(function(k){$("t-"+k).classList.toggle("hide",k!==n);$("tb-"+k).classList.toggle("on",k===n)});
   if(n!=="scan"){camStop();closeSheet()}if(n==="stk")renderStock();if(n==="jv"){jvWatch();jvRender()}window.scrollTo(0,0);
 }
 function hm(t){if(!t)return "";var d=new Date(t),h=d.toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"});return d.toDateString()===new Date().toDateString()?h:d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit"})+" "+h}
@@ -2428,7 +2421,7 @@ function renderLists(){
       sv=sView().filter(function(x){return x._s==="validated"}).sort(function(a,b){return (b.validatedAt||0)-(a.validatedAt||0)}),   // saludos validados con QR, esperando canje
       npen=pen.length+sv.length;
   $("tot").textContent=V.length+" jugaron";$("pc1").textContent="("+npen+")";
-  var bd=$("bd-pen");bd.textContent=npen;bd.classList.toggle("hide",!npen);
+  window.__npen=npen;paintBadge();
   $("chips").innerHTML='<div class="chip" style="border-color:#ffe60066"><b style="color:var(--yel)">'+npen+'</b><span class="small">pendientes</span></div><div class="chip" style="border-color:#3dff8a66"><b style="color:var(--grn)">'+ok.length+'</b><span class="small">reclamados</span></div><div class="chip" style="border-color:#b86bff66"><b style="color:var(--pur)">'+cj+'</b><span class="small">saludos canjeados</span></div>'+
     '<div style="flex-basis:100%"><div class="prog"><i style="width:'+(V.length?Math.round(ok.length/V.length*100):0)+'%"></i></div></div>';
   var q=nz($("p-q").value),f=pen.filter(function(x){return !q||nz(x.code+" "+x.name).indexOf(q)>=0});
@@ -2671,7 +2664,7 @@ function watchSa(){
     saInit=true;
   },function(e){$("sa-pen").textContent="No se pudo leer la base: "+(e&&e.message)});
   saOff=function(){ref.off("value",h)};
-  setInterval(function(){if(!$("t-sal").classList.contains("hide"))renderSa()},15000);
+  setInterval(function(){if(!$("t-pen").classList.contains("hide"))renderSa()},15000);
 }
 function camOf(x){return x.cam===2?2:1}
 /* El sonido de aviso de saludo de siempre: cuatro tonos. */
@@ -2685,13 +2678,15 @@ function saAlert(list){
   var n=list.length,cs=list.map(camOf).filter(function(c,i,a){return a.indexOf(c)===i});
   saTone();
   try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}
-  var onTab=!$("t-sal").classList.contains("hide");
+  var onTab=!$("t-pen").classList.contains("hide");
   if(!onTab){$("salertt").textContent=n>1?(cs.length===1?n+" saludos nuevos · cámara "+cs[0]:n+" saludos nuevos"):"Nuevo saludo · cámara "+cs[0]+": ¡enfocala!";$("salert").classList.add("on");clearTimeout(saHide);saHide=setTimeout(hideAlert,12000)}
   if(document.hidden){var k=0;clearInterval(saFlash);saFlash=setInterval(function(){document.title=(k++%2?saTitle:"👋 NUEVO SALUDO");if(!document.hidden){clearInterval(saFlash);document.title=saTitle}},900)}
 }
 function hideAlert(){$("salert").classList.remove("on")}
 /* Mientras haya saludos en espera, el mismo aviso suena cada 2 segundos sin parar, hasta que se acepten o rechacen todos. */
 var saPenN=0;
+/* Insignia de Pendientes: premios por entregar + saludos que esperan validación (parpadea si hay saludos esperando) */
+function paintBadge(){var b=$("bd-pen");if(!b)return;var n=(window.__npen||0)+(saPenN||0);b.textContent=n;b.classList.toggle("hide",!n);b.classList.toggle("blink",saPenN>0);var t=$("tb-pen");if(t)t.classList.toggle("pending",saPenN>0)}
 function saLoop(){if(saPenN>0&&Date.now()-saLast>=2000)saTone()}
 // el reloj corre en un Worker: las pestañas en segundo plano frenan los setInterval normales, los de un Worker no
 (function(){try{var w=new Worker(URL.createObjectURL(new Blob(["setInterval(function(){postMessage(1)},500)"],{type:"text/javascript"})));w.onmessage=saLoop}catch(e){setInterval(saLoop,1000)}})();
@@ -2702,8 +2697,7 @@ function renderSa(){
       his=SV.filter(function(x){return x._s==="redeemed"||x._s==="rejected"}).sort(function(a,b){return (b._t||0)-(a._t||0)});
   var red=SV.filter(function(x){return x._s==="redeemed"}).length;
   $("sc1").textContent="("+pen.length+")";
-  var bd=$("bd-sal");bd.textContent=pen.length;bd.classList.toggle("hide",!pen.length);
-  saPenN=pen.length;bd.classList.toggle("blink",pen.length>0);$("tb-sal").classList.toggle("pending",pen.length>0);
+  saPenN=pen.length;paintBadge();
   var c1=pen.filter(function(x){return camOf(x)===1}).length,sb=$("sabanner");
   sb.classList.toggle("hide",!pen.length);
   sb.innerHTML=pen.length?'<span class="sig"></span><b>'+pen.length+' EN ESPERA</b>':"";
