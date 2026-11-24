@@ -8,6 +8,7 @@
 | Ranking para OBS | https://ranking-streamingroom-t3.web.app | Fuente de navegador en OBS: ranking en vivo con fondo transparente. |
 | Juego en vivo (anotarse) | https://trivia-streamingroom-t3.web.app/juego.html | Página para que la gente se anote y reserve su lugar (Rojo vs Azul) con nombre y Gmail. |
 | Panel admin | https://admin-streamingroom-t3.web.app | Producción: preguntas, configuración, saludos, reiniciar el ranking y validar premios (con clave). |
+| Bienvenida a la Muestra | https://muestra-streamingroom-t3.web.app | Página de inicio de la muestra anual: Trivia, Ruleta (con mapa del puesto), Rojo vs Azul y el directo de YouTube (QR/cartel de bienvenida). |
 
 Las direcciones de GitHub Pages (`ale3317h.github.io/trivia-input/...`) siguen funcionando con los mismos datos, como respaldo.
 
