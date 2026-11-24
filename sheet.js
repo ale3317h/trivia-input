@@ -20,7 +20,11 @@
 
   function fkey(k) { return String(k).replace(/ñ/g, "n").replace(/\s+/g, "_"); }
   function safe(s) { return String(s).replace(/[.#$\[\]\/]/g, "_"); }
-  function cfgStk() { var c = window.FB && FB.cfg && FB.cfg(); return (c && c.stk) || {}; }
+  function cfgStk() {
+    var c = window.FB && FB.cfg && FB.cfg(), s = (c && c.stk) || {};
+    if (!Object.keys(s).length) { try { s = JSON.parse(localStorage.getItem("st3_stk") || "{}") || {}; } catch (e) { s = {}; } }   // sin internet: las entregas de la última vez que hubo conexión
+    return s;
+  }
   function emit() { listeners.forEach(function (f) { try { f(); } catch (e) {} }); }
 
   /* ---- lectura de la planilla (JSONP: no hace falta CORS ni cuenta) ---- */
@@ -86,7 +90,10 @@
     if (p && typeof p.n === "number") { base = p.n; manual = true; }
     else if (sheet[turno] && typeof sheet[turno][key] === "number") base = sheet[turno][key];
     if (base === null) return null;
-    var used = p && p.used ? Object.keys(p.used).length : 0;
+    // entregas ya subidas + las guardadas en este dispositivo que todavía no se subieron (sin internet)
+    var us = {}; if (p && p.used) Object.keys(p.used).forEach(function (c) { us[c] = 1; });
+    qLoad().forEach(function (x) { if (x.t === turno && fkey(x.k) === fkey(key)) { if (x.op === "c") us[safe(x.c)] = 1; else delete us[safe(x.c)]; } });
+    var used = Object.keys(us).length;
     return { stock: base, entregados: used, quedan: base - used, manual: manual };
   }
   function quedan(turno, key) { var i = info(turno, key); return i ? i.quedan : null; }
@@ -96,14 +103,51 @@
   /* ---- escritura en Firebase (entregas y ajustes) ---- */
   function dbx() { return (window.firebase && window.FB && FB.shared && FB.shared()) ? firebase.database() : null; }
   function ref(turno, key, extra) { var d = dbx(); return d ? d.ref("cfg/stk/" + turno + "/" + fkey(key) + (extra || "")) : null; }
-  function consume(turno, key, code) {
-    var r = ref(turno, key, "/used/" + safe(code)); if (!r) return Promise.reject(new Error("sin conexión"));
-    return r.set(firebase.database.ServerValue.TIMESTAMP);
+  /* Sin internet las entregas (y las que se deshacen) se guardan en este dispositivo y se suben solas al volver la conexión. */
+  var QKEY = "st3_q", connected = null, flushing = false, qRaw = null, qVal = [];
+  function qLoad() {
+    var s = "[]"; try { s = localStorage.getItem(QKEY) || "[]"; } catch (e) {}
+    if (s !== qRaw) { qRaw = s; try { qVal = JSON.parse(s) || []; } catch (e) { qVal = []; } }
+    return qVal;
   }
-  function release(turno, key, code) {
-    var r = ref(turno, key, "/used/" + safe(code)); if (!r) return Promise.reject(new Error("sin conexión"));
-    return r.remove();
+  function qSave(q) { try { localStorage.setItem(QKEY, JSON.stringify(q)); } catch (e) {} qRaw = null; }
+  function enLinea() { return connected === true && navigator.onLine !== false; }
+  function conTope(p, ms) {
+    return new Promise(function (res, rej) {
+      var t = setTimeout(function () { rej(new Error("sin respuesta")); }, ms);
+      p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+    });
   }
+  function enviar(op, turno, key, code, ts) {
+    var r = ref(turno, key, "/used/" + safe(code)); if (!r) return Promise.reject(new Error("sin conexión"));
+    return op === "c" ? r.set(ts || firebase.database.ServerValue.TIMESTAMP) : r.remove();
+  }
+  function encolar(op, turno, key, code) {
+    var q = qLoad().slice();
+    if (op === "r") {   // deshacer algo que todavía no se subió: se cancelan entre sí
+      var i = -1; q.forEach(function (x, n) { if (x.op === "c" && x.t === turno && fkey(x.k) === fkey(key) && x.c === code) i = n; });
+      if (i >= 0) { q.splice(i, 1); qSave(q); emit(); return; }
+    }
+    q.push({ op: op, t: turno, k: key, c: code, ts: Date.now() }); qSave(q); emit();
+  }
+  function flush() {
+    if (flushing || !enLinea() || !qLoad().length) return;
+    flushing = true;
+    (function next() {
+      var q = qLoad(); if (!q.length) { flushing = false; emit(); return; }
+      var x = q[0];
+      conTope(enviar(x.op, x.t, x.k, x.c, x.ts), 8000).then(function () {
+        qSave(qLoad().filter(function (y) { return !(y.op === x.op && y.t === x.t && y.k === x.k && y.c === x.c && y.ts === x.ts); }));
+        emit(); next();
+      }, function () { flushing = false; });
+    })();
+  }
+  function hacer(op, turno, key, code) {
+    if (!enLinea() || qLoad().length) { encolar(op, turno, key, code); flush(); return Promise.resolve({ queued: true }); }
+    return conTope(enviar(op, turno, key, code), 5000).catch(function () { encolar(op, turno, key, code); return { queued: true }; });
+  }
+  function consume(turno, key, code) { return hacer("c", turno, key, code); }
+  function release(turno, key, code) { return hacer("r", turno, key, code); }
   function setManual(turno, key, n) {
     var r = ref(turno, key, "/n"); if (!r) return Promise.reject(new Error("sin conexión"));
     return n === null ? r.remove() : r.set(Math.max(0, n | 0));
@@ -115,13 +159,21 @@
     load();
     timer = setInterval(function () { if (!document.hidden) load(); }, POLL_MS);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) load(); });
-    if (window.FB && FB.watchCfg) FB.watchCfg(function () { emit(); });
+    if (window.FB && FB.watchCfg) FB.watchCfg(function () {
+      try { var s = FB.cfg().stk; if (s && Object.keys(s).length) localStorage.setItem("st3_stk", JSON.stringify(s)); } catch (e) {}
+      emit();
+    });
+    var d0 = dbx();
+    if (d0) d0.ref(".info/connected").on("value", function (s) { connected = !!s.val(); if (connected) flush(); emit(); });
+    addEventListener("online", function () { flush(); emit(); });
+    addEventListener("offline", function () { emit(); });
+    setInterval(flush, 10000);
   }
 
   window.ST3Sheet = {
     PREMIOS: PREMIOS, RULETA: RULETA,
     start: start, load: load, info: info, quedan: quedan, agotado: agotado,
-    consume: consume, release: release, setManual: setManual,
+    consume: consume, release: release, pendientes: function () { return qLoad().length; }, enLinea: enLinea, setManual: setManual,
     onChange: function (f) { listeners.push(f); },
     ruleta: function () { return ruletaDef; },
     EXTRAS: function () { return extrasDef.slice(); },

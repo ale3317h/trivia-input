@@ -192,6 +192,11 @@ input[type=text]:focus{border-color:var(--gold);box-shadow:0 0 0 4px #f5c45122}
 .open{position:fixed;top:16px;right:16px;z-index:40;display:flex;align-items:center;gap:8px;border:1px solid #f5c45166;background:#0a0d1ae6;color:var(--gold-hi);
   border-radius:99px;padding:9px 16px;font:700 .84rem var(--sans);cursor:pointer;opacity:0;pointer-events:none;transition:opacity .35s,background .2s;box-shadow:0 8px 24px -10px #000}
 .open:hover{background:#151a33}
+.open{display:none!important}
+.stage>.hint{gap:18px;flex-wrap:wrap;color:var(--tx);background:#000a;border:1px solid #ffffff22;border-radius:12px;padding:9px 14px}
+.stage>.hint span{display:flex;align-items:center;gap:8px}
+.net{position:fixed;top:12px;right:14px;z-index:45;padding:8px 14px;border-radius:999px;font:700 .8rem var(--sans);background:#7f1d1d;color:#fff;border:1px solid #ffffff55;box-shadow:0 8px 24px -10px #000}
+.net.ok{background:#14532d}.net[hidden]{display:none}
 .app.nopanel ~ .open{opacity:1;pointer-events:auto}
 body.idle .app.nopanel ~ .open{opacity:0;pointer-events:none}
 body.idle .app.nopanel .hint{opacity:0}
@@ -384,7 +389,7 @@ body.zoom .stage>.hint{opacity:0}
         <path d="M14 13 L29 50" stroke="#ff9d91" stroke-width="3" stroke-linecap="round" opacity=".75"/>
       </svg>
     </div>
-    <div class="hint"><kbd>Espacio</kbd> o clic en el logo: genera el QR para girar</div>
+    <div class="hint" id="hint"><span><kbd>P</kbd> Panel de premios</span><span><kbd>Espacio</kbd> <b id="hintEsp">Generar QR para girar</b></span></div>
     <div class="win" id="win">
       <div class="wcard" id="wcard">
         <div class="lbl">★ PREMIO ★</div>
@@ -441,7 +446,7 @@ body.zoom .stage>.hint{opacity:0}
       <label class="opt"><input type="checkbox" id="optTabla"> Mostrar la tabla de premios (chance y stock)</label>
       <label class="opt"><input type="checkbox" id="optIco"> Mostrar íconos de tiza en la ruleta</label>
       <label class="opt"><input type="checkbox" id="optSnd"> Sonido <input type="range" id="optVol" min="0" max="1" step="0.05"></label>
-      <label class="opt"><input type="checkbox" id="optQr"> Pedir QR para girar (un giro por celular)</label>
+      <label class="opt"><input type="checkbox" id="optQr"> Pedir QR para girar (un giro por celular) <span class="small" style="opacity:.7">· desactivarlo pide la contraseña: sirve para jugar sin internet</span></label>
       <button class="btn q" id="qrReset" type="button">Reiniciar celulares (permitir girar otra vez)</button>
       <label class="opt" id="optRmL"><input type="checkbox" id="optRm"> Sacar de la ruleta el premio que sale</label>
       <button class="btn q" id="reset" type="button">Volver al ejemplo</button>
@@ -460,6 +465,17 @@ body.zoom .stage>.hint{opacity:0}
   </aside>
 </div>
 <button class="open" id="showPanel" type="button" title="Mostrar panel (P)"><span aria-hidden="true">←</span> Premios</button>
+<div class="net" id="net" hidden></div>
+<div class="simov" id="pwOv" role="dialog" aria-modal="true" aria-labelledby="pwT">
+  <div class="simbox">
+    <h3 id="pwT">Contraseña</h3>
+    <p id="pwD"></p>
+    <label for="pwIn">Contraseña</label>
+    <input type="password" id="pwIn" autocomplete="off">
+    <div class="err" id="pwErr"></div>
+    <div class="bts"><button class="btn" id="pwOk" type="button">Confirmar</button><button class="btn q" id="pwX" type="button">Cancelar</button></div>
+  </div>
+</div>
 <div class="simov qrov" id="qrOv" role="dialog" aria-modal="true" aria-label="QR para girar">
   <div class="simbox">
     <h3>¡Escaneá para girar!</h3>
@@ -476,7 +492,7 @@ body.zoom .stage>.hint{opacity:0}
 <script src="fb-config.js?v=18"></script>
 <script src="fb.js?v=18"></script>
 <script src="sheet-config.js?v=2"></script>
-<script src="sheet.js?v=4"></script>
+<script src="sheet.js?v=5"></script>
 <script src="qr-lib.js?v=1"></script>
 <script>
 /* ======================= DATOS ======================= */
@@ -1075,7 +1091,36 @@ function refreshSheet(){
   sigPrev=sig;renderPanel();draw(-1);
 }
 $('optEq').addEventListener('change',e=>{st.eq=e.target.checked;save();renderPanel();});
-$('optQr').addEventListener('change',e=>{st.qr=e.target.checked;save();if(!st.qr)cerrarQR(true);});
+/* Activar / desactivar el QR (modo sin internet): pide la contraseña */
+let pwWant=null;
+function hintPaint(){const e=$('hintEsp');if(e)e.textContent=st.qr===false?'Girar la ruleta':'Generar QR para girar';}
+function pwAbrir(want){
+  pwWant=want;
+  $('pwT').textContent=want?'Volver a pedir el QR':'Girar sin QR (modo sin internet)';
+  $('pwD').textContent=want?'Cada giro vuelve a necesitar que la persona escanee el QR.':'La ruleta va a girar con Espacio, sin QR y sin internet. Los premios que se vayan gastando se guardan en este dispositivo y se descuentan del stock cuando vuelva la conexión.';
+  $('pwErr').textContent='';$('pwIn').value='';$('pwOv').classList.add('show');setTimeout(()=>$('pwIn').focus(),30);
+}
+function pwCerrar(){$('pwOv').classList.remove('show');$('pwIn').value='';$('optQr').checked=st.qr!==false;}
+$('optQr').addEventListener('change',e=>{const want=e.target.checked;e.target.checked=st.qr!==false;pwAbrir(want);});
+$('pwX').addEventListener('click',pwCerrar);
+$('pwOv').addEventListener('click',e=>{if(e.target===$('pwOv'))pwCerrar();});
+$('pwOv').addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Escape')pwCerrar();else if(e.key==='Enter')$('pwOk').click();});
+$('pwOk').addEventListener('click',async()=>{
+  const err=$('pwErr'),h=await sha256($('pwIn').value);
+  if(h===null){err.textContent='Este navegador no puede comprobar la contraseña.';return;}
+  if(h!==SIM_HASH){err.textContent='Contraseña incorrecta.';$('pwIn').select();return;}
+  st.qr=pwWant;save();if(!st.qr)cerrarQR(true);
+  $('pwOv').classList.remove('show');$('pwIn').value='';$('optQr').checked=st.qr!==false;hintPaint();
+  aviso(st.qr?'Vuelve a pedirse el QR para girar.':'Modo sin QR activado: la ruleta gira con Espacio. Sin internet, los premios se guardan en este dispositivo.',true);
+});
+/* Estado de la conexión: sin internet, o descuentos esperando subirse */
+function netPaint(){
+  const n=ST3Sheet.pendientes?ST3Sheet.pendientes():0,on=ST3Sheet.enLinea?ST3Sheet.enLinea():true,b=$('net');if(!b)return;
+  if(!on){b.hidden=false;b.className='net';b.textContent='⚠ Sin internet'+(n?' · '+n+' premio'+(n>1?'s':'')+' guardado'+(n>1?'s':'')+' en este dispositivo':'');}
+  else if(n){b.hidden=false;b.className='net ok';b.textContent='↻ Subiendo '+n+' premio'+(n>1?'s':'')+' al stock…';}
+  else b.hidden=true;
+}
+ST3Sheet.onChange(netPaint);setInterval(netPaint,2000);addEventListener('online',netPaint);addEventListener('offline',netPaint);
 $('optTabla').addEventListener('change',e=>{st.tabla=e.target.checked;save();layout();});
 /* ---------- Simulador de tiradas (con contraseña; no toca el stock real) ---------- */
 const SIM_HASH='d92483016af5946ff366758ea8678df6dbaebf679513507ac77e9664b1bcf96b';
@@ -1182,7 +1227,7 @@ async function pedirGiro(){
   if(spinning)return;
   if(st.qr===false){spin();return;}
   const d=rtDb();
-  if(!d){aviso('Sin conexión: no se puede generar el QR. Desactivá "Pedir QR para girar" en el panel si querés girar sin QR.',false);return;}
+  if(!d||!(ST3Sheet.enLinea&&ST3Sheet.enLinea())){aviso('Sin internet: no se puede generar el QR. Abrí el panel (P) y desactivá "Pedir QR para girar" con la contraseña para jugar sin internet.',false);return;}
   if(qrTk)cerrarQR(true);                       // un QR nuevo anula el anterior
   hideWin();
   const tk=qrCode(10);
@@ -1229,8 +1274,9 @@ addEventListener('keyup',e=>{if(e.code==='Space'&&!escribiendo(e.target))e.preve
 
 /* ======================= INICIO ======================= */
 $('pLogo').src=document.querySelector('#hub img').src;   // el mismo logo del centro, sin duplicarlo en el archivo
+st.panel=false;   // el panel de premios arranca oculto: se abre con P
 $('app').classList.toggle('nopanel',!st.panel);
-renderPanel();
+renderPanel();hintPaint();netPaint();
 if(window.ResizeObserver)new ResizeObserver(layout).observe($('stage'));
 addEventListener('resize',layout);
 layout();draw(-1);despertar();
