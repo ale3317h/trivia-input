@@ -111,7 +111,7 @@ var FB = (function () {
 
   /* Quien tiene un premio con QR solo entra al ranking cuando un admin valida (reclama) ese QR en el stand.
      pend[uid] = true mientras ninguno de sus QR esté validado. Quien nunca generó un QR no se ve afectado. */
-  var pend = {};
+  var pend = {}, okc = {};
   function calcPend(s) {
     var tiene = {}, ok = {}, u;
     s.forEach(function (c) {
@@ -120,10 +120,11 @@ var FB = (function () {
       tiene[v.uid] = 1;
       if (v.claimed === true) ok[v.uid] = 1;
     });
-    pend = {};
+    okc = ok; pend = {};
     for (u in tiene) if (!ok[u]) pend[u] = true;
   }
   function loadPend(gen) { return db.ref("prizes/" + gen).once("value").then(calcPend); }
+  function isClaimed(u) { return !!okc[u || uid()]; }
   function isPending(u) { return !!pend[u || uid()]; }
 
   function fromSnap(s) {
@@ -188,6 +189,7 @@ var FB = (function () {
     watchScores: watchScores,
     saveScore: saveScore,
     isPending: isPending,
+    isClaimed: isClaimed,
     lsGet: lsGet,
     lsSet: lsSet
   };

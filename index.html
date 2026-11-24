@@ -683,7 +683,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
-<script src="fb.js?v=19"></script>
+<script src="fb.js?v=20"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -2094,7 +2094,7 @@ function renderStart(){
   $("rankpub").classList.toggle("hide",!rankVisible());$("home-rk").classList.toggle("hide",!rankVisible());
   var p=hasPlayed(),i=mineIdx();
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
-  if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(!test&&FB.isPending(FB.uid())?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
+  if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
   if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
   if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio Normal</b>: podés continuar para avanzar en el ranking.";
@@ -2154,15 +2154,17 @@ if(window.visualViewport)visualViewport.addEventListener("resize",scrollSoon);
 document.addEventListener("animationend",scrollSoon,true);
 try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catch(e){setInterval(scrollState,1000)}
 async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
+/* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
+function pdteMe(){return !test&&!!qrGet()&&!FB.isClaimed(FB.uid())}
 function merged(){
-  var l=cache.filter(function(x){return !isMe(x)});l.push({name:name,score:score,id:"cur"});
+  var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:score,id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
   return{l:l,p:l.findIndex(function(x){return x.id==="cur"})};
 }
 function live(){
   var m=merged(),s="";
   for(var i=0;i<3&&i<m.l.length;i++)s+="<div"+(m.l[i].id==="cur"?" class='yel'":"")+"><span>"+["🥇","🥈","🥉"][i]+" "+esc(m.l[i].name)+"</span><span>"+m.l[i].score+" pts</span></div>";
-  $("live").innerHTML=s+"<div class='you'><span>Vos: puesto #"+(m.p+1)+"</span><span>"+score+" pts</span></div>";
+  $("live").innerHTML=s+"<div class='you'><span>"+(m.p<0?"Tus puntos (su puesto se suma al validar tu QR)":"Vos: puesto #"+(m.p+1))+"</span><span>"+score+" pts</span></div>";
 }
 
 var howI=0;
@@ -2367,8 +2369,8 @@ function qrIssue(li,q){if(qrBlocked())return null;
   return r;
 }
 // Registra el premio en la base para que el productor lo vea en el admin (se reintenta si no había conexión).
-function qrSync(){var r=qrGet();if(!r||test||!FB.shared())return;
-  FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:pzName(r.li),score:r.score,q:r.q,ts:r.ts}).catch(function(){})}
+function qrSync(){var r=qrGet();if(!r||test||!FB.shared())return Promise.resolve();
+  return FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:pzName(r.li),score:r.score,q:r.q,ts:r.ts}).catch(function(){})}
 window.addEventListener("online",qrSync);
 function u8(s){try{return String.fromCharCode.apply(null,new TextEncoder().encode(s))}catch(e){return unescape(encodeURIComponent(s))}}
 function qrMat(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();return q}
@@ -2471,15 +2473,15 @@ async function end(win){
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
-  if(prize)qrIssue(li,win?cq:(cq+1));qrShow("end-qr");
+  if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
   show("s-end");countTo($("st-pts"),score,true);
   // terminó el modo experto: lo primero que se ve es la ventana para dejar el Gmail (aceptar o rechazar)
   (win||lvOf(cq)===3?mailGate():Promise.resolve("ya")).then(function(r){if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");if(good)confetti()});
   await saveScore(true);await refresh();
   var m=merged();
-  var pdte=!test&&FB.isPending(FB.uid());
-  $("st-pos").innerHTML=pdte?"Pendiente":(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
-  if(pdte){$("end-p").textContent="Tu posición todavía no es válida: entra al ranking cuando un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible());
+  var pdte=pdteMe();
+  $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
+  if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
   $("end-rk").classList.toggle("hide",!rankVisible());
 }
 var taps=0,tt=0;
