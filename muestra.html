@@ -3,14 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap"></noscript>
+<link rel="preload" href="fuente-marker.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fuente-exo2.woff2" as="font" type="font/woff2" crossorigin>
 <meta name="theme-color" content="#07030e">
 <title>Muestra Anual · Streaming Room T3</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
+/* Letras guardadas en el propio sitio (no dependen de Google Fonts, así se ven igual con bloqueadores o redes que filtran) */
+@font-face{font-family:"Exo 2";font-style:normal;font-weight:600 900;font-display:swap;src:url(fuente-exo2.woff2) format("woff2")}
+@font-face{font-family:"Exo 2";font-style:italic;font-weight:800 900;font-display:swap;src:url(fuente-exo2-italic.woff2) format("woff2")}
+@font-face{font-family:"Manrope";font-style:normal;font-weight:500 800;font-display:swap;src:url(fuente-manrope.woff2) format("woff2")}
+@font-face{font-family:"Permanent Marker";font-style:normal;font-weight:400;font-display:swap;src:url(fuente-marker.woff2) format("woff2")}
 /* Estética de la trivia (fondo violeta oscuro, Exo 2 + Manrope, neón) con los títulos a marcador del cartel Rojo vs Azul.
    Solo se animan opacity y transform, para que el celu no se trabe. */
 :root{
@@ -199,6 +203,13 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .mapa img{display:block;width:100%;height:auto}
 .nota{margin:10px 0 0;font-size:.82rem;color:var(--mut)}
 .cerrar2{display:block;width:100%;min-height:46px;margin-top:12px;border-radius:12px;border:1.5px solid #b86bffaa;background:#b86bff22;color:#fff;font:800 .85rem var(--disp);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.avcaja{max-width:380px;padding:26px 20px 20px;border-color:#ffe14dcc;box-shadow:0 0 34px -8px #ffe14d,0 24px 60px -20px #000}
+.avico{display:block;width:80px;height:auto;margin:0 auto;filter:drop-shadow(0 0 12px #ffb21f88)}
+.avt{margin-top:8px;font:900 1.05rem var(--disp);letter-spacing:.3em;padding-left:.3em;color:#fff6c4;text-shadow:0 0 10px #ffe14d99}
+.avd{margin:12px 0 18px;font:600 1.08rem/1.4 var(--sans);color:#f1ecfa}
+.avd b{color:#ffe14d;font-weight:800}
+.avbtn{display:block;width:100%;min-height:48px;border:0;border-radius:14px;background:#ffe14d;color:#1a1000;font:800 .95rem var(--disp);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 18px -3px #ffe14d}
+.aviso{z-index:60}
 .pie{margin-top:auto;padding-top:24px;text-align:center;font-size:.78rem;color:var(--mut);letter-spacing:.08em;animation:up .5s var(--ease) 1.5s both}
 
 @media (max-width:400px){.j2{--rw:190px}.rueda{right:-44px}.j2 .txt{max-width:56%}}
@@ -264,6 +275,15 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
     </a>
   </nav>
 
+  <div class="ov aviso" id="ovAviso" role="alertdialog" aria-modal="true" aria-labelledby="avT" aria-describedby="avD" hidden>
+    <div class="caja avcaja">
+      <img class="avico" src="icono-aviso.webp" alt="" width="80" height="67">
+      <div class="avt" id="avT">AVISO</div>
+      <p class="avd" id="avD">Esta página es <b>solo para quienes estén presencialmente</b> o asistan a la <b>Muestra Anual</b>.</p>
+      <button class="avbtn" type="button" id="avOk">Entendido</button>
+    </div>
+  </div>
+
   <div class="ov" id="ovRuleta" role="dialog" aria-modal="true" aria-labelledby="ovT" hidden>
     <div class="caja">
       <button class="cerrar" type="button" aria-label="Cerrar">×</button>
@@ -297,6 +317,14 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
   ov.addEventListener('click',function(e){if(e.target===ov)cerrar()});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)cerrar()});
   if(location.hash==='#ruleta')abrir();
+})();
+/* aviso que aparece siempre al entrar */
+(function(){
+  var av=document.getElementById('ovAviso'),ok=document.getElementById('avOk');
+  function cerrar(){av.hidden=true;av.classList.remove('on');document.body.style.overflow=''}
+  ok.addEventListener('click',cerrar);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!av.hidden)cerrar()});
+  av.hidden=false;av.classList.add('on');document.body.style.overflow='hidden';ok.focus({preventScroll:true});
 })();
 </script>
 </body>
