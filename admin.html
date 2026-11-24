@@ -1969,6 +1969,10 @@ function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;JV.est={};
   d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};JV.got=1;jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
 /* Juego jugado: descuenta 1 bolsita Normal (participar) y 1 Grande (ganar en vivo) del turno de ese horario.
    Códigos fijos por horario: marcar dos veces no descuenta dos veces; al reabrir se devuelven. */
+function jvDescontado(id){var f=((FB.cfg().stk||{})[jvTurnoDe(id)])||{};return !!(((f.Normal||{}).used||{})["jv-"+id+"-participar"]&&((f.Grande||{}).used||{})["jv-"+id+"-ganar"])}
+async function jvDescontar(id){var t=jvTurnoDe(id);
+  try{await ST3Sheet.consume(t,"Normal","jv-"+id+"-participar");await ST3Sheet.consume(t,"Grande","jv-"+id+"-ganar");toast("Stock descontado del "+stkNom(t)+": 1 Normal y 1 Grande");jvRender();renderStock()}
+  catch(e){alert("No se pudo descontar: "+((e&&e.message)||"sin conexión"))}}
 function jvTurnoDe(id){return id.charAt(0)==="t"?"tarde":"manana"}
 async function jvEst(id,val){
   var prev=(JV.est||{})[id],t=jvTurnoDe(id),c1="jv-"+id+"-participar",c2="jv-"+id+"-ganar";
@@ -1980,6 +1984,7 @@ async function jvEst(id,val){
       await ST3Sheet.release(t,"Normal",c1);await ST3Sheet.release(t,"Grande",c2);
     }
     await sdb().ref("cfg/jv/est/"+id).set(val||null);
+    if(val==="jug"){await new Promise(function(r){setTimeout(r,800)});var i1=ST3Sheet.info(t,"Normal"),i2=ST3Sheet.info(t,"Grande");alert("✅ Marcado como jugado.\n\nSe descontó del "+stkNom(t)+": 1 bolsita Normal y 1 Grande.\nQuedan: Normal "+(i1?i1.quedan:"—")+" · Grande "+(i2?i2.quedan:"—"))}
     toast(val==="jug"?"Marcado como jugado: se descontó 1 Normal y 1 Grande":val==="susp"?"Horario suspendido":val==="lleno"?"Horario marcado como lleno":prev==="jug"?"Horario reabierto: stock devuelto":"Horario reabierto");
     renderStock();
   }catch(e){alert("No se pudo: "+e.message)}
@@ -2089,7 +2094,7 @@ async function jvRender(){
         lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(p.v.n||"(sin nombre)")+'</b> · '+mail+'</span>'+
           '<button class="g" title="QR para que la persona vea su turno y pueda cancelar" onclick="jvQR('+args+')">QR</button>'+(JV.key&&!adm?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
           '<button class="p" onclick="jvQuitar('+args+')">Quitar</button>'+(adm?'':'<button class="r" onclick="jvBan('+args+')">Bloquear</button>')+'</div>'}
-      var es=(JV.est||{})[id],tag=es==="susp"?' <span class="small" style="color:#ffb347;font-weight:800">⛔ SUSPENDIDO</span>':es==="lleno"?' <span class="small" style="color:#c084fc;font-weight:800">🈵 LLENO (a mano)</span>':es==="jug"?' <span class="small" style="color:#4ade80;font-weight:800">✅ JUGADO</span>':'';
+      var es=(JV.est||{})[id],tag=es==="susp"?' <span class="small" style="color:#ffb347;font-weight:800">⛔ SUSPENDIDO</span>':es==="lleno"?' <span class="small" style="color:#c084fc;font-weight:800">🈵 LLENO (a mano)</span>':es==="jug"?' <span class="small" style="color:#4ade80;font-weight:800">✅ JUGADO</span>'+(jvDescontado(id)?' <span class="small" style="color:#9be8b4">· stock descontado (1 Normal + 1 Grande)</span>':' <span class="small" style="color:#ffb347;font-weight:800">⚠ stock sin descontar</span> <button class="p" style="margin:0;padding:4px 8px;font-size:11px" onclick="jvDescontar(\''+id+'\')">Descontar ahora</button>'):'';
       rows+='<div class="jvs"><div class="jh"><b>'+jvHora(id)+tag+'</b><span class="bt">'+
         '<button class="p" onclick="jvIr(\''+id+'\')">➕ Anotar</button>'+
         (es==="jug"?'':'<button class="p" onclick="jvEst(\''+id+'\',\'jug\')">✅ Jugado</button>')+
