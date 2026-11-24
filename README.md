@@ -6,7 +6,9 @@
 | Saludá a la cámara (cámara 1) | https://saluda-streamingroom-t3.web.app | Stand del saludo de la cámara 1 (QR del stand). |
 | Saludá a la cámara (cámara 2) | https://saluda-streamingroom-t3.web.app/?cam=2 | Mismo saludo, cámara 2 (QR del stand). El panel admin muestra a qué cámara corresponde cada saludo. |
 | Ranking para OBS | https://ranking-streamingroom-t3.web.app | Fuente de navegador en OBS: ranking en vivo con fondo transparente. |
-| Juego en vivo (anotarse) | https://trivia-streamingroom-t3.web.app/juego.html | Página para que la gente se anote y reserve su lugar (Rojo vs Azul) con nombre y Gmail. |
+| Juego en vivo (Rojo vs Azul) | https://trivia-streamingroom-t3.web.app/juego.html | Horarios con posición libre. La gente no se anota sola: se anota en el stand (el admin carga apodo y Gmail) y con el QR que le dan ve su turno y puede cancelar. |
+| Ruleta pizarrón (stand) | https://trivia-streamingroom-t3.web.app/ruleta-pizarron.html | La ruleta que se usa en el stand, conectada al stock. Espacio o clic en el logo genera un QR único que el celular escanea para girar (una vez por celular). |
+| Ruleta grande (OBS) | https://trivia-streamingroom-t3.web.app/ruleta-grande.html | Ruleta grande para la transmisión, también conectada al stock. |
 | Panel admin | https://admin-streamingroom-t3.web.app | Producción: preguntas, configuración, saludos, reiniciar el ranking y validar premios (con clave). |
 | Bienvenida a la Muestra | https://muestra-streamingroom-t3.web.app | Página de inicio de la muestra anual: Trivia, Ruleta (con mapa del puesto), Rojo vs Azul y el directo de YouTube (QR/cartel de bienvenida). |
 
