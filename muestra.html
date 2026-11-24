@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,700;0,800;0,900;1,800;1,900&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Permanent+Marker&display=swap"></noscript>
 <meta name="theme-color" content="#07030e">
 <title>Muestra Anual · Streaming Room T3</title>
 <link rel="icon" type="image/png" href="favicon.png">
@@ -21,9 +22,9 @@
   --ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%;background:var(--bg)}
+html{-webkit-text-size-adjust:100%;background:var(--bg);overflow-x:hidden;touch-action:pan-y;overscroll-behavior-x:none}
 html,body{margin:0;min-height:100%;color:var(--tx);font:1.0625rem/1.5 var(--sans)}
-body{min-height:100vh;overflow-x:hidden;background:transparent}
+body{min-height:100vh;overflow-x:hidden;background:transparent;touch-action:pan-y;overscroll-behavior-x:none;position:relative;width:100%}
 
 /* fondo: luces difuminadas, suaves */
 .fx{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;background:radial-gradient(75vmax 60vmax at 0% 0%,#7a2fe040,transparent 70%),radial-gradient(55vmax 50vmax at 100% 55%,#e0306f20,transparent 70%),radial-gradient(70vmax 55vmax at 10% 100%,#2a64e036,transparent 70%),var(--bg)}
@@ -40,7 +41,13 @@ body{min-height:100vh;overflow-x:hidden;background:transparent}
 @keyframes logoIn{from{opacity:0;transform:scale(.3) rotate(-14deg)}to{opacity:1;transform:none}}
 @keyframes tubeOn{from{opacity:0;transform:scaleX(.2)}to{opacity:1;transform:none}}
 @keyframes streak{0%{transform:translateX(-60%);opacity:0}20%,80%{opacity:1}100%{transform:translateX(160%);opacity:0}}
-@keyframes gira{to{transform:rotate(360deg)}}
+@keyframes tirada{
+  0%{transform:rotate(0deg);animation-timing-function:cubic-bezier(.1,.62,.13,1)}
+  24.2%{transform:rotate(1570deg);animation-timing-function:linear}
+  33.3%{transform:rotate(1570deg);animation-timing-function:cubic-bezier(.1,.62,.13,1)}
+  57.5%{transform:rotate(3105deg);animation-timing-function:linear}
+  66.7%{transform:rotate(3105deg);animation-timing-function:cubic-bezier(.1,.62,.13,1)}
+  90.8%,100%{transform:rotate(4680deg)}}
 @keyframes lat{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes onda{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.6);opacity:0}}
 @keyframes llena{0%,12%{transform:scaleX(1)}88%,100%{transform:scaleX(.08)}}
@@ -48,7 +55,7 @@ body{min-height:100vh;overflow-x:hidden;background:transparent}
 
 /* ----- Encabezado ----- */
 .rqh{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.rqh b{font:italic 900 clamp(1.1rem,5.4vw,1.5rem)/1.1 var(--disp);letter-spacing:.06em;background:linear-gradient(90deg,#3de8ff 0%,#6fb6ff 34%,#9a8cff 68%,#c77dff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:titleIn 1s var(--ease) both}
+.rqh b{white-space:nowrap;font:italic 900 clamp(.8rem,5.1vw,1.5rem)/1.1 var(--disp);letter-spacing:.05em;background:linear-gradient(90deg,#3de8ff 0%,#6fb6ff 34%,#9a8cff 68%,#c77dff 100%);-webkit-background-clip:text;background-clip:text;color:transparent;animation:titleIn 1s var(--ease) both}
 .rqh img{height:clamp(46px,7vh,60px);width:auto;filter:drop-shadow(0 0 8px #2b7bff88);animation:logoIn .9s var(--spring) .25s both}
 /* tubo de luz: la caja tiene alto para el brillo y se desvanece en las puntas (sin recuadro visible) */
 .tube{position:relative;height:20px;margin:4px 0 -6px;overflow:hidden;
@@ -72,7 +79,7 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 /* ----- Tarjetas ----- */
 .lista{display:flex;flex-direction:column;gap:14px}
 .jg{--c:var(--yel);position:relative;display:flex;align-items:center;min-height:138px;padding:18px 16px;border-radius:20px;
-  border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);background:#0c0718e6;
+  border:1.5px solid var(--c);border:1.5px solid color-mix(in srgb,var(--c) 75%,transparent);background:#0c0718e6;
   box-shadow:0 0 18px -6px var(--c),0 14px 30px -18px #000,inset 0 0 22px -16px var(--c);
   color:var(--tx);text-decoration:none;animation:slin .6s var(--ease) calc(.95s + var(--i)*.1s) both;transition:transform .15s var(--ease)}
 .jg:active{transform:scale(.98)}
@@ -85,17 +92,22 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .tt{font:400 clamp(1.9rem,9.4vw,2.5rem)/1 var(--marker);letter-spacing:.02em;-webkit-text-stroke:.05em #0b0614;paint-order:stroke fill}
 .ds{margin:0;font:600 .9rem/1.3 var(--sans);color:#ece6f7}
 .ds b{font-weight:800;color:#fff}
-.go{display:inline-flex;align-items:center;gap:8px;margin-top:6px;padding:8px 14px 8px 16px;border-radius:12px;background:var(--c);color:#12091f;font:800 .78rem var(--disp);letter-spacing:.1em;text-transform:uppercase;box-shadow:0 0 14px -3px var(--c)}
+.go{display:inline-flex;align-items:center;gap:8px;margin-top:6px;min-height:42px;padding:0 14px 0 16px;border-radius:12px;background:var(--c);color:#12091f;font:800 .78rem var(--disp);letter-spacing:.1em;text-transform:uppercase;box-shadow:0 0 14px -3px var(--c)}
 
 /* 1 · Trivia: tarjetita de pregunta como la del juego */
 .go::after{content:"";width:7px;height:7px;border:solid currentColor;border-width:2.4px 2.4px 0 0;transform:rotate(45deg);margin-left:-2px}
 .j1{--c:#ffe14d}
 .j1 .tt{color:#ffe14d;text-shadow:0 3px 0 #000a,0 0 10px #ffe14d99,0 0 26px #ffb21f55}
-.j1 .art{background:radial-gradient(70% 90% at 92% 50%,#ffe14d1f,transparent 70%)}
+.j1 .art{background:
+  linear-gradient(90deg,#0c0718 30%,#0c071800 62%),
+  linear-gradient(118deg,transparent 46%,#3dff8a26 46% 53%,transparent 53% 57%,#ffe14d26 57% 64%,transparent 64% 68%,#ff4d7d26 68% 75%,transparent 75%),
+  radial-gradient(40% 75% at 66% 0%,#3dff8a40,transparent 70%),
+  radial-gradient(40% 75% at 96% 50%,#ffe14d38,transparent 70%),
+  radial-gradient(40% 75% at 70% 105%,#ff4d7d40,transparent 70%)}
 .quiz{position:absolute;right:-14px;top:50%;width:136px;padding:10px 10px 12px;border-radius:14px;border:1.5px solid #ffe14dcc;background:#130b23;
   box-shadow:0 0 16px -4px #ffe14d99,inset 0 0 14px -10px #ffe14d;transform:translateY(-50%) rotate(-7deg)}
 .quiz .bar{display:block;height:5px;border-radius:9px;background:#ffffff14;overflow:hidden;margin-bottom:8px}
-.quiz .bar i{display:block;height:100%;background:#ffe14d;transform-origin:left;animation:llena 5s linear infinite}
+.quiz .bar i{display:block;height:100%;background:linear-gradient(90deg,#3dff8a,#ffe14d 50%,#ff4d7d);transform-origin:left;animation:llena 5s linear infinite}
 .quiz .q{display:block;height:6px;border-radius:9px;background:#ffffffd9;margin:0 0 5px;width:92%}
 .quiz .q+.q{width:58%;margin-bottom:9px}
 .quiz .op{position:relative;display:flex;align-items:center;gap:6px;height:19px;margin-top:5px;padding:0 6px;border-radius:7px;border:1px solid #ffffff22;background:#ffffff08}
@@ -105,11 +117,12 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .quiz .op.ok::after{content:"";position:absolute;inset:-1px;border-radius:7px;border:1px solid #3dff8a;background:#3dff8a26;box-shadow:0 0 10px #3dff8a88;opacity:0;animation:acierta 5s linear infinite}
 
 /* 2 · Ruleta: la ruleta del cartel, girando despacio */
-.j2{--c:#b86bff}
+.j2{--c:#b86bff;--rw:206px;min-height:186px}
+.j2 .txt{max-width:54%}
 .j2 .tt{color:#e2c8ff;text-shadow:0 3px 0 #000a,0 0 10px #b86bffcc,0 0 26px #b86bff66}
 .j2 .art{background:radial-gradient(60% 90% at 88% 50%,#b86bff2e,transparent 70%),linear-gradient(90deg,#0b0910a6 0%,#0b091059 55%,#0b091033 100%),url("pizarra-chica.webp") center/cover}
-.rueda{position:absolute;right:-30px;top:50%;width:168px;height:168px;margin-top:-84px}
-.rueda .cara{position:absolute;left:8%;top:8%;width:84%;height:84%;will-change:transform;backface-visibility:hidden;transform:translateZ(0);animation:gira 16s linear infinite}
+.rueda{position:absolute;right:-38px;top:50%;width:var(--rw);height:var(--rw);margin-top:calc(var(--rw)/-2)}
+.rueda .cara{position:absolute;left:8%;top:8%;width:84%;height:84%;will-change:transform;backface-visibility:hidden;transform:translateZ(0);animation:tirada 12s infinite}
 .rueda .aro{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px #b86bff66)}
 .rueda .aro .luz{fill:#ffe9a8}
 .rueda .hub{position:absolute;left:50%;top:50%;width:27%;height:27%;transform:translate(-50%,-50%);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#2e2e2e,#0e0e0e 75%);border:2px solid #e9e7e0;box-shadow:0 0 0 3px #111,0 4px 10px #000a}
@@ -127,23 +140,45 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .lock .a{color:#8ab4ff;text-shadow:0 4px 0 #000a,0 0 10px #2f7bffcc,0 0 26px #2f7bff88}
 .lock .r{color:#ff8a8a;text-shadow:0 4px 0 #000a,0 0 10px #ff3b3bcc,0 0 26px #ff3b3b88}
 .lock .v{flex:none;display:grid;place-items:center;width:clamp(30px,8vw,40px);height:clamp(30px,8vw,40px);border-radius:50%;border:3px solid var(--yel);font:400 clamp(.7rem,3vw,.95rem)/1 var(--marker);color:var(--yel);-webkit-text-stroke:0;text-shadow:none;background:#161616aa;box-shadow:0 0 12px #f6d27a88,inset 0 0 10px #f6d27a33}
-.pie3{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.pie3 .ds{font-size:.95rem}
+.lat{position:absolute;inset:-2px;z-index:3;border-radius:inherit;pointer-events:none;opacity:0;will-change:opacity}
+.lat.la{border:2px solid #6fa2ff;box-shadow:0 0 22px 2px #4d8dffcc,0 0 60px 6px #4d8dff66,inset 0 0 30px -6px #4d8dff99;animation:enciende 4s ease-in-out infinite}
+.lat.lr{border:2px solid #ff6b6b;box-shadow:0 0 22px 2px #ff4d4dcc,0 0 60px 6px #ff4d4d66,inset 0 0 30px -6px #ff4d4d99;animation:enciende 4s ease-in-out 2s infinite}
+@keyframes enciende{0%{opacity:0}25%{opacity:1}50%,100%{opacity:0}}
+.lock .a,.lock .r{position:relative}
+.lock .a::after,.lock .r::after{content:attr(data-t);position:absolute;left:0;top:0;opacity:0;pointer-events:none;will-change:opacity}
+.lock .a::after{color:#d6e6ff;text-shadow:0 0 8px #fff,0 0 18px #4d8dff,0 0 40px #4d8dff,0 0 70px #2f7bffaa;animation:enciende 4s ease-in-out infinite}
+.lock .r::after{color:#ffd6d6;text-shadow:0 0 8px #fff,0 0 18px #ff4d4d,0 0 40px #ff4d4d,0 0 70px #ff3b3baa;animation:enciende 4s ease-in-out 2s infinite}
+.pie3{position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px}
+.pie3 .ds{font-size:.95rem;flex:1 1 130px;min-width:0}
+.pie3 .go{flex:none}
 .pie3 .ds b{color:#ff8a8a;text-shadow:0 0 8px #ff3b3b88}
 .j3 .go{flex:none;margin:0;background:linear-gradient(90deg,var(--azul),var(--rojo));color:#fff;box-shadow:-5px 0 14px -5px var(--azul),5px 0 14px -5px var(--rojo)}
 
-/* 4 · Mirar en Directo: cuadros de streams anteriores, oscurecidos, y un botón de play */
-.j4{--c:#ff3b4e}
-.j4 .art{background:linear-gradient(90deg,#0b0910 0%,#0b0910f0 34%,#0b091066 70%,#0b091033 100%),url("bg-estudio.jpg") right center/auto 118% no-repeat,linear-gradient(#0b091099,#0b091099),url("pizarra-chica.webp") center/cover}
-.vivo{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:99px;background:#ff3b4e;color:#fff;font:800 .66rem var(--disp);letter-spacing:.14em}
+/* 4 · Mirá la Muestra en VIVO: mini vista del canal de YouTube (foto del canal, nombre y últimos programas) */
+.j4{--c:#ff3b4e;flex-direction:column;align-items:stretch;gap:12px}
+.j4 .art{background:radial-gradient(60% 80% at 88% 50%,#ff3b4e38,transparent 70%),radial-gradient(60% 50% at 0% 100%,#ff3b4e1f,transparent 70%),repeating-linear-gradient(0deg,#ffffff06 0 1px,transparent 1px 4px),linear-gradient(135deg,#1a0710,#0c0718 60%)}
+.ytbig{position:absolute;right:-22px;top:50%;width:190px;height:152px;margin-top:-76px;opacity:.32;filter:drop-shadow(0 0 10px #ff3b4e)}
+.ytbig .o1,.ytbig .o2{opacity:.2;animation:senal 1.8s ease-out infinite}
+.ytbig .o2{animation-delay:.3s}
+@keyframes senal{0%{opacity:.2}18%{opacity:1}55%,100%{opacity:.2}}
+.canal{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.av{position:relative;flex:none;width:44px;height:44px;border-radius:50%;padding:3px;background:#ff3b4e;box-shadow:0 0 12px -2px #ff3b4e}
+.av::before,.av::after{content:"";position:absolute;inset:-1px;border-radius:50%;border:2px solid #ff3b4e;opacity:0;pointer-events:none;will-change:transform,opacity;animation:aroVivo 2s ease-out infinite}
+.av::after{animation-delay:1s}
+@keyframes aroVivo{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.55);opacity:0}}
+.av>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:#0c0718}
+.av img{display:block;width:66%;height:auto}
+.cn{flex:1 1 auto;min-width:min(100%,max-content);max-width:100%;display:flex;flex-direction:column;line-height:1.2}
+.cn b{font:800 .86rem var(--disp);letter-spacing:.02em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cn small{display:flex;align-items:center;gap:5px;font:600 .72rem var(--sans);color:var(--mut)}
+.cn small svg{width:15px;height:11px;flex:none}
+.vivo{flex:none;display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;border-radius:99px;background:#ff3b4e;color:#fff;font:800 .64rem var(--disp);letter-spacing:.14em}
 .vivo i{width:7px;height:7px;border-radius:50%;background:#fff;animation:lat 1.3s ease-in-out infinite}
-.j4 .txt{max-width:66%}
-.j4 .tt{color:#fff;font-size:clamp(1.5rem,7.2vw,2rem);text-shadow:0 3px 0 #000a,0 0 10px #ff3b4e99,0 0 24px #ff3b4e55}
-.play{position:absolute;right:20px;top:50%;width:58px;height:58px;margin-top:-29px;border-radius:50%;display:grid;place-items:center;background:#ff3b4e;box-shadow:0 0 18px -2px #ff3b4eaa,0 6px 16px -6px #000}
-.play::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid #ff3b4e;animation:onda 2s ease-out infinite}
-.play svg{width:22px;height:22px;margin-left:3px;fill:#fff}
-
-.lock,.pie3,.play{z-index:2}
+.j4 .tt{position:relative;z-index:2;color:#fff;font-size:clamp(1.5rem,7.4vw,2rem);line-height:1.05;text-shadow:0 3px 0 #000a,0 0 10px #ff3b4e88,0 0 24px #ff3b4e44}
+.j4 .tt em{font-style:normal;color:#ff5a6a;text-shadow:0 3px 0 #000a,0 0 10px #ff3b4ecc,0 0 26px #ff3b4e88}
+.pie4{position:relative;z-index:2;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.pie4 .ds{font-size:.86rem;flex:1 1 130px;min-width:0}
+.j4 .go{flex:none;margin:0;color:#fff}
 .pin{display:inline-flex;align-items:center;gap:5px;font:700 .78rem/1.2 var(--sans);color:#e2c8ff}
 .pin svg{width:14px;height:14px;flex:none;fill:#b86bff;filter:drop-shadow(0 0 4px #b86bff)}
 /* ventana de la ruleta con el mapa */
@@ -163,13 +198,17 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 .mapa{display:block;border-radius:14px;overflow:hidden;border:1.5px solid #ffffff22}
 .mapa img{display:block;width:100%;height:auto}
 .nota{margin:10px 0 0;font-size:.82rem;color:var(--mut)}
+.cerrar2{display:block;width:100%;min-height:46px;margin-top:12px;border-radius:12px;border:1.5px solid #b86bffaa;background:#b86bff22;color:#fff;font:800 .85rem var(--disp);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
 .pie{margin-top:auto;padding-top:24px;text-align:center;font-size:.78rem;color:var(--mut);letter-spacing:.08em;animation:up .5s var(--ease) 1.5s both}
 
-@media (max-width:360px){.txt{max-width:62%}.rueda{width:146px;height:146px;margin-top:-73px;right:-34px}.quiz{width:132px;right:-24px}.play{right:14px}}
+@media (max-width:400px){.j2{--rw:190px}.rueda{right:-44px}.j2 .txt{max-width:56%}}
+@media (max-width:360px){.txt{max-width:62%}.quiz{width:132px;right:-24px}}
+@media (max-width:340px){.j2{--rw:52vw}.rueda{right:-34px}.j2 .txt{max-width:50%}.cn b{font-size:.76rem;letter-spacing:0}.cn small{font-size:.64rem}.canal{gap:8px}.av{width:38px;height:38px}.vivo{font-size:.56rem;padding:2px 8px 2px 6px;gap:4px;letter-spacing:.1em}.go{padding:0 12px;font-size:.72rem}}
+@media (max-width:300px){.vivo{display:none}.quiz{width:112px}.j1 .txt{max-width:56%}.tt{font-size:1.7rem}}
 @media (min-width:700px){html{font-size:19px}.wrap{max-width:620px}}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important}
-  .tube::after,.play::before{display:none}
+  .tube::after{display:none}
 }
 </style>
 </head>
@@ -211,15 +250,17 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
     </a>
 
     <a class="jg j3" style="--i:2" href="https://trivia-streamingroom-t3.web.app/juego.html">
+      <span class="lat la" aria-hidden="true"></span><span class="lat lr" aria-hidden="true"></span>
       <span class="art" aria-hidden="true"></span>
-      <span class="lock"><small>PARTICIPÁ EN</small><span class="vsr"><span class="a">AZUL</span><span class="v">VS</span><span class="r">ROJO</span></span></span>
+      <span class="lock"><small>PARTICIPÁ EN</small><span class="vsr"><span class="a" data-t="AZUL">AZUL</span><span class="v">VS</span><span class="r" data-t="ROJO">ROJO</span></span></span>
       <span class="pie3"><span class="ds">Un juego en <b>VIVO</b> por grandes recompensas</span><span class="go">Anotarme</span></span>
     </a>
 
     <a class="jg j4" style="--i:3" href="https://www.youtube.com/@StreamingRoomT3/live" target="_blank" rel="noopener">
-      <span class="art" aria-hidden="true"></span>
-      <span class="txt"><span class="vivo"><i></i>EN VIVO</span><span class="tt">Mirar en Directo</span><span class="ds">Seguí la muestra por YouTube</span></span>
-      <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 3.5v17l14-8.5z"/></svg></span>
+      <span class="art" aria-hidden="true"><svg class="ytbig" viewBox="0 0 200 160"><g fill="none" stroke="#ff3b4e" stroke-width="3" stroke-linecap="round"><path class="o1" d="M150 40a62 62 0 0 1 0 80"/><path class="o2" d="M168 22a88 88 0 0 1 0 116"/><path class="o1" d="M50 40a62 62 0 0 0 0 80"/><path class="o2" d="M32 22a88 88 0 0 0 0 116"/></g><rect x="62" y="50" width="76" height="60" rx="16" fill="#ff3b4e"/><path d="M92 66v28l24-14z" fill="#fff"/></svg></span>
+      <span class="canal"><span class="av"><span><img src="logo-st3.png" alt=""></span></span><span class="cn"><b>Streaming Room T3</b><small><svg viewBox="0 0 28 20" aria-hidden="true"><rect width="28" height="20" rx="5" fill="#ff0033"/><path d="M11 5.5v9l8-4.5z" fill="#fff"/></svg>@StreamingRoomT3</small></span><span class="vivo"><i></i>EN VIVO</span></span>
+      <span class="tt">Mirá la Muestra en <em>VIVO</em></span>
+      <span class="pie4"><span class="ds">Seguí la Muestra en Directo por YouTube</span><span class="go">Mirar en vivo</span></span>
     </a>
   </nav>
 
@@ -234,6 +275,7 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
       </ul>
       <a class="mapa" href="mapa-muestra.webp" target="_blank" rel="noopener"><img src="mapa-muestra.webp" alt="Mapa de la escuela: el puesto del Streaming Room T3 está a la izquierda, entrando, antes del Taller" loading="lazy"></a>
       <p class="nota">El <b>📍</b> marca dónde estamos · tocá el mapa para verlo en grande</p>
+      <button class="cerrar2" type="button">Cerrar</button>
     </div>
   </div>
 
@@ -241,10 +283,17 @@ h1 .cur::after{content:"_";animation:blink 1s steps(1) infinite}
 </main>
 <script>
 (function(){
-  var ov=document.getElementById('ovRuleta'),ab=document.getElementById('abrirRuleta'),x=ov.querySelector('.cerrar');
+  function no(e){e.preventDefault()}
+  ['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,no,{passive:false})});
+  document.addEventListener('touchmove',function(e){if(e.touches.length>1)e.preventDefault()},{passive:false});
+  var ult=0;document.addEventListener('touchend',function(e){var t=Date.now();if(t-ult<300&&!e.target.closest('a,button'))e.preventDefault();ult=t},{passive:false});
+  document.addEventListener('wheel',function(e){if(e.ctrlKey)e.preventDefault()},{passive:false});
+})();
+(function(){
+  var ov=document.getElementById('ovRuleta'),ab=document.getElementById('abrirRuleta'),x=ov.querySelector('.cerrar'),x2=ov.querySelector('.cerrar2');
   function abrir(e){if(e)e.preventDefault();ov.hidden=false;ov.classList.add('on');document.body.style.overflow='hidden';x.focus()}
-  function cerrar(){ov.hidden=true;ov.classList.remove('on');document.body.style.overflow='';ab.focus()}
-  ab.addEventListener('click',abrir);x.addEventListener('click',cerrar);
+  function cerrar(){ov.hidden=true;ov.classList.remove('on');document.body.style.overflow='';ab.focus({preventScroll:true})}
+  ab.addEventListener('click',abrir);x.addEventListener('click',cerrar);x2.addEventListener('click',cerrar);
   ov.addEventListener('click',function(e){if(e.target===ov)cerrar()});
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)cerrar()});
   if(location.hash==='#ruleta')abrir();
