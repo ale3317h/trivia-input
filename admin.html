@@ -1861,7 +1861,9 @@ function loadCfgUI(){
 }
 /* ---------- Stock en vivo: planilla de Google (stock) + Firebase (entregas) ---------- */
 function stkTurno(){return FB.cfg().turno||"manana"}
-function sheetPremio(x){return /^🏆 Puesto #/.test(x.prize||"")?"Especial":((x.li|0)>=3?"Normal":"Pequeño")}
+/* Qué bolsita del stock se descuenta al entregar un premio. Manda el nombre que quedó escrito en el premio (así un QR viejo descuenta lo que decía);
+   si no lo dice, se usa el nivel: difícil = Normal, ganar el juego = Grande. */
+function sheetPremio(x){var p=x.prize||"";if(/^🏆/.test(p))return "Especial";var m=p.match(/Premio (Pequeño|Normal|Grande|Especial)/);if(m)return m[1];var li=x.li|0;return li>=3?"Grande":(li===2?"Normal":"Pequeño")}
 /* Descuenta del turno activo al entregar; al revertir se devuelve (en el turno en que se descontó). */
 function stockUse(action,key,code){
   var p=action==="entregar"?ST3Sheet.consume(stkTurno(),key,code):Promise.all(["manana","tarde"].map(function(t){return ST3Sheet.release(t,key,code)}));
@@ -2388,13 +2390,13 @@ function openPerson(uid){
     }
   });
   var u=esc(uid);
-  if(!h)b+='<div class="small" style="margin:12px 0 4px">＋ SUMAR UN PREMIO A '+esc(p.name)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g" onclick="addPrize(\''+u+'\',\'peq\')">＋ Pequeño</button><button class="g" onclick="addPrize(\''+u+'\',\'nor\')">＋ Normal</button><button class="g" onclick="addPrize(\''+u+'\',\'esp\')">＋ Especial</button></div>';
+  if(!h)b+='<div class="small" style="margin:12px 0 4px">＋ SUMAR UN PREMIO A '+esc(p.name)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g" onclick="addPrize(\''+u+'\',\'nor\')">＋ Normal</button><button class="g" onclick="addPrize(\''+u+'\',\'gra\')">＋ Grande</button><button class="g" onclick="addPrize(\''+u+'\',\'esp\')">＋ Especial</button></div>';
   if(!h)b+='<button class="r" onclick="resetFromRank(\''+u+'\')" style="margin-top:12px">SACAR DEL RANKING Y DEJAR JUGAR</button>';
   b+='<button class="r" onclick="resetPerson(\''+u+'\')">REINICIAR PERSONA (todo)</button><button class="p" onclick="closePerson()">CERRAR</button>';
   $("psh-b").innerHTML=b;$("psh").className="cfm psh on";
 }
 /* Sumar un premio a mano (por si nos equivocamos o hay que compensar): es un premio más en prizes/<ronda>/<id>, igual que el QR del puesto. */
-var ADDPZ={peq:{li:2,t:"DIFÍCIL · Premio Pequeño",d:"2 caramelos + 1 logo plano"},nor:{li:3,t:"EXPERTO · Premio Normal",d:"1 caramelo + 1 sticker + 1 logo plano"},esp:{li:3,t:"🏆 Premio Especial",d:"el premio especial del top 3"}};
+var ADDPZ={nor:{li:2,t:"DIFÍCIL · Premio Normal",d:"1 caramelo + 1 sticker + 1 logo plano"},gra:{li:3,t:"EXPERTO · Premio Grande",d:"2 caramelos + 1 sticker + 1 logo 3D + 1 lapicera"},esp:{li:3,t:"🏆 Premio Especial",d:"el premio especial del top 3"}};
 async function addPrize(uid,k){
   var p=RK.filter(function(x){return x.uid===uid})[0],z=ADDPZ[k],d=sdb();if(!p||!z)return;
   if(!d){alert("Sin conexión con la base.");return}
