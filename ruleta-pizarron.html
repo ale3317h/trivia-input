@@ -300,6 +300,7 @@ body.zoom .stage>.hint{opacity:0}
 .hub img{width:76%;transform:translate(-4.5%,1%);filter:drop-shadow(0 2px 2px #000c)}
 
 /* simulador de tiradas */
+.qrov .simbox{text-align:center}.qrov .qrb{width:min(62vh,380px);aspect-ratio:1;margin:8px auto 10px;background:#fff;border-radius:14px;padding:8px;display:grid;place-items:center}.qrov .qrb svg{width:100%;height:100%;display:block}.qrov .qt{font:800 1.4rem var(--sans);color:var(--tx);margin:4px 0}.qrov .qs{color:var(--mut);font-size:.9rem;margin:2px 0 10px}
 .simov{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:#000b;padding:16px}
 .simov.show{display:grid}
 .simbox{width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#1e1e1e;border:3px solid #e9e7e0;border-radius:20px;
@@ -377,13 +378,13 @@ body.zoom .stage>.hint{opacity:0}
       <div class="rim"></div>
       <svg class="lights" id="lights" viewBox="0 0 100 100"></svg>
       <canvas id="wheel" width="800" height="800"></canvas>
-      <button class="hub" id="hub" type="button" title="Girar (Espacio)"><img alt="ST3 Room" src="logo-pizarron.webp"></button>
+      <button class="hub" id="hub" type="button" title="Mostrar el QR para girar (Espacio)"><img alt="ST3 Room" src="logo-pizarron.webp"></button>
       <svg class="pointer" id="pointer" viewBox="0 0 60 80">
         <path d="M7 8 L53 8 L30 64 Z" fill="#e23b2e" stroke="#111" stroke-width="4.5" stroke-linejoin="round" filter="url(#chalkR)"/>
         <path d="M14 13 L29 50" stroke="#ff9d91" stroke-width="3" stroke-linecap="round" opacity=".75"/>
       </svg>
     </div>
-    <div class="hint"><kbd>Espacio</kbd> o clic en el logo para girar</div>
+    <div class="hint"><kbd>Espacio</kbd> o clic en el logo: genera el QR para girar</div>
     <div class="win" id="win">
       <div class="wcard" id="wcard">
         <div class="lbl">★ PREMIO ★</div>
@@ -440,6 +441,8 @@ body.zoom .stage>.hint{opacity:0}
       <label class="opt"><input type="checkbox" id="optTabla"> Mostrar la tabla de premios (chance y stock)</label>
       <label class="opt"><input type="checkbox" id="optIco"> Mostrar íconos de tiza en la ruleta</label>
       <label class="opt"><input type="checkbox" id="optSnd"> Sonido <input type="range" id="optVol" min="0" max="1" step="0.05"></label>
+      <label class="opt"><input type="checkbox" id="optQr"> Pedir QR para girar (un giro por celular)</label>
+      <button class="btn q" id="qrReset" type="button">Reiniciar celulares (permitir girar otra vez)</button>
       <label class="opt" id="optRmL"><input type="checkbox" id="optRm"> Sacar de la ruleta el premio que sale</label>
       <button class="btn q" id="reset" type="button">Volver al ejemplo</button>
       <p class="note">Cada porción tiene la misma chance: cuantas más porciones de golosinas y stickers, más difícil sacar el cuaderno o el vaso. Los premios y porciones salen de la planilla de Google; el stock, del turno activo.</p>
@@ -448,7 +451,7 @@ body.zoom .stage>.hint{opacity:0}
     <section class="sec">
       <h2><em><i>05</i>Atajos</em></h2>
       <div class="keys">
-        <span><kbd>Espacio</kbd> Girar</span>
+        <span><kbd>Espacio</kbd> QR para girar</span>
         <span><kbd>P</kbd> Panel</span>
         <span><kbd>M</kbd> Mezclar</span>
         <span><kbd>Esc</kbd> Cerrar premio</span>
@@ -457,6 +460,15 @@ body.zoom .stage>.hint{opacity:0}
   </aside>
 </div>
 <button class="open" id="showPanel" type="button" title="Mostrar panel (P)"><span aria-hidden="true">←</span> Premios</button>
+<div class="simov qrov" id="qrOv" role="dialog" aria-modal="true" aria-label="QR para girar">
+  <div class="simbox">
+    <h3>¡Escaneá para girar!</h3>
+    <div class="qrb" id="qrB"></div>
+    <div class="qt" id="qrT">Esperando el escaneo…</div>
+    <div class="qs">Un QR por persona: sirve una sola vez y cada celular gira una sola vez. Vence en <b id="qrC">2:00</b>.</div>
+    <div class="bts"><button class="btn q" id="qrX" type="button">Cancelar (Esc)</button></div>
+  </div>
+</div>
 <canvas id="conf"></canvas>
 
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
@@ -465,6 +477,7 @@ body.zoom .stage>.hint{opacity:0}
 <script src="fb.js?v=18"></script>
 <script src="sheet-config.js?v=2"></script>
 <script src="sheet.js?v=4"></script>
+<script src="qr-lib.js?v=1"></script>
 <script>
 /* ======================= DATOS ======================= */
 const $=id=>document.getElementById(id);
@@ -973,7 +986,7 @@ function renderPanel(){
   });
   probs();strip();tabla();
   $('tIn').value=st.title;$('titulo').textContent=st.title||'Ruleta de premios';
-  $('optSnd').checked=st.sound;$('optVol').value=st.vol;$('optRm').checked=st.remove;$('optIco').checked=st.icons;$('optTabla').checked=st.tabla!==false;$('optEq').checked=st.eq!==false;
+  $('optSnd').checked=st.sound;$('optVol').value=st.vol;$('optRm').checked=st.remove;$('optIco').checked=st.icons;$('optTabla').checked=st.tabla!==false;$('optQr').checked=st.qr!==false;$('optEq').checked=st.eq!==false;
 }
 function probs(){
   const T=total();
@@ -1062,6 +1075,7 @@ function refreshSheet(){
   sigPrev=sig;renderPanel();draw(-1);
 }
 $('optEq').addEventListener('change',e=>{st.eq=e.target.checked;save();renderPanel();});
+$('optQr').addEventListener('change',e=>{st.qr=e.target.checked;save();if(!st.qr)cerrarQR(true);});
 $('optTabla').addEventListener('change',e=>{st.tabla=e.target.checked;save();layout();});
 /* ---------- Simulador de tiradas (con contraseña; no toca el stock real) ---------- */
 const SIM_HASH='d92483016af5946ff366758ea8678df6dbaebf679513507ac77e9664b1bcf96b';
@@ -1138,13 +1152,64 @@ function setPanel(on){
 }
 $('hidePanel').addEventListener('click',()=>setPanel(false));
 $('showPanel').addEventListener('click',()=>setPanel(true));
-$('hub').addEventListener('click',e=>{e.currentTarget.blur();spin();});
+$('hub').addEventListener('click',e=>{e.currentTarget.blur();pedirGiro();});
 $('win').addEventListener('click',hideWin);
 
 /* Con el panel oculto: el botón y las ayudas se esconden si el mouse queda quieto */
 let idleT=0;
 function despertar(){document.body.classList.remove('idle');clearTimeout(idleT);idleT=setTimeout(()=>document.body.classList.add('idle'),2500);}
 addEventListener('mousemove',despertar);addEventListener('mousedown',despertar);
+
+/* ======================= QR PARA GIRAR =======================
+   Espacio (o clic en el logo) genera un QR único. Quien lo escanea (girar.html) lo canjea y la ruleta gira sola, una vez.
+   cfg/rt/q/<código> = {t, s:'open'|'ok'|'exp'|'x'} · cfg/rt/d/<celular> = celulares que ya giraron. */
+const QR_VENCE=120000;
+let qrTk=null,qrRef=null,qrH=null,qrT=0,qrSrv=0;
+function rtDb(){try{return(window.firebase&&window.FB&&FB.shared())?firebase.database():null;}catch(e){return null;}}
+function qrCode(n){const a='abcdefghijkmnpqrstuvwxyz23456789';let s='';try{const r=new Uint32Array(n);crypto.getRandomValues(r);for(let i=0;i<n;i++)s+=a[r[i]%a.length];}catch(e){for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];}return s;}
+function qrBase(){return /^https?:/.test(location.protocol)?new URL('girar.html',location.href).href:'https://trivia-streamingroom-t3.web.app/girar.html';}
+function qrSvgHtml(t){const q=new QRC.Q(-1,QRC.L.M);q.addData(unescape(encodeURIComponent(t)));q.make();const n=q.getModuleCount(),m=2,s=n+2*m;let p='';
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(q.isDark(y,x))p+='M'+(x+m)+' '+(y+m)+'h1v1h-1z';
+  return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="QR para girar la ruleta"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>';}
+function cerrarQR(cancelar){
+  clearInterval(qrT);qrT=0;
+  if(qrRef&&qrH){qrRef.off('value',qrH);}
+  const tk=qrTk,d=rtDb();qrTk=null;qrRef=null;qrH=null;
+  $('qrOv').classList.remove('show');
+  if(cancelar&&tk&&d)d.ref('cfg/rt/q/'+tk).transaction(c=>c===null?c:((c.s==='open')?Object.assign(c,{s:'x'}):undefined)).catch(()=>{});
+}
+async function pedirGiro(){
+  if(spinning)return;
+  if(st.qr===false){spin();return;}
+  const d=rtDb();
+  if(!d){aviso('Sin conexión: no se puede generar el QR. Desactivá "Pedir QR para girar" en el panel si querés girar sin QR.',false);return;}
+  if(qrTk)cerrarQR(true);                       // un QR nuevo anula el anterior
+  hideWin();
+  const tk=qrCode(10);
+  try{qrSrv=(await d.ref('.info/serverTimeOffset').once('value')).val()||0;
+    await d.ref('cfg/rt/q/'+tk).set({t:firebase.database.ServerValue.TIMESTAMP,s:'open'});}
+  catch(e){aviso('No se pudo generar el QR: '+((e&&e.message)||'sin conexión'),false);return;}
+  qrTk=tk;
+  $('qrB').innerHTML=qrSvgHtml(qrBase()+'?t='+tk);
+  $('qrT').textContent='Esperando el escaneo…';
+  $('qrOv').classList.add('show');
+  const fin=Date.now()+QR_VENCE;
+  const tick=()=>{const r=Math.max(0,fin-Date.now());$('qrC').textContent=Math.floor(r/60000)+':'+('0'+Math.floor(r%60000/1000)).slice(-2);
+    if(!r&&qrTk===tk){cerrarQR(true);aviso('El QR venció. Apretá Espacio para generar otro.',false);}};
+  tick();qrT=setInterval(tick,500);
+  qrRef=d.ref('cfg/rt/q/'+tk);
+  qrH=qrRef.on('value',s=>{const v=s.val();if(qrTk!==tk||!v)return;
+    if(v.s==='ok'){                              // escaneado: se cierra el QR y gira
+      qrTk=null;qrRef.off('value',qrH);qrRef=null;qrH=null;clearInterval(qrT);qrT=0;
+      d.ref('cfg/rt/q/'+tk+'/s').set('used').catch(()=>{});
+      $('qrOv').classList.remove('show');spin();}});
+}
+$('qrX').addEventListener('click',()=>cerrarQR(true));
+$('qrReset').addEventListener('click',()=>{
+  const d=rtDb();if(!d){aviso('Sin conexión.',false);return;}
+  if(!confirm('¿Reiniciar los celulares? Todos los que ya giraron van a poder girar una vez más.'))return;
+  d.ref('cfg/rt/d').remove().then(()=>aviso('Listo: los celulares pueden volver a girar.',true),e=>aviso('No se pudo: '+((e&&e.message)||''),false));
+});
 
 /* ======================= TECLADO ======================= */
 function escribiendo(t){return t&&((t.tagName==='INPUT'&&t.type==='text')||t.tagName==='TEXTAREA'||t.isContentEditable);}
@@ -1153,10 +1218,10 @@ addEventListener('keydown',e=>{
   if(e.code==='Space'){
     if(escribiendo(t))return;
     e.preventDefault();if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
-    if(!e.repeat)spin();return;
+    if(!e.repeat)pedirGiro();return;
   }
   if(escribiendo(t)){if(e.key==='Escape'||e.key==='Enter')t.blur();return;}
-  if(e.key==='Escape')hideWin();
+  if(e.key==='Escape'){if($('qrOv').classList.contains('show'))cerrarQR(true);else hideWin();}
   else if(e.key==='p'||e.key==='P')setPanel(!st.panel);
   else if((e.key==='m'||e.key==='M')&&!spinning)cambio();
 });

@@ -72,6 +72,13 @@ details.tz summary::before{content:"▸ ";}details.tz[open] summary::before{cont
 .jvs .jh{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .jvs .jh b{font:800 16px system-ui,sans-serif}
 .jvs .jh .bt{display:flex;gap:6px}.jvs .jh button{margin:0;padding:6px 10px;font-size:12px;min-height:0}
+.jvf label{display:block;font:700 14px system-ui,sans-serif;margin:12px 0 4px;color:#fff}
+.jvf input,.jvf select{margin:0;font-size:17px;padding:12px 14px}
+.jvf select{width:100%;background:#0b0518;color:var(--tx);border:1px solid #4a2568;border-radius:10px}
+.jvq{display:flex;gap:10px}.jvq button{flex:1;margin:0;padding:14px 10px;font-size:16px;letter-spacing:.04em;opacity:.55;background:#121212;border:2px solid #ffffff30}
+.jvq button.a{border-color:#2f7bff;color:#9cc2ff}.jvq button.r{border-color:#ff3b3b;color:#ffa3a3}
+.jvq button.on{opacity:1}.jvq button.a.on{background:#17407f;color:#fff;box-shadow:0 0 14px #2f7bff88}.jvq button.r.on{background:#7f1d1d;color:#fff;box-shadow:0 0 14px #ff3b3b88}
+.jvgo{display:block;width:100%;margin:16px 0 0;padding:16px;font-size:18px}
 .jvp{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;border-top:1px dashed #ffffff14}
 .jvp .eq{font-weight:800;width:44px}.jvp .eq.r{color:#ff6b6b}.jvp .eq.a{color:#6ba1ff}
 .jvp .m{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -278,14 +285,18 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <details style="margin:6px 0 10px"><summary class="small" style="cursor:pointer"><b>Mensaje de los mails</b> (se usa en ✉️ y en Avisar)</summary>
         <textarea id="jv-tpl" rows="4" style="margin-top:8px" oninput="try{localStorage.setItem('jv_tpl',this.value)}catch(e){}"></textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {hora} y {equipo} se completan solos para cada persona.</p></details>
-      <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">➕ Anotar a alguien (desde el stand)</b>
-        <p class="small" style="margin:4px 0 8px">La gente ya no se anota sola en la página: pasa por el stand. Pedile el <b>nombre o apodo</b> (se ve en la página) y el <b>Gmail</b> (le avisamos 5 minutos antes). El Gmail se guarda cifrado.</p>
-        <div class="row" style="flex-wrap:wrap;gap:6px">
-          <input id="jv-an" type="text" maxlength="20" placeholder="Nombre o apodo" autocomplete="off" style="margin:0;flex:2 1 140px">
-          <input id="jv-am" type="email" inputmode="email" placeholder="Gmail (nombre@gmail.com)" autocomplete="off" style="margin:0;flex:2 1 180px">
-          <select id="jv-as" style="margin:0;flex:1 1 90px"></select>
-          <select id="jv-aq" style="margin:0;flex:1 1 90px"><option value="a">Azul</option><option value="r">Rojo</option></select>
-          <button class="p" onclick="jvAgregar()" style="margin:0">ANOTAR</button></div></div>
+      <div class="jvs jvf" style="margin:10px 0"><b style="font:800 17px system-ui,sans-serif">➕ Anotar a alguien</b>
+        <p class="small" style="margin:4px 0 10px">La gente se anota acá, en el stand. Completá los dos datos y tocá ANOTAR.</p>
+        <label for="jv-an">1 · Apodo o nombre <span class="small">(el que se ve en la página)</span></label>
+        <input id="jv-an" type="text" maxlength="20" placeholder="Ej: Juli" autocomplete="off">
+        <label for="jv-am">2 · Gmail <span class="small">(le avisamos 5 minutos antes)</span></label>
+        <input id="jv-am" type="email" inputmode="email" placeholder="nombre@gmail.com" autocomplete="off" autocapitalize="none" spellcheck="false">
+        <label for="jv-as">3 · Horario</label>
+        <select id="jv-as" onchange="jvForm()"></select>
+        <label>4 · Equipo</label>
+        <input id="jv-aq" type="hidden" value="a">
+        <div class="jvq"><button type="button" id="jv-qa" class="on a" onclick="jvEq('a');jvForm()">AZUL</button><button type="button" id="jv-qr" class="r" onclick="jvEq('r');jvForm()">ROJO</button></div>
+        <button class="p jvgo" type="button" onclick="jvAgregar()">✅ ANOTAR</button></div>
       <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">📅 Día del juego</b>
         <p class="small" style="margin:4px 0 8px">Con la fecha puesta, la página marca sola «YA PASÓ» cada horario cuando termina. Sin fecha no marca nada solo.</p>
         <div class="row" style="gap:6px"><input id="jv-fe" type="date" style="margin:0"><button class="p" onclick="jvFecha(1)" style="margin:0">GUARDAR</button><button class="g" onclick="jvFecha(0)" style="margin:0">QUITAR</button></div></div>
@@ -1931,7 +1942,7 @@ function jvWatch(){var d=sdb();if(!d||JV.on)return;JV.on=1;JV.est={};
   var sel=$("jv-as");if(sel&&!sel.options.length){JV_TURNOS.forEach(function(T){for(var m=T.ini;m<T.fin;m+=15){var id=T.id+("0"+Math.floor(m/60)).slice(-2)+("0"+m%60).slice(-2);sel.add(new Option((T.id==="m"?"Mañana ":"Tarde ")+jvHora(id),id))}})}
   d.ref("cfg/jv/est").on("value",function(x){JV.est=x.val()||{};jvRender()});
   d.ref("cfg/jv/fecha").on("value",function(x){var f=$("jv-fe");if(f&&document.activeElement!==f)f.value=x.val()||""});
-  d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
+  d.ref("cfg/jv/s").on("value",function(x){JV.s=x.val()||{};JV.got=1;jvRender()},function(e){$("jv-st").textContent="No se pueden leer las reservas: "+e.message})}
 /* Juego jugado: descuenta 1 bolsita Normal (participar) y 1 Grande (ganar en vivo) del turno de ese horario.
    Códigos fijos por horario: marcar dos veces no descuenta dos veces; al reabrir se devuelven. */
 function jvTurnoDe(id){return id.charAt(0)==="t"?"tarde":"manana"}
@@ -1953,7 +1964,21 @@ async function jvFecha(on){
   var v=$("jv-fe").value;if(on&&!v){toast("Elegí una fecha");return}
   try{await sdb().ref("cfg/jv/fecha").set(on?v:null);toast(on?"Día guardado: los horarios se marcan solos":"Sin fecha: no se marca nada solo");if(!on)$("jv-fe").value=""}catch(e){alert("No se pudo: "+e.message)}
 }
-function jvIr(id){var s=$("jv-as");if(s)s.value=id;var n=$("jv-an");if(n){n.scrollIntoView({block:"center"});n.focus()}}
+function jvCupo(id,q){var eq=((JV.s||{})[id]||{})[q]||{},n=0,t=Date.now(),k,v;for(k in eq){v=eq[k];if(v&&(v.st==="ok"||(v.st==="hold"&&v.exp>t)))n++}return n}
+function jvEq(q){$("jv-aq").value=q;$("jv-qa").classList.toggle("on",q==="a");$("jv-qr").classList.toggle("on",q==="r")}
+/* Formulario de anotar: muestra los cupos de cada horario, elige solo el primer horario con lugar y cambia de equipo si el elegido está completo */
+function jvForm(){
+  var sel=$("jv-as");if(!sel||!sel.options.length)return;
+  var est=JV.est||{},i,o,id,a,r,es,cerr;
+  for(i=0;i<sel.options.length;i++){o=sel.options[i];id=o.value;a=jvCupo(id,"a");r=jvCupo(id,"r");es=est[id];cerr=es==="jug"||es==="susp"||es==="lleno"||(a>=2&&r>=2);
+    o.textContent=(id.charAt(0)==="m"?"Mañana ":"Tarde ")+jvHora(id)+" · Azul "+a+"/2 · Rojo "+r+"/2"+(es==="jug"?" · ✅ jugado":es==="susp"?" · ⛔ suspendido":(cerr?" · lleno":""));o.dataset.cerr=cerr?"1":""}
+  if(JV.got&&!JV.pick){JV.pick=1;for(i=0;i<sel.options.length;i++)if(!sel.options[i].dataset.cerr){sel.selectedIndex=i;break}}
+  var cA=jvCupo(sel.value,"a"),cR=jvCupo(sel.value,"r"),q=$("jv-aq").value;
+  if(q==="a"&&cA>=2&&cR<2)q="r";else if(q==="r"&&cR>=2&&cA<2)q="a";
+  jvEq(q);$("jv-qa").textContent="AZUL · "+cA+"/2";$("jv-qr").textContent="ROJO · "+cR+"/2";
+}
+function jvIr(id){var s=$("jv-as");if(s){s.value=id;jvForm()}var n=$("jv-an");if(n){n.scrollIntoView({block:"center"});n.focus()}}
+document.addEventListener("keydown",function(e){if(e.key==="Enter"&&(e.target.id==="jv-an"||e.target.id==="jv-am")){e.preventDefault();if(e.target.id==="jv-an")$("jv-am").focus();else jvAgregar()}});
 var JV_PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
 function jvB64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
 async function jvCifrar(texto){
@@ -1992,11 +2017,11 @@ async function jvAgregar(){
       if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1,h:hs,e:e};return cur});
     if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(id));return}
     await d.ref("cfg/jv/h/"+hs).set("adm-"+seat);
-    $("jv-an").value="";$("jv-am").value="";toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
+    $("jv-an").value="";$("jv-am").value="";$("jv-an").focus();toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
   }catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvRender(){
-  var box=$("jv-box");if(!box)return;
+  var box=$("jv-box");if(!box)return;jvForm();
   var t=Date.now(),h="",tot=0,ids=Object.keys(JV.s).sort();
   for(var ti=0;ti<JV_TURNOS.length;ti++){var T=JV_TURNOS[ti],rows="";
     for(var m=T.ini;m<T.fin;m+=15){
