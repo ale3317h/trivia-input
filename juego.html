@@ -110,6 +110,7 @@ button.as:hover{transform:translateY(-2px)}
   font:400 clamp(1.15rem,5vw,1.6rem)/1 var(--marker);letter-spacing:.06em;padding:6px 8px;border:3px solid;border-radius:10px;background:#111e}
 .cartel.pasado{color:#c9c5ba;border-color:#c9c5ba}
 .cartel.susp{color:#ffb347;border-color:#ffb347;box-shadow:0 0 12px #ffb34777}
+.cartel.jug{color:#4ade80;border-color:#4ade80;box-shadow:0 0 12px #22c55e77}
 .cartel.lleno{color:#c084fc;border-color:#c084fc;box-shadow:0 0 12px #a855f777}
 .hr b{color:var(--amarillo);font-weight:600}
 .aviso{margin:8px 0 0;padding:8px 10px;border:2px solid #ffb347;border-radius:12px;color:#ffb347;font-weight:700;font-size:14px}
@@ -331,14 +332,15 @@ function ahoraAR(){var d=new Date(now()-3*3600*1000);return{min:d.getUTCHours()*
 // 'pasado' (ya terminó, si el admin puso el día) · 'susp' (suspendido a mano) · 'lleno' (a mano o porque están los 4 lugares) · '' (abierto)
 function estadoSlot(s){
   var a=ahoraAR();
+  if(EST[s.id]==="jug")return"jug";
   if(FECHA&&(a.dia>FECHA||(a.dia===FECHA&&a.min>=s.min+15)))return"pasado";
   var m=EST[s.id];if(m==="susp")return"susp";
   if(m==="lleno")return"lleno";
   var sl=S[s.id]||{};if(cuenta(sl.a)>=CAP&&cuenta(sl.r)>=CAP)return"lleno";
   return"";
 }
-function cerrado(s){var e=estadoSlot(s);return e==="pasado"||e==="susp"}
-var CARTEL={pasado:"YA PASÓ",susp:"SUSPENDIDO",lleno:"LLENO"};
+function cerrado(s){var e=estadoSlot(s);return e==="pasado"||e==="susp"||e==="jug"}
+var CARTEL={jug:"JUGADO ✓",pasado:"YA PASÓ",susp:"SUSPENDIDO",lleno:"LLENO"};
 function vivos(eq){var o={},k,v,t=now();for(k in (eq||{})){v=eq[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))o[k]=v}return o}
 function cuenta(eq){return Object.keys(vivos(eq)).length}
 
@@ -366,7 +368,7 @@ function equipo(s,q){
     else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" aria-label="Lugar guardado">'+PER+'</button>';}
   var yo=MIO&&MIO.s===s.id&&MIO.q===q;
   var txt=lib===2?'<b>2 lugares</b> libres':(lib===1?'<b>1 lugar</b> libre':(res?'Lugar guardado':'Completo'));
-  var es=estadoSlot(s),dis=!!MIO||lib===0||es==='pasado'||es==='susp'||es==='lleno';
+  var es=estadoSlot(s),dis=!!MIO||lib===0||es==='pasado'||es==='susp'||es==='lleno'||es==='jug';
   return '<div class="team '+q+(yo?' yo':'')+'"><div class="asientos">'+as+'</div><div class="lib">'+(yo?'<b>¡Acá estás vos!</b>':txt)+'</div>'+
     (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
 }
