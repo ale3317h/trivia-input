@@ -109,10 +109,28 @@ var FB = (function () {
     return db.ref("scores/" + gen).orderByChild("score").limitToLast(400);
   }
 
+  /* Quien tiene un premio con QR solo entra al ranking cuando un admin valida (reclama) ese QR en el stand.
+     pend[uid] = true mientras ninguno de sus QR esté validado. Quien nunca generó un QR no se ve afectado. */
+  var pend = {};
+  function calcPend(s) {
+    var tiene = {}, ok = {}, u;
+    s.forEach(function (c) {
+      var v = c.val() || {};
+      if (!v.uid) return;
+      tiene[v.uid] = 1;
+      if (v.claimed === true) ok[v.uid] = 1;
+    });
+    pend = {};
+    for (u in tiene) if (!ok[u]) pend[u] = true;
+  }
+  function loadPend(gen) { return db.ref("prizes/" + gen).once("value").then(calcPend); }
+  function isPending(u) { return !!pend[u || uid()]; }
+
   function fromSnap(s) {
     var out = [];
     s.forEach(function (c) {
       if (cfg.px && cfg.px[c.key]) return;   // reiniciada por producción
+      if (pend[c.key]) return;               // su QR todavía no fue validado en el stand
       var v = c.val() || {};
       out.push({ id: c.key, uid: c.key, name: v.name || "?", score: v.score | 0, lvl: v.lvl || 1, ts: v.ts || 0 });
     });
@@ -128,16 +146,17 @@ var FB = (function () {
   function listScores() {
     if (!db) return Promise.resolve(localScores());
     return readCfg().then(function (c) {
-      return query(c.gen).once("value").then(fromSnap);
+      return loadPend(c.gen).then(function () { return query(c.gen).once("value"); }).then(fromSnap);
     }).catch(function () { return localScores(); });
   }
 
   function watchScores(cb) {
     if (!db) { cb(localScores()); return; }
-    readCfg().then(function (c) {
+    readCfg().then(function (c) { return loadPend(c.gen).catch(function () {}).then(function () { return c; }); }).then(function (c) {
       var last = null;
       query(c.gen).on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
       db.ref("cfg/px").on("value", function (s) { cfg.px = s.val() || {}; if (last) cb(fromSnap(last)); });
+      db.ref("prizes/" + c.gen).on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
     });
   }
 
@@ -168,6 +187,7 @@ var FB = (function () {
     listScores: listScores,
     watchScores: watchScores,
     saveScore: saveScore,
+    isPending: isPending,
     lsGet: lsGet,
     lsSet: lsSet
   };

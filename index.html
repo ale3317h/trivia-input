@@ -683,7 +683,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
-<script src="fb.js?v=18"></script>
+<script src="fb.js?v=19"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=4"></script>
 <script>
@@ -2094,7 +2094,7 @@ function renderStart(){
   $("rankpub").classList.toggle("hide",!rankVisible());$("home-rk").classList.toggle("hide",!rankVisible());
   var p=hasPlayed(),i=mineIdx();
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
-  if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.";
+  if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(!test&&FB.isPending(FB.uid())?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
   if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
   if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio Normal</b>: podés continuar para avanzar en el ranking.";
@@ -2477,7 +2477,9 @@ async function end(win){
   (win||lvOf(cq)===3?mailGate():Promise.resolve("ya")).then(function(r){if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");if(good)confetti()});
   await saveScore(true);await refresh();
   var m=merged();
-  $("st-pos").innerHTML=rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–";$("st-pc").classList.toggle("hide",!rankVisible());
+  var pdte=!test&&FB.isPending(FB.uid());
+  $("st-pos").innerHTML=pdte?"Pendiente":(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
+  if(pdte){$("end-p").textContent="Tu posición todavía no es válida: entra al ranking cuando un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible());
   $("end-rk").classList.toggle("hide",!rankVisible());
 }
 var taps=0,tt=0;

@@ -278,10 +278,11 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <details style="margin:6px 0 10px"><summary class="small" style="cursor:pointer"><b>Mensaje de los mails</b> (se usa en ✉️ y en Avisar)</summary>
         <textarea id="jv-tpl" rows="4" style="margin-top:8px" oninput="try{localStorage.setItem('jv_tpl',this.value)}catch(e){}"></textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {hora} y {equipo} se completan solos para cada persona.</p></details>
-      <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">➕ Anotar a alguien en el momento</b>
-        <p class="small" style="margin:4px 0 8px">Para quien no tiene celu o internet: queda anotado sin Gmail y se ve en la página con su nombre.</p>
+      <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">➕ Anotar a alguien (desde el stand)</b>
+        <p class="small" style="margin:4px 0 8px">La gente ya no se anota sola en la página: pasa por el stand. Pedile el <b>nombre o apodo</b> (se ve en la página) y el <b>Gmail</b> (le avisamos 5 minutos antes). El Gmail se guarda cifrado.</p>
         <div class="row" style="flex-wrap:wrap;gap:6px">
           <input id="jv-an" type="text" maxlength="20" placeholder="Nombre o apodo" autocomplete="off" style="margin:0;flex:2 1 140px">
+          <input id="jv-am" type="email" inputmode="email" placeholder="Gmail (nombre@gmail.com)" autocomplete="off" style="margin:0;flex:2 1 180px">
           <select id="jv-as" style="margin:0;flex:1 1 90px"></select>
           <select id="jv-aq" style="margin:0;flex:1 1 90px"><option value="a">Azul</option><option value="r">Rojo</option></select>
           <button class="p" onclick="jvAgregar()" style="margin:0">ANOTAR</button></div></div>
@@ -1953,16 +1954,45 @@ async function jvFecha(on){
   try{await sdb().ref("cfg/jv/fecha").set(on?v:null);toast(on?"Día guardado: los horarios se marcan solos":"Sin fecha: no se marca nada solo");if(!on)$("jv-fe").value=""}catch(e){alert("No se pudo: "+e.message)}
 }
 function jvIr(id){var s=$("jv-as");if(s)s.value=id;var n=$("jv-an");if(n){n.scrollIntoView({block:"center"});n.focus()}}
+var JV_PUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
+function jvB64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
+async function jvCifrar(texto){
+  var pub=await crypto.subtle.importKey("jwk",JV_PUB,{name:"ECDH",namedCurve:"P-256"},false,[]);
+  var eph=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]);
+  var k=await crypto.subtle.deriveKey({name:"ECDH",public:pub},eph.privateKey,{name:"AES-GCM",length:256},false,["encrypt"]);
+  var iv=crypto.getRandomValues(new Uint8Array(12));
+  var c=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(texto));
+  var j=await crypto.subtle.exportKey("jwk",eph.publicKey);
+  return{x:j.x,y:j.y,i:jvB64(iv),c:jvB64(c)};
+}
+async function jvHash(m){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("jv|"+m));return Array.from(new Uint8Array(b)).slice(0,12).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+function jvGmail(raw){
+  var v=String(raw||"").trim().toLowerCase(),m=v.match(/^([^@\s]+)@([^@\s]+)$/);
+  if(!m)return{ok:false,msg:"El Gmail no parece un mail (ejemplo: nombre@gmail.com)"};
+  var u=m[1],d=m[2];if(d==="googlemail.com")d="gmail.com";
+  if(d!=="gmail.com")return{ok:false,msg:"Tiene que ser un Gmail (termina en @gmail.com)"};
+  var base=u.split("+")[0],letras=base.replace(/\./g,"");
+  if(!/^[a-z0-9.]+$/.test(base)||letras.length<6||letras.length>30||base.charAt(0)==="."||base.slice(-1)==="."||base.indexOf("..")>-1)
+    return{ok:false,msg:"Ese Gmail no existe: tiene entre 6 y 30 letras, números o puntos"};
+  return{ok:true,mail:letras+"@gmail.com"};
+}
 async function jvAgregar(){
   var nom=$("jv-an").value.replace(/\s+/g," ").trim(),id=$("jv-as").value,q=$("jv-aq").value;
   if(nom.length<2){toast("Escribí el nombre");return}
-  var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now();
+  if(nom.length>20){toast("El nombre puede tener hasta 20 letras");return}
+  var g=jvGmail($("jv-am").value);if(!g.ok){toast(g.msg);return}
+  var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now(),d=sdb();
   try{
-    var res=await sdb().ref("cfg/jv/s/"+id+"/"+q).transaction(function(cur){
+    var hs=await jvHash(g.mail);
+    if((await d.ref("cfg/jv/ban/"+hs).once("value")).val()){toast("Ese Gmail está bloqueado");return}
+    if((await d.ref("cfg/jv/h/"+hs).once("value")).val()){toast("Ese Gmail ya tiene un lugar anotado");return}
+    var e=await jvCifrar(g.mail);
+    var res=await d.ref("cfg/jv/s/"+id+"/"+q).transaction(function(cur){
       cur=cur||{};var n=0,k,v;for(k in cur){v=cur[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))n++;else delete cur[k]}
-      if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1};return cur});
+      if(n>=2)return;cur[seat]={st:"ok",n:nom,t:t,adm:1,h:hs,e:e};return cur});
     if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(id));return}
-    $("jv-an").value="";toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
+    await d.ref("cfg/jv/h/"+hs).set("adm-"+seat);
+    $("jv-an").value="";$("jv-am").value="";toast(nom+" anotado/a a las "+jvHora(id)+" en "+(q==="r"?"Rojo":"Azul"));
   }catch(e){alert("No se pudo: "+e.message)}
 }
 async function jvRender(){
@@ -1977,7 +2007,7 @@ async function jvRender(){
       ps.sort(function(a,b){return (a.q===b.q?0:(a.q==="a"?-1:1))||((a.v.t||0)-(b.v.t||0))});
       for(var i=0;i<ps.length;i++){var p=ps[i],args="\'"+id+"\',\'"+p.q+"\',\'"+p.k+"\'";
         if(p.hold){lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m">⏳ Guardado para un invitado hasta '+new Date(p.v.exp).toTimeString().slice(0,5)+'</span><button class="p" onclick="jvQuitar('+args+')">Quitar</button></div>';continue}
-        var adm=!!p.v.adm,mail=adm?"anotado en el momento":(JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado");
+        var adm=!!p.v.adm&&!p.v.e,mail=adm?"anotado en el momento (sin Gmail)":(JV.key?esc(await jvMail(p.v.e)||""):"🔒 cifrado");
         lines+='<div class="jvp"><span class="eq '+p.q+'">'+(p.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(p.v.n||"(sin nombre)")+'</b> · '+mail+'</span>'+
           (JV.key&&!adm?'<button class="g" title="Mail personalizado" onclick="jvMailUno('+args+')">✉️</button>':'')+
           '<button class="p" onclick="jvQuitar('+args+')">Quitar</button>'+(adm?'':'<button class="r" onclick="jvBan('+args+')">Bloquear</button>')+'</div>'}
