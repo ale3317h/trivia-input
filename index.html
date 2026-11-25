@@ -633,7 +633,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="endh" id="end-c"><div class="big" id="end-t"></div><p id="end-pz"></p><div class="hide" id="end-badge"></div></div>
 <div class="card y c qrc hide" id="end-qr"></div>
 <div class="card" id="end-d"><div class="stats"><div class="st" style="--c:#ffe14d"><small>PUNTOS</small><b id="st-pts">0</b></div><div class="st" style="--c:#b86bff"><small>PREGUNTA</small><b id="st-q">0</b></div><div class="st" id="st-pc" style="--c:#3dff8a"><small>POSICIÓN</small><b id="st-pos">–</b></div></div>
-<p class="hide" id="end-p"></p></div>
+<p class="hide" id="end-p"></p><div id="rk-cut2" class="c hide" style="margin:10px 0"></div></div>
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
 <button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button>
@@ -2090,6 +2090,7 @@ function rkCut(){
   if(i.cerrado){e.className="c";e.innerHTML='<span style="'+pill+'background:#ff4d6d22;border:1.5px solid #ff4d6d;color:#ff8fa3">🔒 RANKING CERRADO</span><div class="mut" style="font-size:12px;margin-top:5px">Podés seguir jugando, pero ya no suma puntos</div>';}
   else if(i.seg==null){e.className="c";e.innerHTML='<span style="'+pill+'background:#3dff8a22;border:1.5px solid #3dff8a;color:#3dff8a">🟢 RANKING ABIERTO</span>';}
   else{e.className="c";e.innerHTML='<span style="'+pill+'background:#ffe14d1f;border:1.5px solid #ffe14d;color:#ffe14d">⏰ El ranking cierra en <b class="rk-cd"></b></span><div class="mut" style="font-size:12px;margin-top:5px">Después podés seguir jugando, pero no suma puntos</div>';}
+  var e2=$("rk-cut2");if(e2){e2.className="c";e2.innerHTML=e.innerHTML}
   cdTick();
   var q=$("s-name");if(q&&q.classList.contains("hide"))e.classList.add("hide");
 }
@@ -2104,10 +2105,7 @@ function cdTxt(){
 function cdTick(){
   var t=null;try{t=cdTxt()}catch(e){}
   document.querySelectorAll(".rk-cd").forEach(function(e){e.textContent=t||""});
-  var b=$("rk-bar");if(!b||test)return;
-  var i0=FB.rankInfo(ls("tj")||turnoNow());if(i0.seg==null&&!i0.cerrado){b.classList.add("hide")}
-  else if(t){b.innerHTML="⏰ El ranking se cierra en <b>"+t+"</b>";b.classList.remove("hide")}
-  else{var i=FB.rankInfo(ls("tj")||turnoNow());b.innerHTML="🔒 Ranking cerrado";b.classList.remove("hide")}
+  var b=$("rk-bar");if(b)b.classList.add("hide");var i0=FB.rankInfo(ls("tj")||turnoNow());
   if((!t&&$("rk-cut")&&/cierra en/.test($("rk-cut").textContent))||(!window.__ri||window.__ri!==i0.modo+i0.cerrado)){window.__ri=i0.modo+i0.cerrado;rkCut()}
 }
 setInterval(function(){try{cdTick()}catch(e){}},1000);
