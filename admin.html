@@ -2606,19 +2606,40 @@ function mailStatus(){
 }
 function fillTpl(t,m,link){return t.replace(/\{nombre\}/g,m.name).replace(/\{puesto\}/g,m.pos).replace(/\{link\}/g,link)}
 /* QR del premio como imagen PNG (mismo contenido que muestra premio.html): se descarga y se copia al portapapeles para adjuntarlo o pegarlo en el mail */
-function qrPremioBlob(name,pos,code){
+async function qrPremioBlob(name,pos,code){
+  /* misma pantalla que premio.html: tarjeta oscura, trofeo, PUESTO #N en amarillo grande, QR en caja blanca y el código */
+  try{await Promise.all(['900 120px "Exo 2"','700 30px "Manrope"','700 44px "JetBrains Mono"'].map(function(f){return document.fonts.load(f)}))}catch(e){}
   var txt="ST3 ROOM · RANKING\nJugador: "+name+"\nPremio: Puesto #"+pos+" del ranking\nCódigo: "+code;
   var u8;try{u8=String.fromCharCode.apply(null,new TextEncoder().encode(txt))}catch(e){u8=unescape(encodeURIComponent(txt))}
   var q=new QRC.Q(-1,QRC.L.M);q.addData(u8);q.make();
-  var n=q.getModuleCount(),m=4,u=Math.floor(560/(n+2*m)),S=u*(n+2*m),W=720,H=S+330,x0=(W-S)/2,y0=150,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
-  c.width=W;c.height=H;g.fillStyle="#07030e";g.fillRect(0,0,W,H);g.textAlign="center";
-  g.fillStyle="#ffe14d";g.font="700 38px monospace";g.fillText("ST3 ROOM · TRIVIA",W/2,58);
-  g.fillStyle="#fff";g.font="800 34px sans-serif";g.fillText(String(name).slice(0,26),W/2,100);
-  g.fillStyle="#3dff8a";g.font="700 26px sans-serif";g.fillText("PUESTO #"+pos+" DEL RANKING",W/2,134);
-  g.fillStyle="#fff";g.fillRect(x0-14,y0-14,S+28,S+28);g.fillStyle="#000";
-  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))g.fillRect(x0+(x+m)*u,y0+(y+m)*u,u,u);
-  g.fillStyle="#ffe14d";g.font="700 30px monospace";g.fillText(code,W/2,y0+S+58);
-  g.fillStyle="#cfc7e6";g.font="600 22px sans-serif";g.fillText("Mostrá este QR en el stand para retirar tu premio",W/2,y0+S+98);
+  var n=q.getModuleCount(),m=4,u=Math.floor(440/(n+2*m)),S=u*(n+2*m),pad=16,BX=S+2*pad,W=720,H=1360,cx=W/2,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
+  c.width=W;c.height=H;
+  var DISP='"Exo 2","Manrope",system-ui,sans-serif',SANS='"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif',MONO='"JetBrains Mono",ui-monospace,"Courier New",monospace';
+  function rr(x0,y0,w,h2,r){g.beginPath();g.moveTo(x0+r,y0);g.arcTo(x0+w,y0,x0+w,y0+h2,r);g.arcTo(x0+w,y0+h2,x0,y0+h2,r);g.arcTo(x0,y0+h2,x0,y0,r);g.arcTo(x0,y0,x0+w,y0,r);g.closePath()}
+  // fondo con los resplandores violeta y magenta de la página
+  g.fillStyle="#07030e";g.fillRect(0,0,W,H);
+  var g1=g.createRadialGradient(0,0,0,0,0,620);g1.addColorStop(0,"#5b1a8a66");g1.addColorStop(1,"#5b1a8a00");g.fillStyle=g1;g.fillRect(0,0,W,H);
+  var g2=g.createRadialGradient(W,H,0,W,H,560);g2.addColorStop(0,"#8a1a4a55");g2.addColorStop(1,"#8a1a4a00");g.fillStyle=g2;g.fillRect(0,0,W,H);
+  // tarjeta
+  var CX=36,CY=36,CW=W-72,CH=H-72;
+  g.save();g.shadowColor="#ffe14dbb";g.shadowBlur=46;rr(CX,CY,CW,CH,44);g.fillStyle="#130b23";g.fill();g.restore();
+  rr(CX,CY,CW,CH,44);g.strokeStyle="#ffe14d66";g.lineWidth=3;g.stroke();
+  g.textAlign="center";g.textBaseline="alphabetic";
+  g.font='110px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';g.fillStyle="#ffe14d";g.fillText("🏆",cx,190);
+  g.font='700 31px '+SANS;g.fillStyle="#b9a6d6";g.fillText(String(name).slice(0,24)+", quedaste en el",cx,262);
+  g.save();g.shadowColor="#ffe14d77";g.shadowBlur=30;g.fillStyle="#ffe14d";
+  var fs1=168;g.font='900 '+fs1+'px '+DISP;while(g.measureText("PUESTO").width>CW-120&&fs1>90){fs1-=4;g.font='900 '+fs1+'px '+DISP}g.fillText("PUESTO",cx,420);g.font='900 168px '+DISP;g.fillText("#"+pos,cx,572);g.restore();
+  g.font='700 31px '+SANS;g.fillStyle="#b9a6d6";g.fillText("del ranking de la trivia",cx,636);
+  // QR en caja blanca con brillo
+  var bx=cx-BX/2,by=672;
+  g.save();g.shadowColor="#ffe14d99";g.shadowBlur=46;rr(bx,by,BX,BX,34);g.fillStyle="#fff";g.fill();g.restore();
+  g.fillStyle="#000";
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))g.fillRect(bx+pad+(x+m)*u,by+pad+(y+m)*u,u,u);
+  // código y nota
+  var cy2=by+BX+78;
+  g.fillStyle="#ffe14d";g.font='700 46px '+MONO;try{g.letterSpacing="5px"}catch(e){}g.fillText(code,cx,cy2);try{g.letterSpacing="0px"}catch(e){}
+  g.font='500 25px '+SANS;g.fillStyle="#b9a6d6";
+  g.fillText("Mostrá este QR en el stand del stream para retirar tu",cx,cy2+56);g.fillText("premio. Es de un solo uso.",cx,cy2+92);
   return new Promise(function(res){c.toBlob(res,"image/png")});
 }
 async function adjuntarQR(m,link){
