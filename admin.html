@@ -260,19 +260,22 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
         <div class="row"><button class="r" onclick="resetClaimed()">REINICIAR RECLAMADOS</button><button class="r" onclick="resetRedeemed()">REINICIAR CANJEADOS</button></div></div>
     </div>
 
+    <div id="jv-aviso" class="hide" onclick="jvAvisoGo()" style="cursor:pointer;background:#ffe600;color:#000;font:700 14px system-ui,sans-serif;padding:10px 12px;border-radius:10px;margin:8px 0"></div>
+    <div id="top-banner" class="hide" onclick="tab('rk')" style="cursor:pointer;background:#3dff8a;color:#000;font:700 14px system-ui,sans-serif;padding:10px 12px;border-radius:10px;margin:8px 0"></div>
     <div id="t-rk" class="pane hide">
       <h2 style="margin-top:6px">Ranking <span class="small" id="rk-n"></span></h2>
       <p class="small" style="margin-top:0">Tocá a una persona para reiniciarla (ranking, premio y QR), anular su premio o revertir lo reclamado.</p>
       <div class="row" style="margin-bottom:8px"><div class="fix"><span class="badge" id="rkgen">—</span></div></div>
       <input id="rk-q" placeholder="Buscar por nombre" oninput="renderRk()" autocomplete="off" style="margin-bottom:10px">
       <div id="rk-list">Cargando…</div>
+      <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
         <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear).</p>
         <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
         <div id="mail-list" class="small">Cargando…</div>
-        <input id="mail-su" value="¡Quedaste en el ranking de la Trivia de Streaming Room T3!" style="margin-top:10px">
-        <textarea id="mail-bd" rows="5" style="margin-top:8px">¡Hola {nombre}! Quedaste en el puesto #{puesto} del ranking de la Trivia de Streaming Room T3 y te llevás un premio.
+        <input id="mail-su" value="🏆 ¡Felicidades! Quedaste en el top del ranking de la Trivia de Streaming Room T3" style="margin-top:10px">
+        <textarea id="mail-bd" rows="5" style="margin-top:8px">¡Felicidades {nombre}! 🎉 Quedaste en el puesto #{puesto} del top del ranking del turno de la Trivia de Streaming Room T3 y te llevás un premio especial.
 Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 {link}
 ¡Gracias por jugar!</textarea>
@@ -327,7 +330,8 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
     <div id="t-stk" class="pane hide">
       <h2>Stock en vivo</h2>
       <p class="small" style="margin-top:0">El stock sale de la <b>planilla de Google</b> y se actualiza solo. Acá se resta lo entregado. La casilla de la derecha (ajuste) corrige el stock sin tocar la planilla.</p>
-      <div class="row"><button id="stk-m" onclick="setTurno('manana')">☀️ TURNO MAÑANA</button><button id="stk-t" onclick="setTurno('tarde')">🌙 TURNO TARDE</button></div>
+      <div class="row"><button id="stk-m" onclick="setTurno('manana')">☀️ TURNO MAÑANA</button><button id="stk-t" onclick="setTurno('tarde')">🌙 TURNO TARDE</button><button id="stk-a" onclick="setTurnoAuto()">🕛 AUTOMÁTICO</button></div>
+      <div class="small" id="stk-auto" style="margin:6px 0"></div>
       <div class="small" id="stk-st" style="margin:8px 0"></div>
       <div id="stk-box"></div>
       <div class="row"><button class="p" onclick="stkOpen()">ABRIR LA PLANILLA</button><button class="p" onclick="stkRefresh()">ACTUALIZAR AHORA</button></div>
@@ -1987,14 +1991,23 @@ function stockUse(action,key,code){
 }
 function sheetSync(action,x){if(x)return stockUse(action,sheetPremio(x),x.code||x.id)}
 function stkSaludo(action,id){return stockUse(action,"Pequeño","sal-"+id)}
+/* El turno cambia solo a las 12:00 (mañana → tarde). Si el automático se equivoca, se fuerza a mano (vale hasta el próximo cambio automático) o se vuelve a «automático». */
 async function setTurno(v){
-  try{await FB.setCfg({turno:v});toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo ✓")}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
+  try{await FB.setTurnoManual(v);stkTurnoPaint();toast("Turno "+(v==="tarde"?"tarde":"mañana")+" activo (a mano) ✓")}catch(e){alert("No se pudo cambiar el turno: "+(e&&e.message))}
+}
+async function setTurnoAuto(){
+  try{await FB.clearTurnoManual();stkTurnoPaint();toast("Turno automático ✓")}catch(e){alert("No se pudo volver al automático: "+(e&&e.message))}
 }
 function stkTurnoPaint(){stkPaintTurno();
   var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(!m||!n)return;
   m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p";
+  var man=FB.cfg().tman&&FB.turnoAuto()!==t,a=$("stk-a"),tx=$("stk-auto");
+  if(a)a.className=man?"p":"g";
+  if(tx)tx.innerHTML=man?"⚠ Turno forzado a mano: <b>"+(t==="tarde"?"tarde":"mañana")+"</b>. Toca <b>AUTOMÁTICO</b> para volver al horario (cambia solo a las 12:00)."
+    :"Turno automático: <b>"+(t==="tarde"?"tarde":"mañana")+"</b> · pasa a tarde solo a las 12:00.";
   renderStock();
 }
+setInterval(function(){try{if($("stk-m"))stkTurnoPaint()}catch(e){}},30000);
 /* ---------- reinicios de stock ---------- */
 function stkFk(k){return String(k).replace(/ñ/g,"n").replace(/\s+/g,"_")}
 function stkNom(t){return t==="tarde"?"turno tarde":"turno mañana"}
@@ -2427,7 +2440,7 @@ function renderStock(){
   box.innerHTML=h;
   var at=ST3Sheet.leyo();$("stk-st").textContent=at?"Planilla leída hace "+Math.max(0,Math.round((Date.now()-at)/1000))+" s · se actualiza sola":"No se pudo leer la planilla: revisá que esté compartida («cualquiera con el enlace puede ver»).";
 }
-ST3Sheet.onChange(function(){renderStock();stkPaintTurno();var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(m&&n){m.className=t==="manana"?"g":"p";n.className=t==="tarde"?"g":"p"}});
+ST3Sheet.onChange(function(){renderStock();stkPaintTurno();var t=stkTurno(),m=$("stk-m"),n=$("stk-t");if(m&&n)stkTurnoPaint()});
 async function saveCfg(){
   var n=[+$("c-n1").value|0,+$("c-n2").value|0,+$("c-n3").value|0];
   var t=Math.max(5,Math.min(60,+$("c-t").value|0))*1000;
@@ -2527,14 +2540,21 @@ function renderLists(){
 }
 
 /* ---------- ranking por persona ---------- */
-var RK=[],rkOff=null,rkGen=null,personOpen=null;
+var RK=[],RKALL=[],rkOff=null,rkGen=null,personOpen=null;
+/* Cada turno tiene su ranking: acá solo cuenta el del turno activo, y el puntaje que vale es el de antes del cierre (11:05 / 16:05). */
+function rkTurno(){
+  var t=FB.cfg().turno;
+  RK=RKALL.filter(function(p){return (p.t||"manana")===t}).map(function(p){var q={};for(var k in p)q[k]=p[k];if(p.c!=null)q.score=p.c;return q});
+  RK.sort(function(a,b){return b.score-a.score||a.ts-b.ts});renderRk();
+}
+setInterval(function(){try{rkTurno()}catch(e){}},30000);
 function watchRank(){
   var d=sdb();if(!d)return;
   var g=FB.cfg().gen;if(rkGen===g&&rkOff)return;
   if(rkOff)rkOff();rkGen=g;
   var ref=d.ref("scores/"+g).orderByChild("score").limitToLast(400),
-      h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,lvl:v.lvl||1,ts:v.ts||0})});
-        o.sort(function(a,b){return b.score-a.score||a.ts-b.ts});RK=o;lsLater("adm_rk",o);renderRk()},
+      h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,c:(v.c==null?null:(v.c|0)),lvl:v.lvl||1,ts:v.ts||0,t:v.t||"manana"})});
+        RKALL=o;rkTurno();lsLater("adm_rk",RKALL)},
         function(e){var l=$("rk-list");if(l)l.textContent="No se pudo leer el ranking: "+(e&&e.message)});
   rkOff=function(){ref.off("value",h)};
 }
@@ -2549,17 +2569,19 @@ function watchMails(){
   var d=sdb();if(!d||mailOff)return;
   var ref=d.ref("cfg/mails"),h=ref.on("value",function(s){MAILENC={};
     s.forEach(function(c){var v=c.val()||{};if(v.e)MAILENC[c.key]=v.e});
-    mailsDec()},
+    mailsDec();renderRk()},
     function(e){MAILS={};mailErr="No se pueden leer los mails guardados ("+((e&&e.message)||"sin permiso")+"): escribilos a mano.";renderMails()});
   mailOff=function(){ref.off("value",h)};
 }
 var MAILENC={};
 /* los mails llegan cifrados: con la clave de los mails (pestaña Juego → VER MAILS) se descifran acá */
 async function mailsDec(){var o={},k,n=0;
-  for(k in MAILENC){n++;if(JV.key){var m=await jvMail(MAILENC[k]);if(m&&m.indexOf("@")>0)o[k]=m}}
+  for(k in MAILENC){n++;if(JV.key){var m=await jvMail(MAILENC[k]);if(m&&(m.indexOf("@")>0||isTel(m)))o[k]=m}}
   MAILS=o;mailErr=(n&&!JV.key)?"Los mails están cifrados: poné la clave de los mails (pestaña Juego → VER MAILS) para verlos.":"";renderMails()}
 function mailOf(uid){return String(mailEd[uid]!=null?mailEd[uid]:(MAILS[uid]||"")).trim()}
 function okMail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)}
+function isTel(v){var d=String(v).replace(/[\s\-().]/g,"");return /^\+?\d{8,15}$/.test(d)}
+function telNum(v){var d=String(v).replace(/[\s\-().]/g,"").replace(/^\+/,"");if(d.length===10)d="54"+d;if(/^0/.test(d))d="54"+d.replace(/^0+/,"");return d}
 function renderMails(){
   var l=$("mail-list");if(!l)return;
   var n=0;MROWS=[];RK.forEach(function(p){if(!PX[p.uid])MROWS.push({uid:p.uid,name:p.name,score:p.score,pos:++n})});
@@ -2602,17 +2624,18 @@ async function mailNext(kind){
   var sel=MROWS.filter(function(m){return mailSel[m.uid]});if(!sel.length){alert("Marcá al menos una persona.");return}
   var m=sel.filter(function(x){return !mailSent[x.uid]})[0];
   if(!m){if(confirm("Ya se abrió el mail de todos los marcados. ¿Empezar de nuevo?")){mailSent={};renderMails()}return}
-  var to=mailOf(m.uid);if(!okMail(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
-  var w=kind==="gmail"?window.open("","_blank"):null;   // la pestaña se abre ya, dentro del clic, para que el navegador no la bloquee
+  var to=mailOf(m.uid);if(!okMail(to)&&!isTel(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
+  var w=(kind==="gmail"||isTel(to))?window.open("","_blank"):null;   // la pestaña se abre ya, dentro del clic, para que el navegador no la bloquee
   var link;try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
   var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link);
-  if(kind==="gmail"){var url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
+  if(isTel(to)){var wu="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);if(w){try{w.opener=null}catch(e){}w.location.href=wu}else window.open(wu,"_blank")}
+  else if(kind==="gmail"){var url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
     if(w){try{w.opener=null}catch(e){}w.location.href=url}else window.open(url,"_blank")}
   else location.href="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
   mailSent[m.uid]=1;renderMails();
 }
 function mailCopy(){
-  var a=MROWS.filter(function(m){return mailSel[m.uid]}).map(function(m){return mailOf(m.uid)}).filter(okMail);
+  var a=MROWS.filter(function(m){return mailSel[m.uid]}).map(function(m){return mailOf(m.uid)}).filter(okMail);   // los teléfonos no se copian: van por WhatsApp
   if(!a.length){alert("Marcá al menos una persona con mail.");return}
   var t=a.join(", ");
   (navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast("Mails copiados ✓")},function(){prompt("Copiá los mails:",t)});
@@ -2622,7 +2645,7 @@ function prizeState(x){return x._v?{c:"vd",t:"✖ anulado"}:(x._c?{c:"ok",t:"✓
 function renderRk(){
   var l=$("rk-list");if(!l)return;
   renderMails();
-  $("rkgen").textContent="Ranking #"+FB.cfg().gen;
+  $("rkgen").textContent="Ranking #"+FB.cfg().gen+" · turno "+(FB.cfg().turno==="tarde"?"tarde":"mañana");try{top3Paint()}catch(e){}
   var pos=0,hid=0;
   RK.forEach(function(p){p._h=!!PX[p.uid];if(p._h){hid++;p._pos=0}else p._pos=++pos});
   $("rk-n").textContent="("+pos+(hid?" + "+hid+" reiniciados":"")+")";
@@ -2632,7 +2655,7 @@ function renderRk(){
   else l.innerHTML=L.map(function(p){
     var pr=prizesOf(p),st=pr.length?pr.map(function(x){var s=prizeState(x);return '<span class="st '+s.c+'">'+s.t+'</span>'}).join(""):'<span class="st no">sin premio</span>';
     var em=p._h?'<div class="em md">⟲</div>':(p._pos<=3?'<div class="em md">'+["🥇","🥈","🥉"][p._pos-1]+'</div>':'<div class="em">#'+p._pos+'</div>');
-    return '<div class="pz rk'+(p._h?' hid':'')+'" onclick="openPerson(\''+esc(p.uid)+'\')">'+em+'<div class="mid"><b>'+esc(p.name)+'</b>'+(p._h?'<span class="tg sa">REINICIADO</span>':'')+'<div class="small">'+p.score+' pts · nivel '+p.lvl+'</div><div class="chs">'+st+'</div></div><div class="act">›</div></div>';
+    return '<div class="pz rk'+(p._h?' hid':'')+'" onclick="openPerson(\''+esc(p.uid)+'\')">'+em+'<div class="mid"><b>'+esc(p.name)+'</b>'+(p._h?'<span class="tg sa">REINICIADO</span>':'')+(xrOf(p.uid)?'<span class="tg" style="background:#ffb347;color:#000">NO ANOTADO</span>':(!p._h&&rkEligible(p)&&!MAILENC[p.uid]?'<span class="tg" style="background:#ff6b6b;color:#000">SIN CONTACTO</span>':''))+'<div class="small">'+p.score+' pts · nivel '+p.lvl+'</div><div class="chs">'+st+'</div></div><div class="act">›</div></div>';
   }).join("");
   if(personOpen)openPerson(personOpen);
 }
@@ -2651,6 +2674,9 @@ function openPerson(uid){
   });
   var u=esc(uid);
   if(!h)b+='<div class="small" style="margin:12px 0 4px">＋ SUMAR UN PREMIO A '+esc(p.name)+'</div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="g" onclick="addPrize(\''+u+'\',\'nor\')">＋ Normal</button><button class="g" onclick="addPrize(\''+u+'\',\'gra\')">＋ Grande</button><button class="g" onclick="addPrize(\''+u+'\',\'esp\')">＋ Especial</button></div>';
+  var xr=xrOf(uid);
+  b+='<div class="small" style="margin:12px 0 4px">📇 Contacto: <b>'+(MAILENC[uid]?'guardado':'sin cargar')+'</b>'+(xr?' · <b style="color:var(--yel)">NO ANOTADO al ranking final</b>':'')+'</div><button class="p" onclick="personContact(\''+u+'\')">'+(MAILENC[uid]?'CAMBIAR CONTACTO':'CARGAR GMAIL / CELULAR')+'</button>'+
+    (xr?'<button class="g" onclick="personNoRank(\''+u+'\',false)">VOLVER A ANOTAR AL RANKING FINAL</button>':'<button class="p" onclick="personNoRank(\''+u+'\',true)">NO ANOTAR AL RANKING FINAL</button>');
   if(!h)b+='<button class="r" onclick="resetFromRank(\''+u+'\')" style="margin-top:12px">SACAR DEL RANKING Y DEJAR JUGAR</button>';
   b+='<button class="r" onclick="resetPerson(\''+u+'\')">REINICIAR PERSONA (todo)</button><button class="p" onclick="closePerson()">CERRAR</button>';
   $("psh-b").innerHTML=b;$("psh").className="cfm psh on";
@@ -2666,6 +2692,141 @@ async function addPrize(uid,k){
   catch(e){alert("No se pudo sumar: "+(e&&e.message))}
 }
 function closePerson(){personOpen=null;$("psh").className="cfm psh"}
+
+/* ---------- Contacto del top 3 (Gmail o celular) y «no anotar al ranking final» ----------
+   Quien llegó al modo experto (premio Grande) y valida su QR en el stand: el admin le pide el Gmail o el celular ahí mismo.
+   Se guarda cifrado en cfg/mails/<uid> (igual que los Gmails de Rojo vs Azul). Quien no va a estar o no quiere el premio especial se marca
+   «no anotar al ranking final» (cfg/xr): aparece en el ranking, pero no entra al top 3 final ni recibe el mail. */
+function xrOf(uid){return !!((FB.cfg().xr||{})[uid])}
+function needContact(x){return !!(x&&x.uid&&(x.li|0)>=3&&!/^🏆/.test(x.prize||"")&&!MAILENC[x.uid]&&!xrOf(x.uid)&&enLinea()&&sdb())}
+function askContact(x){return new Promise(function(res){
+  var ov=document.createElement("div");ov.id="ct-ov";ov.style.cssText="position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.innerHTML='<div class="card" style="max-width:420px;width:100%;margin:0"><div style="font:800 20px system-ui,sans-serif">📇 Contacto de '+esc(x.name)+'</div>'+
+    '<p class="small" style="margin:8px 0">Llegó al modo experto: puede quedar en el <b>top 3</b> del turno y se le avisa por mail con su QR. Pedile el <b>Gmail</b> (o su <b>celular</b> si no tiene).</p>'+
+    '<input id="ct-in" placeholder="Gmail (nombre@gmail.com) o celular" autocomplete="off" style="margin:6px 0">'+
+    '<div id="ct-er" class="small" style="color:var(--red);min-height:18px"></div>'+
+    '<button class="g" id="ct-ok" style="display:block;width:100%;margin:6px 0">GUARDAR Y SEGUIR</button>'+
+    '<button class="p" id="ct-no" style="display:block;width:100%;margin:6px 0">NO ANOTAR AL RANKING FINAL</button>'+
+    '<button class="p" id="ct-sk" style="display:block;width:100%;margin:6px 0">SIN DATO POR AHORA</button>'+
+    '<button class="r" id="ct-cn" style="display:block;width:100%;margin:6px 0">VOLVER</button>'+
+    '<p class="small" style="margin:6px 0 0"><b>No anotar</b>: aparece en el ranking pero no entra al top 3 final ni recibe mail (no hace falta contacto). <b>Sin dato</b>: si queda en el top 3 se lo saltea y se avisa al siguiente; el contacto se puede cargar después desde su ficha en Ranking.</p></div>';
+  document.body.appendChild(ov);var inp=ov.querySelector("#ct-in");setTimeout(function(){try{inp.focus()}catch(e){}},200);
+  function fin(v){try{ov.remove()}catch(e){}res(v)}
+  ov.querySelector("#ct-cn").onclick=function(){fin("cancel")};
+  ov.querySelector("#ct-sk").onclick=function(){fin("skip")};
+  ov.querySelector("#ct-no").onclick=async function(){try{await FB.setXr(x.uid,true);toast(x.name+": no se anota al ranking final")}catch(e){alert("No se pudo: "+(e&&e.message));return}fin("norank")};
+  ov.querySelector("#ct-ok").onclick=async function(){
+    var er=ov.querySelector("#ct-er"),v=inp.value.trim(),r=await saveContact(x.uid,x.name,v);
+    if(!r.ok){er.textContent=r.msg;return}fin("ok")};
+  inp.addEventListener("keydown",function(e){if(e.key==="Enter")ov.querySelector("#ct-ok").click()});
+})}
+async function saveContact(uid,name,v){
+  v=String(v||"").trim();var k,val;
+  if(v.indexOf("@")>=0){var g=jvGmail(v);if(!g.ok)return{ok:false,msg:g.msg};val=g.mail;k="g"}
+  else if(isTel(v)){val=v.replace(/\s+/g," ");k="t"}
+  else return{ok:false,msg:"Escribí un Gmail (nombre@gmail.com) o un celular con código de área"};
+  var d=sdb();if(!d)return{ok:false,msg:"Sin conexión con la base"};
+  try{var e=await jvCifrar(val);await d.ref("cfg/mails/"+uid).set({e:e,k:k,n:name||"",ts:firebase.database.ServerValue.TIMESTAMP});MAILENC[uid]=e;return{ok:true}}
+  catch(x){return{ok:false,msg:"No se pudo guardar: "+(x&&x.message)}}
+}
+async function personContact(uid){
+  var p=RKALL.filter(function(x){return x.uid===uid})[0];if(!p)return;
+  var r=await askContact({uid:uid,name:p.name});if(r==="ok")toast("Contacto guardado ✓");renderRk();
+}
+async function personNoRank(uid,on){
+  var p=RKALL.filter(function(x){return x.uid===uid})[0];if(!p)return;
+  try{await FB.setXr(uid,on);toast(on?p.name+": no se anota al ranking final":p.name+": vuelve a poder quedar en el top 3");renderRk();if(personOpen)openPerson(personOpen)}catch(e){alert("No se pudo: "+(e&&e.message))}
+}
+
+/* ---------- Top 3 del turno: se arma solo al cierre (11:10 / 16:10) ----------
+   Entran los que validaron su QR en el stand (premio de la trivia reclamado), no están marcados «no anotar» ni reiniciados y dejaron contacto.
+   Quien no deja contacto se saltea y pasa el siguiente. Lo arma el primer admin que tenga el panel abierto y queda guardado en cfg/rkfin; «REHACER» lo recalcula. */
+function rkEligible(p){
+  if(PX[p.uid]||xrOf(p.uid))return false;
+  var pr=prizesOf(p).filter(function(x){return !x._v&&!/^🏆/.test(x.prize||"")});
+  return pr.length>0&&pr.every(function(x){return x._c})&&(pr.some(function(x){return (x.li|0)>=3}));   // validó su QR y llegó a experto
+}
+function top3Calc(){
+  var out=[],skip=[];
+  RK.forEach(function(p){
+    if(out.length>=3)return;
+    if(!rkEligible(p))return;
+    if(!MAILENC[p.uid]){skip.push(p);return}
+    out.push(p);
+  });
+  return{top:out,skip:skip};
+}
+function top3Key(){return FB.cfg().gen+"_"+FB.cfg().turno}
+var RKFIN={},rkfinOff=null;
+function top3Watch(){var d=sdb();if(!d||rkfinOff)return;var ref=d.ref("cfg/rkfin"),h=ref.on("value",function(s){RKFIN=s.val()||{};top3Paint()});rkfinOff=function(){ref.off("value",h)}}
+async function top3Freeze(force){
+  var d=sdb();if(!d||!enLinea())return;var k=top3Key(),c=top3Calc();
+  var val={ts:firebase.database.ServerValue.TIMESTAMP,u:c.top.map(function(p){return{uid:p.uid,name:p.name,score:p.score|0}}),skip:c.skip.map(function(p){return p.uid})};
+  try{await d.ref("cfg/rkfin/"+k).transaction(function(cur){if(cur&&!force)return;return val})}catch(e){}
+}
+async function top3Redo(){
+  if(!await askSteps([{icon:"🔁",title:"¿Rehacer el top 3?",text:"Se vuelve a calcular con el ranking, los QR validados y los contactos de <b>ahora</b>. Los que ya recibieron su mail conservan su QR de puesto; si cambia el puesto, se anula el anterior y se crea otro.",ok:"REHACER TOP 3"}]))return;
+  await top3Freeze(true);toast("Top 3 recalculado ✓")
+}
+function top3Due(){var i=FB.rankInfo(),n=FB.ahoraAR();return n.min>=FB.HORARIOS.final[FB.cfg().turno]}
+async function top3Send(uid,kind){
+  var f=(RKFIN[top3Key()]||{}),i=(f.u||[]).findIndex(function(x){return x.uid===uid});if(i<0)return;
+  var m={uid:uid,name:f.u[i].name,score:f.u[i].score,pos:i+1},to=mailOf(uid);
+  if(!to){alert(JV.key?"No se pudo leer el contacto de "+m.name+".":"Poné la clave de los mails en la pestaña Juego → VER MAILS para poder enviar.");return}
+  var tel=isTel(to),w=window.open("","_blank"),link;
+  try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
+  var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link),url;
+  if(tel)url="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);
+  else url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
+  if(w){try{w.opener=null}catch(e){}w.location.href=url}else window.open(url,"_blank");
+  try{await sdb().ref("cfg/rkfin/"+top3Key()+"/sent/"+uid).set(firebase.database.ServerValue.TIMESTAMP)}catch(e){}
+}
+function top3Paint(){
+  var c=$("top-card");if(!c)return;
+  var t=FB.cfg().turno,tn=t==="tarde"?"tarde":"mañana",info=FB.rankInfo(),k=top3Key(),fin=RKFIN[k],h="";
+  var H='<h2 style="margin:0 0 4px">🏆 Top 3 del turno '+tn+'</h2>';
+  if(fin&&fin.u){
+    H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón abre el mail (o WhatsApp si dejó celular) con «felicidades» y su QR de premio de un solo uso.</p>';
+    if(!JV.key)H+='<div class="small" style="color:var(--yel);margin-bottom:6px">Para enviar, poné la clave de los mails (pestaña Juego → VER MAILS).</div>';
+    H+=(fin.u.length?fin.u.map(function(p,i){var s=(fin.sent||{})[p.uid],to=mailOf(p.uid);
+      return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts · '+(to?(isTel(to)?'📱 '+esc(to):'✉ '+esc(to)):'contacto cifrado')+(s?' · <span style="color:var(--grn)">✓ enviado '+hm(s)+'</span>':'')+'</div></div><div class="act"><button class="g" onclick="top3Send(\''+esc(p.uid)+'\')">'+(s?'REENVIAR':'ENVIAR')+'</button></div></div>'}).join(""):'<div class="small">Nadie cumplió las condiciones todavía (QR validado + contacto + modo experto).</div>');
+    if(fin.skip&&fin.skip.length)H+='<div class="small" style="color:var(--yel);margin-top:6px">⚠ Salteados por no tener contacto: '+fin.skip.map(function(u){var p=RKALL.filter(function(x){return x.uid===u})[0];return esc(p?p.name:u)}).join(", ")+'. Si lo cargás desde su ficha, tocá REHACER.</div>';
+    H+='<div class="row" style="margin-top:8px"><button class="p" onclick="top3Redo()">🔁 REHACER TOP 3</button></div>';
+  }else{
+    var cr=top3Calc();
+    H+='<p class="small" style="margin:0 0 8px">'+(info.cerrado?'El ranking del turno ya cerró a las '+info.hora+'.':'El ranking cierra a las '+info.hora+' (los puntos de después ya no cuentan).')+' El top 3 se arma <b>solo a las '+info.final+'</b>. Vista previa de ahora:</p>';
+    H+=cr.top.length?cr.top.map(function(p,i){return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts</div></div></div>'}).join(""):'<div class="small">Todavía nadie cumple: tiene que haber validado su QR en el stand, haber llegado a experto y tener contacto.</div>';
+    if(cr.skip.length)H+='<div class="small" style="color:var(--yel);margin-top:6px">⚠ Sin contacto (se los saltea): '+cr.skip.map(function(p){return esc(p.name)}).join(", ")+'</div>';
+    H+='<div class="row" style="margin-top:8px"><button class="p" onclick="top3Freeze(false);toast(\'Top 3 definido ✓\')">DEFINIR AHORA</button></div>';
+  }
+  c.innerHTML=H;
+  var b=$("top-banner");if(b){var pend=fin&&fin.u&&fin.u.filter(function(p){return !(fin.sent||{})[p.uid]}).length;b.classList.toggle("hide",!pend);if(pend)b.innerHTML='🏆 Top 3 del turno '+tn+' listo: faltan enviar <b>'+pend+'</b> mail'+(pend>1?'s':'')+' · tocá para ir'}
+}
+/* cada medio minuto: si llegó la hora (11:10 / 16:10) y nadie armó el top 3 de este turno, lo arma este panel */
+setInterval(function(){try{top3Watch();if(top3Due()&&!(RKFIN[top3Key()]&&RKFIN[top3Key()].u)&&RK.length)top3Freeze(false);top3Paint()}catch(e){}},30000);
+setTimeout(function(){try{top3Watch()}catch(e){}},3000);
+
+/* ---------- Rojo vs Azul: aviso automático 5 minutos antes de cada horario ---------- */
+function jvSlotMin(id){return (+id.slice(1,3))*60+(+id.slice(3,5))}
+function jvAvisoPaint(){
+  var b=$("jv-aviso");if(!b)return;
+  var n=FB.ahoraAR(),fe=($("jv-fe")||{}).value;if(fe&&fe!==n.dia){b.classList.add("hide");return}
+  var avs=(JV.avs||{}),best=null;
+  Object.keys(JV.s||{}).forEach(function(id){
+    var d=jvSlotMin(id)-n.min;if(d>5||d<-1||avs[id])return;
+    var cant=0,sl=JV.s[id]||{};["r","a"].forEach(function(q){var eq=sl[q]||{};for(var k in eq){if(eq[k]&&eq[k].st==="ok")cant++}});
+    if(cant&&(!best||d<best.d))best={id:id,d:d,cant:cant};
+  });
+  if(!best){b.classList.add("hide");return}
+  b.classList.remove("hide");b.dataset.id=best.id;
+  b.innerHTML='🎮 <b>Rojo vs Azul · '+jvHora(best.id)+'</b>: en '+Math.max(0,best.d)+' min juega · '+best.cant+' persona'+(best.cant>1?'s':'')+' · '+(JV.key?'tocá para abrir el aviso':'poné la clave de los mails (pestaña Juego)')}
+function jvAvisoGo(){
+  var b=$("jv-aviso"),id=b&&b.dataset.id;if(!id)return;
+  if(!JV.key){tab("jv");return}
+  jvAvisar(id).then(function(){try{sdb().ref("cfg/jv/avs/"+id).set(firebase.database.ServerValue.TIMESTAMP)}catch(e){}});
+}
+setInterval(function(){try{jvWatch();jvAvisoPaint()}catch(e){}},15000);
+setTimeout(function(){try{var d=sdb();if(d)d.ref("cfg/jv/avs").on("value",function(s){JV.avs=s.val()||{};jvAvisoPaint()})}catch(e){}},4000);
 
 async function claimRow(id){
   var x=PR.filter(function(p){return p.id===id})[0];if(!x||x._c||x._v)return;
@@ -2741,6 +2902,8 @@ function resolve(code,qrText){
 }
 async function confirmClaim(){
   var b=$("cbtn");b.disabled=true;b.textContent="Guardando…";
+  var x0=PR.filter(function(p){return p.id===cur})[0];
+  if(x0&&needContact(x0)){b.disabled=false;b.textContent="ENTREGADO · MARCAR RECLAMADO";var cr=await askContact(x0);if(cr==="cancel")return;b.disabled=true;b.textContent="Guardando…"}
   var r=await doClaim(cur,"qr"),x=PR.filter(function(p){return p.id===cur})[0];
   if(r.ok)showSheet("ok",'<div class="tt">✓ RECLAMADO</div>'+card(x||{li:0,name:"",score:0})+'<button class="g" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
   else if(r.dup)showSheet("dup",'<div class="tt">'+r.msg.toUpperCase()+'</div>'+card(x)+'<button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');

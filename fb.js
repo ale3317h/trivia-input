@@ -28,22 +28,41 @@ var FB = (function () {
     }
   } catch (e) { }
 
+  /* ---------- HORARIOS (hora de Argentina, con la hora del servidor) ----------
+     · Turno: hasta las 12:00 es «mañana»; desde las 12:00 es «tarde». Producción puede forzar uno a mano (dura hasta el próximo cambio automático) o volver a «automático».
+     · Ranking: cada turno tiene su propio ranking. Cierra a las 11:05 / 16:05 (después se puede jugar, pero ya no suma) y a las 11:10 / 16:10 se define el top 3. */
+  var srvOff = 0;
+  try { if (db) db.ref(".info/serverTimeOffset").on("value", function (s) { srvOff = +s.val() || 0; }); } catch (e) { }
+  var HORARIOS = { cambio: 12 * 60, cierre: { manana: 11 * 60 + 5, tarde: 16 * 60 + 5 }, final: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 } };
+  function ahoraAR() { var d = new Date(Date.now() + srvOff - 3 * 3600 * 1000); return { min: d.getUTCHours() * 60 + d.getUTCMinutes(), seg: d.getUTCSeconds(), dia: d.toISOString().slice(0, 10) }; }
+  function turnoAuto() { return ahoraAR().min >= HORARIOS.cambio ? "tarde" : "manana"; }
+  function turnoDe(m) {
+    var a = ahoraAR(), auto = a.min >= HORARIOS.cambio ? "tarde" : "manana";
+    if (m && (m.t === "tarde" || m.t === "manana") && m.d === a.dia && m.a === auto) return m.t;   // cambio manual: vale hasta que el automático cambie de turno
+    return auto;
+  }
+  function hhmm(min) { return Math.floor(min / 60) + ":" + ("0" + (min % 60)).slice(-2); }
   function norm(v) {
     v = v || {};
-    return {
+    var o = {
       t: typeof v.t === "number" ? v.t : DEF.t,
       n: (v.n && v.n.length === 3) ? v.n : DEF.n,
       showRank: v.showRank === undefined ? true : !!v.showRank,
       gen: typeof v.gen === "number" ? v.gen : DEF.gen,
       rg: (v.rs && typeof v.rs === "object" && +v.rs.allGen) || 0,   // ronda del último "Reiniciar todo" (vuelve a pedir seguir las redes)
       stk: (v.stk && typeof v.stk === "object") ? v.stk : {},   // stock en vivo por turno: stk/<turno>/<premio>/{n, used/<código>}
-      turno: v.turno === "tarde" ? "tarde" : "manana",   // turno activo (lo elige producción en el admin): decide qué hoja en vivo manda
+      tman: (v.tman && typeof v.tman === "object") ? v.tman : null,   // cambio manual de turno: {t, a (turno automático de ese momento), d (día)}
       px: (v.px && typeof v.px === "object") ? v.px : {},   // personas que producción reinició: uid -> hora
       pv: (v.pv && typeof v.pv === "object") ? v.pv : {},   // premios/QR anulados: id -> hora
       xw: (v.xw && typeof v.xw === "object") ? v.xw : {},   // en espera: terminó el experto y todavía no respondió la ventana (no aparece en el ranking)
-      xs: (v.xs && typeof v.xs === "object") ? v.xs : {}    // quien rechazó el aviso al terminar el modo experto: uid -> puntos que tenía al ganar el nivel difícil (su ranking llega hasta ahí)
+      xs: (v.xs && typeof v.xs === "object") ? v.xs : {},   // quien rechazó el aviso al terminar el modo experto: uid -> puntos que tenía al ganar el nivel difícil (su ranking llega hasta ahí)
+      xr: (v.xr && typeof v.xr === "object") ? v.xr : {}    // «no anotar al ranking final»: quien no va a estar o no quiere el premio (aparece en el ranking pero no entra al top 3 final)
     };
+    // turno activo: se calcula con la hora (y el cambio manual si lo hay), así cambia solo a las 12:00 sin que nadie toque nada
+    Object.defineProperty(o, "turno", { enumerable: true, get: function () { return turnoDe(o.tman); } });
+    return o;
   }
+  cfg = norm({});
 
   function uid() {
     var k = "trivia_uid", v = null;
@@ -82,9 +101,12 @@ var FB = (function () {
     }).catch(function () { return cfg; });
   }
 
+  var cfgWatchers = [], ultimoTurno = null;
+  setInterval(function () { var t = cfg.turno; if (ultimoTurno !== null && t !== ultimoTurno) cfgWatchers.forEach(function (f) { try { f(cfg); } catch (e) { } }); ultimoTurno = t; }, 15000);
   function watchCfg(cb) {
+    cfgWatchers.push(cb);
     if (!db) { cb(cfg); return; }
-    db.ref("cfg").on("value", function (s) { cfg = norm(s.val()); guardarCfg(s.val()); cb(cfg); },
+    db.ref("cfg").on("value", function (s) { cfg = norm(s.val()); ultimoTurno = cfg.turno; guardarCfg(s.val()); cb(cfg); },
       function (e) { lastError = e.message; });
   }
 
@@ -154,16 +176,17 @@ var FB = (function () {
   function isClaimed(u) { return !!okc[u || uid()]; }
   function isPending(u) { return !!pend[u || uid()]; }
 
-  function fromSnap(s) {
+  function fromSnap(s, todos) {
     var out = [];
     s.forEach(function (c) {
       if (cfg.px && cfg.px[c.key]) return;   // reiniciada por producción
       if (pend[c.key]) return;               // su QR todavía no fue validado en el stand
       if (cfg.xw && cfg.xw[c.key]) return;   // terminó el experto y no respondió todavía: en espera
       var v = c.val() || {};
-      var sc = v.score | 0, lv = v.lvl || 1;
+      if (!todos && (v.t || "manana") !== cfg.turno) return;   // cada turno tiene su ranking: se ve solo el del turno activo
+      var sc = (v.c !== undefined && v.c !== null) ? (v.c | 0) : (v.score | 0), lv = v.lvl || 1;   // c = lo que sumó antes del cierre del ranking
       if (cfg.xs && cfg.xs[c.key] != null) { sc = Math.min(sc, cfg.xs[c.key] | 0); lv = Math.min(lv, 3); }   // rechazó seguir: cuenta solo hasta el nivel difícil
-      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: sc, lvl: lv, ts: v.ts || 0 });
+      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: sc, lvl: lv, ts: v.ts || 0, t: v.t || "manana" });
     });
     out.sort(function (a, b) { return b.score - a.score || a.ts - b.ts; });
     return out;
@@ -189,6 +212,7 @@ var FB = (function () {
       db.ref("cfg/px").on("value", function (s) { cfg.px = s.val() || {}; if (last) cb(fromSnap(last)); });
       db.ref("cfg/xs").on("value", function (s) { cfg.xs = s.val() || {}; if (last) cb(fromSnap(last)); });
       db.ref("cfg/xw").on("value", function (s) { cfg.xw = s.val() || {}; if (last) cb(fromSnap(last)); });
+      setInterval(function () { if (last) cb(fromSnap(last)); }, 60000);   // si el turno cambia solo por la hora, el ranking cambia al del turno nuevo
       db.ref("prizes/" + c.gen).on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
     });
   }
@@ -200,9 +224,10 @@ var FB = (function () {
       return Promise.resolve();
     }
     return readCfg().then(function (c) {
-      return db.ref("scores/" + c.gen + "/" + rec.uid).set({
-        name: rec.name, score: rec.score | 0, lvl: rec.lvl || 1, ts: rec.ts || Date.now()
-      });
+      var t = rec.t === "tarde" ? "tarde" : (rec.t === "manana" ? "manana" : c.turno), tarde = ahoraAR().min >= HORARIOS.cierre[t];
+      var up = { name: rec.name, score: rec.score | 0, lvl: rec.lvl || 1, ts: rec.ts || Date.now(), t: t };
+      if (!tarde) up.c = rec.score | 0;    // si ya cerró el ranking de su turno, el puntaje sigue creciendo pero lo que cuenta queda en el de antes del cierre
+      return db.ref("scores/" + c.gen + "/" + rec.uid).update(up);
     });
   }
 
@@ -216,11 +241,18 @@ var FB = (function () {
     setCfg: setCfg,
     resetRank: resetRank,
     cfg: function () { return cfg; },
+    ahoraAR: ahoraAR, turnoAuto: turnoAuto, HORARIOS: HORARIOS, hhmm: hhmm,
+    /* ¿ya cerró el ranking de este turno? {cerrado, hora} */
+    rankInfo: function (t) { t = t || cfg.turno; var c = HORARIOS.cierre[t]; return { turno: t, cerrado: ahoraAR().min >= c, hora: hhmm(c), final: hhmm(HORARIOS.final[t]) }; },
+    setTurnoManual: function (t) { var a = ahoraAR(); return db ? db.ref("cfg/tman").set({ t: t, a: turnoAuto(), d: a.dia, ts: firebase.database.ServerValue.TIMESTAMP }).then(readCfg) : Promise.resolve(cfg); },
+    clearTurnoManual: function () { return db ? db.ref("cfg/tman").remove().then(readCfg) : Promise.resolve(cfg); },
+    setXr: function (u, on) { cfg.xr = cfg.xr || {}; if (on) cfg.xr[u] = Date.now(); else delete cfg.xr[u]; return db ? db.ref("cfg/xr/" + u).set(on ? firebase.database.ServerValue.TIMESTAMP : null) : Promise.resolve(); },
     loadQuestions: loadQuestions,
     saveQuestions: saveQuestions,
     setXw: function (u, on) { cfg.xw = cfg.xw || {}; if (on) cfg.xw[u] = true; else delete cfg.xw[u]; return db ? db.ref("cfg/xw/" + u).set(on ? true : null) : Promise.resolve(); },
     setXs: function (u, pts) { cfg.xs = cfg.xs || {}; cfg.xs[u] = pts | 0; return db ? db.ref("cfg/xs/" + u).set(pts | 0) : Promise.resolve(); },
     listScores: listScores,
+    fromSnap: fromSnap,
     watchScores: watchScores,
     saveScore: saveScore,
     isPending: isPending,

@@ -588,7 +588,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="card y hide" id="played"></div>
 <div class="card y c qrc hide" id="played-qr"></div>
 <button class="hide" id="contbtn" onclick="resume()">CONTINUAR PARA AVANZAR EN EL RANKING →</button>
-<div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="start()">JUGAR →</button><small id="err" class="red"></small></div>
+<div id="rk-cut" class="c hide" style="margin:6px 0 10px;font-weight:700"></div><div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="start()">JUGAR →</button><small id="err" class="red"></small></div>
 <button class="p" id="home-rk" onclick="showRank()">VER RANKING</button>
 <div id="rankpub"><h2>TOP 3</h2><div class="pod" id="pod"></div>
 <h2>TOP 10</h2><div class="card"><div id="tb" class="scr"></div></div><div id="rkst" class="c"></div></div>
@@ -2085,8 +2085,19 @@ function getList(){return FB.listScores()}
 function saveScore(force){
   if(test)return Promise.resolve();
   if(score<=0&&!force)return Promise.resolve();
-  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now()});
+  if(!rkClosed())cntVal=score;try{ls("cnt",String(cntVal))}catch(e){}
+  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:ls("tj")||turnoNow()});
 }
+/* Cada turno tiene su ranking: cierra a las 11:05 / 16:05 (hora de Argentina). Después se puede seguir jugando y ganar el premio por el nivel, pero los puntos ya no suman. */
+var cntVal=+(ls("cnt")||0)||0;
+function rkClosed(){try{return !test&&FB.rankInfo(ls("tj")||turnoNow()).cerrado}catch(e){return false}}
+function rkCut(){
+  var e=$("rk-cut");if(!e)return;var i=FB.rankInfo(ls("tj")||turnoNow()),t=i.turno==="tarde"?"de la tarde":"de la mañana";
+  if(i.cerrado){e.className="c red";e.innerHTML="⏰ El ranking "+t+" ya cerró ("+i.hora+"). Podés jugar igual y ganar el premio por tu nivel, pero tus puntos ya no suman al ranking.";}
+  else{e.className="c yel";e.innerHTML="⏰ El ranking "+t+" cierra a las "+i.hora+": los puntos que hagas después ya no suman. El top 3 se define a las "+i.final+".";}
+  var q=$("s-name");if(q&&q.classList.contains("hide"))e.classList.add("hide");
+}
+setInterval(function(){try{rkCut()}catch(e){}},30000);
 function status(){
   var e=$("rkst");if(!e)return;
   e.textContent=FB.shared()?(loaded?"Ranking compartido en vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Conectando al ranking…"):"Sin conexión: el ranking se guarda solo en este dispositivo";
@@ -2132,6 +2143,7 @@ function renderStart(){
   if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
   if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
+  try{rkCut()}catch(e){}
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
 async function init(){
@@ -2143,7 +2155,7 @@ async function init(){
   var _cfgT=0;FB.watchCfg(function(){clearTimeout(_cfgT);_cfgT=setTimeout(function(){applyCfg();playerReset();reqSync();renderStart()},800)});   // varios cambios seguidos de la config = un solo repintado
   var _rpT=0;function repaintSoon(){if(_rpT)return;_rpT=setTimeout(function(){_rpT=0;repaint()},400)}   // muchos puntajes que cambian juntos = un solo repintado (sin trabas)
   FB.watchScores(function(l){cache=l;loaded=true;repaintSoon()});
-  if(xGet())xDecide().then(function(){go()});   // recargó en medio de la ventana del Gmail: vuelve a salir hasta que acepte o rechace
+  if(XFLOW&&xGet())xDecide().then(function(){go()});   // recargó en medio de la ventana del Gmail: vuelve a salir hasta que acepte o rechace
 }
 /* El Excel manda en lo que lleva cada premio */
 function planSheet(){}
@@ -2299,7 +2311,7 @@ function play(){
   order=buildOrder();
   if(!order.length){show("s-name");$("err").textContent="Las preguntas están incompletas. Avisale al admin.";return}
   qi=0;cq=0;lastGood=false;hp=MAXHP;score=0;racha=0;expertHp=false;
-  if(!test)ls("played",String(FB.cfg().gen));
+  if(!test){ls("played",String(FB.cfg().gen));ls("tj",turnoNow());ls("cnt","0");cntVal=0}
   $("live").classList.toggle("hide",!rankVisible());
   saveScore().then(refresh);lvBanner(0,ask);
 }
@@ -2495,13 +2507,15 @@ function gmailCheck(raw){
    1) «¿podés quedarte hasta las 11:15/16:15?»  SÍ → pide el Gmail · NO → «¿estás seguro?» (ACEPTAR → Gmail, VOLVER → pregunta)
    2) Gmail: ACEPTAR guarda · RECHAZAR → aviso, CONFIRMAR deja de contar el experto (el ranking llega hasta el nivel difícil), CANCELAR vuelve al Gmail
    El estado queda en localStorage («xflow») hasta que se resuelve: si recarga, la ventana vuelve a salir. Fuera del top 3 no se pregunta nada. */
+/* false: el Gmail/teléfono ya no se pide en el celular; lo pide el admin cuando valida el QR en el stand */
+var XFLOW=false;
 function turnoHasta(){return turnoNow()==="tarde"?"16:15":"11:15"}
 function xGet(){try{var x=JSON.parse(ls("xflow")||"null");return x&&String(x.gen)===String(FB.cfg().gen)?x:null}catch(e){return null}}
 function xSet(x){if(test)return;try{if(x)localStorage.setItem("xflow",JSON.stringify(x));else localStorage.removeItem("xflow")}catch(e){}}
 function xShow(id){["mb-top","mb-nosure","mb-ask","mb-warn"].forEach(function(k){$(k).classList.toggle("hide",k!==id)});$("mail-ov").classList.remove("hide")}
 function hardScore(){try{var h=JSON.parse(ls("hard")||"null");if(h&&String(h.gen)===String(FB.cfg().gen)&&h.score>=0)return h.score|0}catch(e){}var x=xGet();return score||(x&&x.score)||0}
 function xPos(sc){var n=0;cache.forEach(function(x){if(!isMe(x)&&x.score>sc)n++});return n+1}   // puesto en el ranking visible de ese momento
-function curScore(){return ls("mailNo")==="1"?Math.min(score,hardScore()):score}
+function curScore(){var s=rkClosed()?Math.min(score,cntVal):score;return ls("mailNo")==="1"?Math.min(s,hardScore()):s}
 function xTop(){$("xt-h").textContent=turnoHasta();var x=xGet();if(x&&x.stage!=="top"){x.stage="top";xSet(x)}xShow("mb-top")}
 function xMail(){$("mo-in").value="";$("mo-err").textContent="";$("mo-err").className="mer";$("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},300)}
 function xYes(){
@@ -2570,14 +2584,14 @@ async function end(win){
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
-  var expertEnd=(win||lvOf(cq)===3)&&!test;
+  var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test;
   if(expertEnd){xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
   show("s-end");countTo($("st-pts"),score,true);
   await saveScore(true);await refresh();
   var m=merged();
   var pdte=pdteMe();
   $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
-  if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
+  if(rkClosed()){$("end-p").textContent="⏰ El ranking de tu turno ya cerró ("+FB.rankInfo(ls("tj")||turnoNow()).hora+"): tu premio por el nivel que alcanzaste sigue valiendo, pero estos puntos ya no suman al ranking."+(pdte?" Igual, pasá por el stand con tu QR.":"");$("end-p").classList.remove("hide")}else if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
   $("end-rk").classList.toggle("hide",!rankVisible());
   // solo si terminó el experto y quedó en el top 3: preguntas de la muestra y del Gmail (no se pueden cerrar sin responder)
   var r=expertEnd?await xDecide():"ya";
