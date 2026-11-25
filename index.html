@@ -2132,6 +2132,22 @@ function repaint(){
   if(!$("s-name").classList.contains("hide")){podium();tbl("tb");status()}
 }
 function mineIdx(){if(!cache)return-1;for(var i=0;i<cache.length;i++)if(isMe(cache[i]))return i;return-1}
+(function(){var s=document.createElement("style");s.textContent=
+".tw{--c:#ffe14d}.tw.k2{--c:#4df3ff}.tw.k3{--c:#ff5fa2}"+
+".tn{text-shadow:0 0 12px color-mix(in srgb,var(--c) 70%,transparent);font-size:1rem}"+
+".ts{color:var(--c);opacity:.9;font-weight:700}"+
+".bl{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 55%,transparent),color-mix(in srgb,var(--c) 8%,transparent));border-top:3px solid var(--c);box-shadow:0 -6px 26px -6px var(--c),inset 0 10px 22px -14px var(--c);text-shadow:0 0 14px var(--c);font-size:1.7rem}"+
+"table{border-spacing:0 6px}"+
+"th{color:#4df3ff;text-shadow:0 0 8px #4df3ff66}"+
+"td{background:#ffffff0d;border-top:1px solid #ffffff10;border-bottom:1px solid #ffffff10}td:first-child{border-left:3px solid #b86bff}"+
+"td:nth-child(3){color:#b86bff;font-weight:700}td:last-child{color:#4df3ff;font-weight:800;text-shadow:0 0 10px #4df3ff66}"+
+"tr:has(.n1) td{background:linear-gradient(90deg,#ffe14d2e,#ffe14d0d);border-color:#ffe14d55;box-shadow:0 0 16px -6px #ffe14d}tr:has(.n1) td:first-child{border-left-color:#ffe14d}"+
+"tr:has(.n2) td{background:linear-gradient(90deg,#4df3ff26,#4df3ff0a);border-color:#4df3ff55;box-shadow:0 0 16px -6px #4df3ff}tr:has(.n2) td:first-child{border-left-color:#4df3ff}"+
+"tr:has(.n3) td{background:linear-gradient(90deg,#ff5fa226,#ff5fa20a);border-color:#ff5fa255;box-shadow:0 0 16px -6px #ff5fa2}tr:has(.n3) td:first-child{border-left-color:#ff5fa2}"+
+"td.n1,td.n1+td{color:#ffe14d;text-shadow:0 0 10px #ffe14d88}td.n2,td.n2+td{color:#4df3ff;text-shadow:0 0 10px #4df3ff88}td.n3,td.n3+td{color:#ff5fa2;text-shadow:0 0 10px #ff5fa288}"+
+"td.rk{font-size:1.15rem}"+
+"tr.me td{background:linear-gradient(90deg,#3dff8a33,#3dff8a0f);color:#3dff8a;border-color:#3dff8a77;box-shadow:0 0 18px -5px #3dff8a}tr.me td:first-child{border-left-color:#3dff8a}tr.me td:last-child{color:#3dff8a}";
+document.head.appendChild(s)})();
 function tbl(el){
   if(!loaded){$(el).textContent="Cargando ranking…";return}
   var l=cache,me=mineIdx();
@@ -2143,7 +2159,7 @@ function tbl(el){
     $(el).innerHTML=s2;return;
   }
   var h="<table><tr><th>#</th><th>JUGADOR</th><th>NIV</th><th>PTS</th></tr>";
-  l.forEach(function(r,i){var cl=i<3?" n"+(i+1):"";h+="<tr"+(i===me?" class='me'":"")+"><td class='rk"+cl+"'>"+(i+1)+"</td><td class='nm"+cl+"'>"+esc(r.name)+"</td><td>"+r.lvl+"</td><td>"+r.score+"</td></tr>"});
+  l.forEach(function(r,i){var cl=i<3?" n"+(i+1):"";h+="<tr"+(i===me?" class='me'":"")+"><td class='rk"+cl+"'>"+(i<3?["🥇","🥈","🥉"][i]:(i+1))+"</td><td class='nm"+cl+"'>"+esc(r.name)+"</td><td>"+r.lvl+"</td><td>"+r.score+"</td></tr>"});
   $(el).innerHTML=h+"</table>";
 }
 function podium(id){
@@ -2162,7 +2178,7 @@ function renderStart(){
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
   if(p&&!(qrGet()&&(myClaimed||FB.isClaimed())))$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
   var rec=p&&qrGet()&&(myClaimed||FB.isClaimed());   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
-  if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:10px;font-size:13px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
+  if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:6px;font-size:12px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
   if(p&&hasCont()&&!rec)$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
@@ -2500,11 +2516,11 @@ function claimPaint(){
   try{if(!$("s-end").classList.contains("hide")){var m=merged(),pd=pdteMe();$("st-pos").innerHTML=(rankVisible()&&!pd?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");$("st-pc").classList.toggle("hide",!rankVisible()||pd);if(myClaimed){$("end-p").textContent="✅ Premio reclamado: tu puesto en el ranking ya está validado.";$("end-p").classList.remove("hide")}}}catch(e){}
   try{if(!$("qr-ov").classList.contains("hide"))qrOpen()}catch(e){}
 }
-(function(){var s=document.createElement("style");s.textContent="@keyframes gboing{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-12px) rotate(6deg)}}@keyframes gglow{0%,100%{box-shadow:0 0 22px #3dff8a55}50%{box-shadow:0 0 44px #3dff8aaa}}.cl{border:2px solid #3dff8a;border-radius:22px;padding:18px 14px 16px;text-align:center;background:linear-gradient(180deg,#3dff8a22,#0000 70%);box-shadow:0 0 28px #3dff8a44}.cl .gift{font-size:76px;line-height:1;display:inline-block}.cl .ok{display:inline-block;background:#3dff8a;color:#041;font:800 13px system-ui,sans-serif;letter-spacing:.08em;border-radius:99px;padding:4px 12px;margin-top:6px}.cl h3{margin:10px 0 2px;font:800 24px/1.1 system-ui,sans-serif;color:#ffe14d}.cl .pr{color:#fff;opacity:.85;font:600 15px system-ui,sans-serif}.cl .pos{display:flex;align-items:center;justify-content:center;gap:12px;margin:14px 0 4px}.cl .med{font-size:58px;line-height:1}.cl .top{font:900 34px/1 system-ui,sans-serif;color:#fff}.cl .pts{font:800 22px system-ui,sans-serif;color:#ffe14d}.cl .val{font:600 12px system-ui,sans-serif;color:#3dff8a;letter-spacing:.1em;margin-top:8px}";document.head.appendChild(s)})();
+(function(){var s=document.createElement("style");s.textContent=".cl{border:2px solid #3dff8a;border-radius:18px;padding:12px 14px;background:linear-gradient(180deg,#3dff8a22,#0000 80%);box-shadow:0 0 24px #3dff8a44}.cl .hd{display:flex;align-items:center;gap:12px;text-align:left}.cl .gift{font-size:52px;line-height:1}.cl .ok{display:inline-block;background:#3dff8a;color:#041;font:800 11px system-ui,sans-serif;letter-spacing:.08em;border-radius:99px;padding:3px 10px}.cl h3{margin:4px 0 0;font:800 18px/1.1 system-ui,sans-serif;color:#ffe14d}.cl .pos{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px;padding-top:10px;border-top:1px dashed #3dff8a55}.cl .med{font-size:40px;line-height:1}.cl .top{font:900 28px/1 system-ui,sans-serif;color:#fff;text-align:left}.cl .pts{font:800 19px system-ui,sans-serif;color:#4df3ff;text-shadow:0 0 12px #4df3ff88;text-align:left}.cl .val{font:700 11px system-ui,sans-serif;color:#3dff8a;letter-spacing:.1em;text-align:center;margin-top:6px}";document.head.appendChild(s)})();
 function claimHTML(r){
   var i=mineIdx(),me=i>=0?cache[i]:null,med=i<0?"":(i<3?["🥇","🥈","🥉"][i]:"🏅"),
       top=i<0?"":(i<3?"TOP "+(i+1):"PUESTO #"+(i+1)),pts=me?Number(me.score||0).toLocaleString("es-AR"):"";
-  return '<div class="cl"><div class="gift">🎁</div><div><span class="ok">PREMIO '+QPZ[r.li][1].toUpperCase()+'</span></div><h3>¡RECOMPENSA RECLAMADA!</h3>'+
+  return '<div class="cl"><div class="hd"><div class="gift">🎁</div><div><span class="ok">PREMIO '+QPZ[r.li][1].toUpperCase()+'</span><h3>¡RECOMPENSA RECLAMADA!</h3></div></div>'+
     (me?'<div class="pos"><span class="med">'+med+'</span><div><div class="top">'+top+'</div><div class="pts">'+pts+' pts</div></div></div>':'<div class="pos"><span class="med">⏳</span><div class="pts">Tu puesto aparece en un momento</div></div>')+
     '<div class="val">✓ RANKING VALIDADO</div></div>'}
 function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}claimBind();e.innerHTML=myClaimed?claimHTML(r):qrHTML(r);e.classList.remove("hide")}
