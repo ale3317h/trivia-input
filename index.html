@@ -2169,8 +2169,8 @@ function renderStart(){
   $("rankpub").classList.toggle("hide",!rankVisible());$("home-rk").classList.toggle("hide",!rankVisible());
   var p=hasPlayed(),i=mineIdx();
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
-  if(p&&!(qrGet()&&(myClaimed||FB.isClaimed())))$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
-  var rec=p&&qrGet()&&(myClaimed||FB.isClaimed());   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
+  if(p&&!(qrGet()&&myClaimed))$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
+  claimBind();var rec=p&&qrGet()&&myClaimed;   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
   if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:6px;font-size:12px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
@@ -2236,7 +2236,7 @@ document.addEventListener("animationend",scrollSoon,true);
 try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catch(e){setInterval(scrollState,1000)}
 async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
 /* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
-function pdteMe(){return !test&&!!qrGet()&&!myClaimed&&!FB.isClaimed(FB.uid())}
+function pdteMe(){return !test&&!!qrGet()&&!myClaimed}
 function merged(){
   var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:curScore(),id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
@@ -2499,8 +2499,9 @@ function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><
 /* Premio ya reclamado en el stand: en lugar del QR sale la pantalla de «premio reclamado» con su puesto en el ranking */
 var myClaimed=false,claimOff=null,claimKey="";
 function claimBind(){
-  var r=qrGet();if(!r||test||!FB.shared()||!FB.watchPrize)return;var k=r.gen+"/"+r.id;if(k===claimKey)return;
-  if(claimOff)try{claimOff()}catch(e){}claimKey=k;
+  var r=qrGet();if(!r){myClaimed=false;claimKey="";if(claimOff){try{claimOff()}catch(e){}claimOff=null}return}
+  if(test||!FB.shared()||!FB.watchPrize)return;var k=r.gen+"/"+r.id;if(k===claimKey)return;
+  if(claimOff)try{claimOff()}catch(e){}claimKey=k;myClaimed=false;
   claimOff=FB.watchPrize(r.gen,r.id,function(c){var ch=c!==myClaimed;myClaimed=c;if(ch){claimPaint();if(c)try{confetti()}catch(e){}}});
 }
 function claimPaint(){

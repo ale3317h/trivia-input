@@ -223,13 +223,22 @@ var FB = (function () {
   function watchScores(cb) {
     if (!db) { cb(localScores()); return; }
     readCfg().then(function (c) { return loadPend(c.gen).catch(function () {}).then(function () { return c; }); }).then(function (c) {
-      var last = null;
-      query(c.gen).on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
+      var last = null, bound = c.gen, qRef = null, qH = null, pRef = null, pH = null;
+      /* El ranking y los premios se miran de la ronda (gen) actual. Si el admin hace «Reiniciar todo», se vuelve a mirar la ronda nueva sin recargar */
+      function bind(g) {
+        if (qRef) qRef.off("value", qH); if (pRef) pRef.off("value", pH);
+        bound = g; last = null; pend = {}; okc = {}; pendGen = null;
+        qRef = query(g); qH = qRef.on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
+        pRef = db.ref("prizes/" + g); pH = pRef.on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
+        cb([]);
+      }
+      qRef = query(c.gen); qH = qRef.on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
+      db.ref("cfg/gen").on("value", function (s) { var g = s.val(); if (typeof g === "number" && g !== bound) { cfg.gen = g; bind(g); } });
       db.ref("cfg/px").on("value", function (s) { cfg.px = s.val() || {}; if (last) cb(fromSnap(last)); });
       db.ref("cfg/xs").on("value", function (s) { cfg.xs = s.val() || {}; if (last) cb(fromSnap(last)); });
       db.ref("cfg/xw").on("value", function (s) { cfg.xw = s.val() || {}; if (last) cb(fromSnap(last)); });
       setInterval(function () { if (last) cb(fromSnap(last)); }, 60000);   // si el turno cambia solo por la hora, el ranking cambia al del turno nuevo
-      db.ref("prizes/" + c.gen).on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
+      pRef = db.ref("prizes/" + c.gen); pH = pRef.on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
     });
   }
 
