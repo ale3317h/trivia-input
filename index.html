@@ -2133,20 +2133,19 @@ function repaint(){
 }
 function mineIdx(){if(!cache)return-1;for(var i=0;i<cache.length;i++)if(isMe(cache[i]))return i;return-1}
 (function(){var s=document.createElement("style");s.textContent=
-".tw{--c:#ffe14d}.tw.k2{--c:#4df3ff}.tw.k3{--c:#ff5fa2}"+
-".tn{text-shadow:0 0 12px color-mix(in srgb,var(--c) 70%,transparent);font-size:1rem}"+
-".ts{color:var(--c);opacity:.9;font-weight:700}"+
-".bl{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 55%,transparent),color-mix(in srgb,var(--c) 8%,transparent));border-top:3px solid var(--c);box-shadow:0 -6px 26px -6px var(--c),inset 0 10px 22px -14px var(--c);text-shadow:0 0 14px var(--c);font-size:1.7rem}"+
+".tw{--c:#ffd23f}.tw.k2{--c:#5ee7ff}.tw.k3{--c:#ff7eb6}"+
+".tn{font-size:1rem}.ts{color:var(--c);font-weight:700}"+
+".bl{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 38%,#1a1030),color-mix(in srgb,var(--c) 10%,#120a22));border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);border-bottom:0;font-size:1.7rem}"+
 "table{border-spacing:0 6px}"+
-"th{color:#4df3ff;text-shadow:0 0 8px #4df3ff66}"+
-"td{background:#ffffff0d;border-top:1px solid #ffffff10;border-bottom:1px solid #ffffff10}td:first-child{border-left:3px solid #b86bff}"+
-"td:nth-child(3){color:#b86bff;font-weight:700}td:last-child{color:#4df3ff;font-weight:800;text-shadow:0 0 10px #4df3ff66}"+
-"tr:has(.n1) td{background:linear-gradient(90deg,#ffe14d2e,#ffe14d0d);border-color:#ffe14d55;box-shadow:0 0 16px -6px #ffe14d}tr:has(.n1) td:first-child{border-left-color:#ffe14d}"+
-"tr:has(.n2) td{background:linear-gradient(90deg,#4df3ff26,#4df3ff0a);border-color:#4df3ff55;box-shadow:0 0 16px -6px #4df3ff}tr:has(.n2) td:first-child{border-left-color:#4df3ff}"+
-"tr:has(.n3) td{background:linear-gradient(90deg,#ff5fa226,#ff5fa20a);border-color:#ff5fa255;box-shadow:0 0 16px -6px #ff5fa2}tr:has(.n3) td:first-child{border-left-color:#ff5fa2}"+
-"td.n1,td.n1+td{color:#ffe14d;text-shadow:0 0 10px #ffe14d88}td.n2,td.n2+td{color:#4df3ff;text-shadow:0 0 10px #4df3ff88}td.n3,td.n3+td{color:#ff5fa2;text-shadow:0 0 10px #ff5fa288}"+
+"th{color:#9fb4ff}"+
+"td{background:#ffffff0d}td:first-child{border-left:3px solid #b86bff}"+
+"td:nth-child(3){color:#b86bff;font-weight:700}td:last-child{color:#5ee7ff;font-weight:800}"+
+"tr:has(.n1) td{background:#ffd23f14}tr:has(.n1) td:first-child{border-left-color:#ffd23f}"+
+"tr:has(.n2) td{background:#5ee7ff12}tr:has(.n2) td:first-child{border-left-color:#5ee7ff}"+
+"tr:has(.n3) td{background:#ff7eb612}tr:has(.n3) td:first-child{border-left-color:#ff7eb6}"+
+"td.n1{color:#ffd23f}td.n2{color:#5ee7ff}td.n3{color:#ff7eb6}"+
 "td.rk{font-size:1.15rem}"+
-"tr.me td{background:linear-gradient(90deg,#3dff8a33,#3dff8a0f);color:#3dff8a;border-color:#3dff8a77;box-shadow:0 0 18px -5px #3dff8a}tr.me td:first-child{border-left-color:#3dff8a}tr.me td:last-child{color:#3dff8a}";
+"tr.me td{background:#3dff8a14}tr.me td:first-child{border-left-color:#3dff8a}tr.me td.nm{color:#3dff8a}";
 document.head.appendChild(s)})();
 function tbl(el){
   if(!loaded){$(el).textContent="Cargando ranking…";return}
@@ -2521,7 +2520,7 @@ function claimHTML(r){
   var i=mineIdx(),me=i>=0?cache[i]:null,med=i<0?"":(i<3?["🥇","🥈","🥉"][i]:"🏅"),
       top=i<0?"":(i<3?"TOP "+(i+1):"PUESTO #"+(i+1)),pts=me?Number(me.score||0).toLocaleString("es-AR"):"";
   return '<div class="cl"><div class="hd"><div class="gift">🎁</div><div><span class="ok">PREMIO '+QPZ[r.li][1].toUpperCase()+'</span><h3>¡RECOMPENSA RECLAMADA!</h3></div></div>'+
-    (me?'<div class="pos"><span class="med">'+med+'</span><div><div class="top">'+top+'</div><div class="pts">'+pts+' pts</div></div></div>':'<div class="pos"><span class="med">⏳</span><div class="pts">Tu puesto aparece en un momento</div></div>')+
+    (me?'<div class="pos"><span class="med">'+med+'</span><div><div class="top">'+top+'</div><div class="pts">'+pts+' pts</div></div></div>':'<div class="pos"><span class="med">🏅</span><div><div class="pts">'+Number(r.score||0).toLocaleString("es-AR")+' pts</div></div></div>')+
     '<div class="val">✓ RANKING VALIDADO</div></div>'}
 function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}claimBind();e.innerHTML=myClaimed?claimHTML(r):qrHTML(r);e.classList.remove("hide")}
 function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=(myClaimed?claimHTML(r):qrHTML(r))+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}

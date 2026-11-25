@@ -54,6 +54,8 @@ var FB = (function () {
     }
     return o;
   }
+  /* turno de un puntaje viejo que no lo tiene guardado: se deduce por la hora en que se jugó (desde las 12:00 = tarde) */
+  function turnoDeTs(ts) { if (!ts) return "manana"; var d = new Date(ts - 3 * 3600 * 1000); return d.getUTCHours() * 60 + d.getUTCMinutes() >= HORARIOS.cambio ? "tarde" : "manana"; }
   function hhmm(min) { return Math.floor(min / 60) + ":" + ("0" + (min % 60)).slice(-2); }
   function norm(v) {
     v = v || {};
@@ -197,10 +199,10 @@ var FB = (function () {
       if (pend[c.key]) return;               // su QR todavía no fue validado en el stand
       if (cfg.xw && cfg.xw[c.key]) return;   // terminó el experto y no respondió todavía: en espera
       var v = c.val() || {};
-      if (!todos && (v.t || "manana") !== cfg.turno) return;   // cada turno tiene su ranking: se ve solo el del turno activo
+      if (!todos && (v.t || turnoDeTs(v.ts)) !== cfg.turno) return;   // cada turno tiene su ranking: se ve solo el del turno activo
       var sc = (v.c !== undefined && v.c !== null) ? (v.c | 0) : (v.score | 0), lv = v.lvl || 1;   // c = lo que sumó antes del cierre del ranking
       if (cfg.xs && cfg.xs[c.key] != null) { sc = Math.min(sc, cfg.xs[c.key] | 0); lv = Math.min(lv, 3); }   // rechazó seguir: cuenta solo hasta el nivel difícil
-      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: sc, lvl: lv, ts: v.ts || 0, t: v.t || "manana" });
+      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: sc, lvl: lv, ts: v.ts || 0, t: v.t || turnoDeTs(v.ts) });
     });
     out.sort(function (a, b) { return b.score - a.score || a.ts - b.ts; });
     return out;
@@ -258,6 +260,7 @@ var FB = (function () {
     ahoraAR: ahoraAR, turnoAuto: turnoAuto, HORARIOS: HORARIOS, hhmm: hhmm,
     /* ¿ya cerró el ranking de este turno? {cerrado, hora} */
     rankInfo: rankInfo,
+    turnoDeTs: turnoDeTs,
     /* cierre a mano: modo "open" (abierto hasta que lo cambien), "closed" (cerrado ya) o "until" (abierto N minutos desde ahora). Vale para el turno activo y ese día. */
     setRankMode: function (modo, mins) { var o = { m: modo, t: cfg.turno, d: ahoraAR().dia }; if (modo === "until") o.u = nowMs() + Math.round(mins * 60000); return db ? db.ref("cfg/rkm").set(o).then(readCfg) : Promise.resolve(cfg); },
     clearRankMode: function () { return db ? db.ref("cfg/rkm").remove().then(readCfg) : Promise.resolve(cfg); },

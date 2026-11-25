@@ -2548,7 +2548,7 @@ var RK=[],RKALL=[],rkOff=null,rkGen=null,personOpen=null;
 /* Cada turno tiene su ranking: acá solo cuenta el del turno activo, y el puntaje que vale es el de antes del cierre (11:10 / 16:10). */
 function rkTurno(){
   var t=FB.cfg().turno;
-  RK=RKALL.filter(function(p){return (p.t||"manana")===t}).map(function(p){var q={};for(var k in p)q[k]=p[k];if(p.c!=null)q.score=p.c;return q});
+  RK=RKALL.filter(function(p){return (p.t||FB.turnoDeTs(p.ts))===t}).map(function(p){var q={};for(var k in p)q[k]=p[k];if(p.c!=null)q.score=p.c;return q});
   RK.sort(function(a,b){return b.score-a.score||a.ts-b.ts});renderRk();
 }
 setInterval(function(){try{rkTurno()}catch(e){}},30000);
@@ -2557,7 +2557,7 @@ function watchRank(){
   var g=FB.cfg().gen;if(rkGen===g&&rkOff)return;
   if(rkOff)rkOff();rkGen=g;
   var ref=d.ref("scores/"+g).orderByChild("score").limitToLast(400),
-      h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,c:(v.c==null?null:(v.c|0)),lvl:v.lvl||1,ts:v.ts||0,t:v.t||"manana"})});
+      h=ref.on("value",function(s){var o=[];s.forEach(function(c){var v=c.val()||{};o.push({uid:c.key,name:v.name||"?",score:v.score|0,c:(v.c==null?null:(v.c|0)),lvl:v.lvl||1,ts:v.ts||0,t:v.t||FB.turnoDeTs(v.ts)})});
         RKALL=o;rkTurno();lsLater("adm_rk",RKALL)},
         function(e){var l=$("rk-list");if(l)l.textContent="No se pudo leer el ranking: "+(e&&e.message)});
   rkOff=function(){ref.off("value",h)};
