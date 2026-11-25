@@ -177,9 +177,10 @@ body.tienelugar .toast{bottom:92px}
     <div class="part">PARTICIPÁ EN</div>
     <h1 class="duelo"><span class="a">AZUL</span><span class="v">VS</span><span class="r">ROJO</span></h1>
     <span class="live"><b></b> EN STREAM</span>
-    <p class="sub">Mirá los horarios con posición libre. Para unirte, acercate al stand. Gana el equipo que sume más puntos, ¡y hay premios!</p>
+    <p class="sub">Elegí un horario con posición libre y unite. Tu lugar se confirma cuando lo valida el stand. Gana el equipo que sume más puntos, ¡y hay premios!</p>
   </header>
 
+  <section class="mine hide" id="pend"></section>
   <section class="mine hide" id="mi2"></section>
   <section class="mine hide" id="mine"></section>
 
@@ -187,13 +188,47 @@ body.tienelugar .toast{bottom:92px}
   <p class="pie" id="estado">Cargando lugares…</p>
 </div>
 
-<!-- Anotarse: solo en el stand -->
+<!-- Pedir lugar (se confirma en el stand) -->
 <div class="ov hide" id="ovUnir">
   <div class="box">
-    <h2>¡Acercate al stand!</h2>
-    <p id="u-txt">Para unirte a este turno acercate al stand: ahí te anotamos.</p>
-    <p style="font-size:14px;color:var(--mut)">Decile al stand tu <b>nombre o apodo</b> (el que se ve en la pantalla) y el <b>Gmail</b> donde te avisamos 5 minutos antes para que estés en el stream.</p>
-    <button class="btn cerrar" type="button" id="u-x" style="width:100%">Entendido</button>
+    <h2 id="u-tit">¡Sumate al juego!</h2>
+    <p id="u-txt"></p>
+    <p style="font-size:14px;color:var(--mut)">Dejanos tu nombre o apodo y tu Gmail (te avisamos <b>5 minutos antes</b>). Después te damos un QR para confirmar tu lugar en el stand.</p>
+    <input id="u-nom" type="text" maxlength="20" autocomplete="given-name" placeholder="Tu nombre o apodo" style="margin-bottom:8px">
+    <input id="u-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
+    <div class="err" id="u-err"></div>
+    <button class="btn" type="button" id="u-sig" style="width:100%">Pedir mi lugar</button>
+    <button class="btn sec cerrar" type="button" id="u-x" style="width:100%">Cancelar</button>
+  </div>
+</div>
+
+<!-- Invitar a un compañero (QR) -->
+<div class="ov hide" id="ovInv">
+  <div class="box">
+    <h2>Invitá a un compañero</h2>
+    <p>Que escanee este QR con la cámara del celular y pida su lugar en tu equipo. El stand lo confirma.</p>
+    <p class="sub" id="i-msg" style="margin:4px 0 6px"></p>
+    <div class="qr" id="i-qr"></div>
+    <button class="btn hide" type="button" id="i-share" style="width:100%;margin:6px 0">Compartir invitación</button>
+    <div class="link" id="i-link"></div>
+    <p style="font-size:13px;color:var(--mut)">Este QR sirve una sola vez, mientras quede un lugar libre en tu equipo.</p>
+    <button class="btn sec cerrar" type="button" id="i-x" style="width:100%">Listo</button>
+  </div>
+</div>
+
+<!-- Me invitaron (QR) -->
+<div class="ov hide" id="ovIn">
+  <div class="box">
+    <h2 id="in-t">¡Te invitaron a jugar!</h2>
+    <p id="in-p"></p>
+    <div id="in-form">
+      <p>Dejá tu nombre y tu Gmail y pedí tu lugar: el stand lo confirma.</p>
+      <input id="in-nom" type="text" maxlength="20" autocomplete="given-name" placeholder="Tu nombre o apodo" style="margin-bottom:8px">
+      <input id="in-mail" type="email" inputmode="email" autocomplete="email" placeholder="tunombre@gmail.com">
+      <div class="err" id="in-err"></div>
+      <button class="btn" id="in-ok" type="button" style="width:100%">Pedir mi lugar</button>
+    </div>
+    <button class="btn sec cerrar" type="button" id="in-x" style="width:100%">Ver los horarios</button>
   </div>
 </div>
 
@@ -212,8 +247,7 @@ body.tienelugar .toast{bottom:92px}
   <div class="box">
     <h2>¿Estás seguro?</h2>
     <p>Si salís del juego perdés tu lugar: otra persona puede ocuparlo y, si después querés volver, vas a tener que anotarte de nuevo en un horario libre.</p>
-    <p>Si habías guardado un lugar para tu compañero, también se libera.</p>
-    <button class="btn morado" type="button" id="l-si" style="width:100%">Confirmar</button>
+        <button class="btn morado" type="button" id="l-si" style="width:100%">Confirmar</button>
     <button class="btn sec cerrar" type="button" id="l-no" style="width:100%">Cancelar</button>
   </div>
 </div>
@@ -235,6 +269,8 @@ body.tienelugar .toast{bottom:92px}
      u/<uid>  = {s,q,k}  el lugar de cada celular (uno solo)
      h/<hash del gmail> = uid  (un lugar por Gmail)
      tok/<código> = {s,q,by,exp,used}  invitación (QR único, se usa una sola vez)
+     pend/<código> = {s,q,n,h,e,u,t,inv?,st?}  pedido de lugar: NO ocupa el lugar hasta que el admin lo acepta (escanea el QR)
+     pu/<uid> = <código>  el pedido de cada celular (uno solo)
    El Gmail se guarda CIFRADO: solo el admin (con su clave) puede leerlo.
    ============================================================= */
 var CAP=2, HOLD_MS=5*60*1000;
@@ -312,7 +348,7 @@ var CARTEL={jug:"JUGADO ✓",pasado:"YA PASÓ",susp:"SUSPENDIDO",lleno:"LLENO"};
 function vivos(eq){var o={},k,v,t=now();for(k in (eq||{})){v=eq[k];if(!v)continue;if(v.st==="ok"||(v.st==="hold"&&v.exp>t))o[k]=v}return o}
 function cuenta(eq){return Object.keys(vivos(eq)).length}
 
-var MI=null,Sok=false;
+var MI=null,Sok=false,PEND=null,PCOD="";
 function pintar(){
   var h="";
   TURNOS.forEach(function(T){
@@ -325,7 +361,7 @@ function pintar(){
     h+='</section>';
   });
   $("turnos").innerHTML=h;
-  pintarMio();pintarMi();
+  pintarMio();pintarMi();pintarPend();
 }
 function equipo(s,q){
   var eq=(S[s.id]||{})[q],v=vivos(eq),ocu=0,res=0,k,lst=[];for(k in v){lst.push(v[k]);if(v[k].st==="ok")ocu++;else res++}
@@ -337,7 +373,7 @@ function equipo(s,q){
     else as+='<button type="button" class="as res" data-res="'+esc(nombreDe(eq,p.by))+'" aria-label="Lugar guardado">'+PER+'</button>';}
   var yo=MIO&&MIO.s===s.id&&MIO.q===q;
   var txt=lib===2?'<b>2 posiciones</b> libres':(lib===1?'<b>Posición</b> libre':(res?'Lugar guardado':'Completo'));
-  var es=estadoSlot(s),dis=!!MIO||lib===0||es==='pasado'||es==='susp'||es==='lleno'||es==='jug';
+  var es=estadoSlot(s),dis=!!MIO||!!PEND||lib===0||es==='pasado'||es==='susp'||es==='lleno'||es==='jug';
   return '<div class="team '+q+(yo?' yo':'')+'"><div class="asientos">'+as+'</div><div class="lib">'+(yo?'<b>¡Acá estás vos!</b>':txt)+'</div>'+
     (yo?'':'<button class="unir" type="button" data-s="'+s.id+'" data-q="'+q+'"'+(dis?' disabled':'')+'>Unirme</button>')+'</div>';
 }
@@ -364,20 +400,89 @@ function pintarMio(){
   var s=slotDe(MIO.s);if(!s){b.classList.add("hide");return}
   var eq=(S[MIO.s]||{})[MIO.q]||{},v=vivos(eq),comp=0,cn="",hold=null,k;
   for(k in v){if(v[k].st==="ok"&&v[k].u!==UID){comp++;cn=v[k].n||""}if(v[k].st==="hold"&&v[k].by===UID)hold=v[k]}
-  var estado=comp?('Jugás con <b>'+esc(cn||"tu compañero")+'</b> 🙌'):(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: para sumar a alguien, que se acerque al stand.');
+  var estado=comp?('Jugás con <b>'+esc(cn||"tu compañero")+'</b> 🙌'):(hold?'Le guardamos el lugar a tu compañero hasta las '+new Date(hold.exp-off).toTimeString().slice(0,5):'Todavía no tenés compañero: puede sumarse cualquiera o invitá a alguien.');
   b.innerHTML='<h2>¡Ya tenés tu lugar!</h2><p>Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+MIO.q+'">'+EQ[MIO.q]+'</span>.</p><p>'+estado+'</p>'+
+    '<div class="btns">'+(comp?'':'<button class="btn '+(MIO.q==="r"?"rojo":"azul")+'" type="button" id="b-inv">Invitá a un compañero</button>')+'</div>'+
     (estadoSlot(s)==='susp'?'<div class="aviso">⚠️ Este horario fue suspendido. Elegí otro libre (primero tenés que salir del juego).</div>':'')+'<small>Te avisamos a tu Gmail 5 minutos antes para que te acerques al stream.</small>';
   b.classList.remove("hide");
+  var bi=$("b-inv");if(bi)bi.onclick=invitar;
 }
 $("b-lib").onclick=function(){$("ovLib").classList.remove("hide")};
 
-/* ---------- unirse: solo en el stand ---------- */
+/* ---------- pedir lugar: queda PENDIENTE hasta que el stand lo valida escaneando el QR ---------- */
+var pend=null;
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".unir");if(!b||b.disabled)return;abrirUnir(b.dataset.s,b.dataset.q)});
-function stand(sid,q){var s=sid&&slotDe(sid);
-  $("u-txt").innerHTML=s?"Para unirte a este turno (<b>"+s.hora+"</b>, "+(q?EQ[q]:"Rojo o Azul")+") acercate al stand: ahí te anotamos.":"Para unirte a este turno acercate al stand: ahí te anotamos.";
-  $("ovUnir").classList.remove("hide")}
-function abrirUnir(sid,q){if(sid&&estadoSlot(slotDe(sid))){toast("Ese horario ya no está disponible.");return}stand(sid,q)}
-$("u-x").onclick=function(){$("ovUnir").classList.add("hide");volverComun()};
+function abrirUnir(sid,q){
+  if(MIO||PEND){toast(MIO?"Ya tenés un lugar anotado.":"Ya tenés un pedido esperando confirmación.");return}
+  var s=slotDe(sid);if(!s||estadoSlot(s)){toast("Ese horario ya no está disponible.");return}
+  pend={s:sid,q:q};
+  $("u-txt").innerHTML="Pedís lugar en el <span class=\"eq "+q+"\">"+EQ[q]+"</span> a las <b>"+s.hora+"</b> ("+(sid.charAt(0)==="m"?"turno mañana":"turno tarde")+").";
+  $("u-mail").value="";$("u-nom").value=(function(){try{return localStorage.getItem("jv_nom")||""}catch(e){return""}})();$("u-err").textContent="";
+  $("u-sig").disabled=false;$("ovUnir").classList.remove("hide");setTimeout(function(){($("u-nom").value?$("u-mail"):$("u-nom")).focus()},200);
+}
+$("u-x").onclick=function(){$("ovUnir").classList.add("hide");pend=null};
+$("u-mail").onkeydown=function(e){if(e.key==="Enter")$("u-sig").click()};
+$("u-sig").onclick=async function(){
+  var nn=nombreCheck($("u-nom").value);if(!nn.ok){$("u-err").textContent=nn.msg;return}
+  var c=gmailCheck($("u-mail").value);if(!c.ok){$("u-err").textContent=c.msg;return}
+  var p=pend;if(!p)return;
+  await pedir($("u-err"),$("u-sig"),p.s,p.q,nn.nom,c.mail,null,function(){$("ovUnir").classList.add("hide");pend=null});
+};
+/* crea el pedido (sin ocupar el lugar). inv = código de invitación o null */
+async function pedir(errEl,btn,sid,q,nom,mail,inv,cerrar){
+  var s=slotDe(sid);
+  if(PEND||MIO){errEl.textContent="Ya tenés un lugar o un pedido en este celular.";return}
+  if(!s||estadoSlot(s)){errEl.textContent="Ese horario ya no está disponible. Elegí otro.";return}
+  btn.disabled=true;errEl.textContent="Enviando…";
+  try{
+    try{localStorage.setItem("jv_nom",nom)}catch(x){}
+    var h=await hashMail(mail);
+    if(await baneado(h)){errEl.textContent="No podés anotarte en el juego. Si creés que es un error, hablá con producción.";btn.disabled=false;return}
+    var ya=(await R("h/"+h).once("value")).val();
+    if(ya&&ya!==UID){errEl.textContent="Ese Gmail ya tiene un lugar anotado.";btn.disabled=false;return}
+    if(cuenta((S[sid]||{})[q])>=CAP){errEl.textContent="Ese equipo se completó. Elegí otro lugar.";btn.disabled=false;return}
+    var e=await cifrar(mail),cod=rnd(10),t=now(),o={s:sid,q:q,n:nom,h:h,e:e,u:UID,t:t};
+    if(inv)o.inv=inv;
+    var up={};up["pend/"+cod]=o;up["pu/"+UID]=cod;await R("").update(up);
+    cerrar();toast("Pedido enviado: falta que el stand lo confirme.");
+  }catch(err){errEl.textContent="No se pudo enviar ("+(err&&err.message||"sin conexión")+"). Probá de nuevo.";btn.disabled=false}
+}
+/* escucha mi pedido: cuando el admin lo acepta aparece mi lugar (u/<uid>) y el pedido desaparece */
+var pendRef=null;
+function vigilarPend(){
+  R("pu/"+UID).on("value",function(sn){
+    var cod=sn.val()||"";if(cod===PCOD)return;
+    if(pendRef){pendRef.off();pendRef=null}PCOD=cod;PEND=null;
+    if(!cod){pintar();return}
+    pendRef=R("pend/"+cod);
+    pendRef.on("value",function(x){var v=x.val();
+      if(v){PEND=Object.assign({cod:cod},v)}
+      else{PEND=null;if(PCOD===cod){R("pu/"+UID).remove().catch(function(){});if(MIO)toast("¡Te confirmaron el lugar!")}}
+      pintar()},function(){});
+  });
+}
+function qrSvg(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(unescape(encodeURIComponent(t)));q.make();var n=q.getModuleCount(),m=3,s=n+2*m,p="",x,y;
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
+  return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="QR para confirmar tu lugar"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
+function linkBase(){return location.origin+location.pathname}
+function quitarPend(cod){var up={};up["pend/"+cod]=null;up["pu/"+UID]=null;return R("").update(up)}
+function pintarPend(){
+  var b=$("pend");
+  if(!PEND||MIO){b.classList.add("hide");b.innerHTML="";return}
+  var s=slotDe(PEND.s);if(!s){b.classList.add("hide");return}
+  var tn=PEND.s.charAt(0)==="m"?"Turno mañana":"Turno tarde";
+  if(PEND.st==="no"){
+    b.innerHTML='<h2>No pudimos confirmar tu lugar</h2><p>El stand no confirmó tu pedido de las <b>'+s.hora+'</b> ('+esc(tn)+'). Si querés jugar, acercate al stand o elegí otro horario libre.</p><div class="btns"><button class="btn" type="button" id="pe-ok">Entendido</button></div>';
+    b.classList.remove("hide");$("pe-ok").onclick=function(){quitarPend(PEND.cod)};return}
+  b.innerHTML='<h2>⏳ Todavía no estás anotado</h2>'+
+    '<p>Pediste lugar a las <b>'+s.hora+'</b> ('+esc(tn)+') en el <span class="eq '+PEND.q+'">'+EQ[PEND.q]+'</span> como <b>'+esc(PEND.n||"")+'</b>.</p>'+
+    '<p><b>Esperá: todavía no estás anotado. Acercate al stand y mostrá este QR para confirmar tu lugar.</b></p>'+
+    '<div class="qr">'+qrSvg(linkBase()+"?p="+PEND.cod)+'</div>'+
+    '<small>Este QR es solo tuyo y sirve para este pedido. Cuando el stand lo acepte, esta pantalla cambia sola.</small>'+
+    '<div class="btns" style="margin-top:10px"><button class="btn sec" type="button" id="pe-x">Cancelar mi pedido</button></div>';
+  b.classList.remove("hide");
+  $("pe-x").onclick=function(){quitarPend(PEND.cod).then(function(){toast("Pedido cancelado")}).catch(function(){toast("No se pudo cancelar. Probá de nuevo.")})};
+}
 
 /* ---------- mi participación (QR que da el stand) ---------- */
 var miMsg="";
@@ -426,8 +531,46 @@ async function liberar(){
   MIO=null;pintar();toast("Saliste del juego.");
 }
 
-/* ---------- invitaciones (QR): ya no se usan, la anotación es en el stand ---------- */
-function abrirInvitacion(){stand(null,null)}
+/* ---------- invitar a un compañero (QR único; quien lo escanea pide lugar y el stand lo valida) ---------- */
+function mostrarQR(tok){
+  var url=linkBase()+"?inv="+tok,yo=(MIO&&MIO.n)||"";$("i-qr").innerHTML=qrSvg(url);$("i-link").textContent=url;
+  $("i-msg").innerHTML='"<b>'+esc(yo||"Tu compañero")+'</b> te invitó a que te unas a su equipo"';
+  var sh=$("i-share");if(navigator.share){sh.classList.remove("hide");sh.onclick=function(){navigator.share({title:"Juego en vivo",text:(yo||"Alguien")+" te invitó a que te unas a su equipo en el Juego en vivo",url:url}).catch(function(){})}}else sh.classList.add("hide");
+  $("ovInv").classList.remove("hide");
+}
+$("i-x").onclick=function(){$("ovInv").classList.add("hide")};
+async function invitar(){
+  if(!MIO)return;
+  try{
+    var mine=(await R("tok").orderByChild("by").equalTo(UID).once("value")).val()||{},k;
+    for(k in mine)if(!mine[k].used&&mine[k].s===MIO.s&&mine[k].q===MIO.q){mostrarQR(k);return}
+    var tok=rnd(10);
+    await R("tok/"+tok).set({s:MIO.s,q:MIO.q,by:UID,n:MIO.n||"",exp:0,used:false,hold:null,t:now()});
+    mostrarQR(tok);
+  }catch(e){toast("No se pudo crear la invitación. Probá de nuevo.")}
+}
+var INV=null;
+async function abrirInvitacion(tok){
+  $("ovIn").classList.remove("hide");$("in-form").classList.add("hide");
+  var t=null;try{t=(await R("tok/"+tok).once("value")).val()}catch(e){}
+  if(!t){$("in-t").textContent="Esta invitación no existe";$("in-p").textContent="Revisá el QR o elegí un horario libre.";return}
+  if(t.used){$("in-t").textContent="Esta invitación ya se usó";$("in-p").textContent="Cada QR sirve una sola vez. Podés elegir otro horario libre.";return}
+  if(MIO||PEND){$("in-t").textContent=MIO?"Ya tenés un lugar":"Ya tenés un pedido";$("in-p").textContent=MIO?"Desde este celular ya hay alguien anotado.":"Desde este celular ya pediste un lugar: esperá a que el stand lo confirme.";return}
+  var s=slotDe(t.s);if(!s||estadoSlot(s)){$("in-t").textContent="Ese horario ya no está disponible";$("in-p").textContent="Está suspendido, lleno o ya pasó. Elegí otro horario libre.";return}
+  INV={tok:tok,s:t.s,q:t.q};
+  $("in-t").textContent=t.n?(t.n+" te invitó a que te unas a su equipo"):"¡Te invitaron a jugar!";
+  $("in-p").innerHTML='Jugás a las <b>'+s.hora+'</b> en el <span class="eq '+t.q+'">'+EQ[t.q]+'</span>.';
+  try{$("in-nom").value=localStorage.getItem("jv_nom")||""}catch(e){}
+  $("in-err").textContent="";$("in-ok").disabled=false;$("in-form").classList.remove("hide");setTimeout(function(){$("in-mail").focus()},200);
+}
+$("in-mail").onkeydown=function(e){if(e.key==="Enter")$("in-ok").click()};
+$("in-x").onclick=function(){$("ovIn").classList.add("hide");INV=null;volverComun()};
+$("in-ok").onclick=async function(){
+  var nn=nombreCheck($("in-nom").value);if(!nn.ok){$("in-err").textContent=nn.msg;return}
+  var c=gmailCheck($("in-mail").value);if(!c.ok){$("in-err").textContent=c.msg;return}
+  var I=INV;if(!I)return;
+  await pedir($("in-err"),$("in-ok"),I.s,I.q,nn.nom,c.mail,I.tok,function(){$("ovIn").classList.add("hide");INV=null;volverComun()});
+};
 function volverComun(){try{history.replaceState(null,"",location.pathname)}catch(e){}}
 
 /* ---------- arranque ---------- */
@@ -441,7 +584,8 @@ R("fecha").on("value",function(s){FECHA=s.val()||"";pintar()});
 R("s").on("value",function(s){S=s.val()||{};Sok=true;$("estado").textContent="Los lugares se actualizan solos.";pintar()},
   function(e){$("estado").textContent="No se pueden leer los lugares ("+e.message+")."});
 setInterval(pintar,30000);   // para que vuelvan los lugares guardados que vencen
-var qs=new URLSearchParams(location.search);if(qs.get("inv"))abrirInvitacion(qs.get("inv"));
+var qs=new URLSearchParams(location.search);if(qs.get("inv"))abrirInvitacion(qs.get("inv").replace(/[^a-z0-9]/gi,""));
+vigilarPend();
 cargarMi();
 })();
 </script>

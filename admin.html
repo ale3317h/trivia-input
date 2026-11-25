@@ -288,10 +288,11 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
       <p class="small" style="margin-top:0">Reservas de la página <b>juego.html</b> (Azul vs Rojo, de a dos). Los Gmails se guardan cifrados: poné la clave para verlos y avisarle a cada horario 5 minutos antes.</p>
       <div class="row"><input id="jv-pw" type="password" placeholder="Clave de los mails" autocomplete="off" style="margin:0"><button class="p" onclick="jvUnlock()" style="margin:0">VER MAILS</button></div>
       <div class="small" id="jv-st" style="margin:8px 0"></div>
+      <div id="jv-pend"></div>
       <details style="margin:6px 0 10px"><summary class="small" style="cursor:pointer"><b>Mensaje de los mails</b> (se usa en ✉️ y en Avisar)</summary>
         <textarea id="jv-tpl" rows="4" style="margin-top:8px" oninput="try{localStorage.setItem('jv_tpl',this.value)}catch(e){}"></textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {hora} y {equipo} se completan solos para cada persona.</p></details>
-      <p class="small" style="margin:10px 0">Para anotar a alguien tocá <b>➕ Anotar</b> en el horario que quiere: se abre una ventanita con el apodo y el Gmail.</p>
+      <p class="small" style="margin:10px 0">La gente se anota sola desde <b>juego.html</b>, pero <b>el lugar solo cuenta cuando lo confirmás</b>: te muestran su QR, lo escaneás en la pestaña <b>Escanear</b> y elegís Aceptar o Rechazar (los pedidos también aparecen abajo, en «Pedidos para confirmar»). Para anotar a alguien en el momento tocá <b>➕ Anotar</b> en el horario que quiere.</p>
       <div class="jvs" style="margin:10px 0"><b style="font:800 15px system-ui,sans-serif">📅 Día del juego</b>
         <p class="small" style="margin:4px 0 8px">Con la fecha puesta, la página marca sola «YA PASÓ» cada horario cuando termina. Sin fecha no marca nada solo.</p>
         <div class="row" style="gap:6px"><input id="jv-fe" type="date" style="margin:0"><button class="p" onclick="jvFecha(1)" style="margin:0">GUARDAR</button><button class="g" onclick="jvFecha(0)" style="margin:0">QUITAR</button></div></div>
@@ -1958,7 +1959,7 @@ async function boot(){
   $("mode").textContent=FB.shared()?"Base compartida conectada":"Modo local (sin base)";
   try{caches.keys().then(function(ks){var v=ks.filter(function(k){return /^st3-v/.test(k)})[0];if(v)$("mode").textContent+=" · versión "+v})}catch(e){}
   $("mode").style.color=FB.shared()?"var(--grn)":"var(--red)";
-  loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();
+  loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();jvPendWatch();
   setTimeout(admHydrate,2500);setTimeout(admHydrate,6000);offPaint();
   var qOk=await Promise.race([FB.loadQuestions().then(function(q){lsS("adm_qs",q);return q}),new Promise(function(r){setTimeout(function(){r(null)},4000)})]);
   qs=qOk||lsJ("adm_qs",null)||(window.SEED||[]).map(function(a,i){return{id:"q"+(i+1),q:a[0],ok:a[1],bad:a[2]||[]}});renderQs();
@@ -2166,6 +2167,76 @@ async function jvQR(id,q,k){
   if(!tk){tk=jvRnd(10);var up={};up["cfg/jv/s/"+id+"/"+q+"/"+k+"/tk"]=tk;up["cfg/jv/mi/"+tk]={s:id,q:q,k:k,n:v.n||"",h:v.h||null,t:Date.now()};
     try{await jvWrite(up)}catch(e){alert("No se pudo: "+e.message);return}}
   jvMostrarQR(tk,v.n,id,q)}
+/* ---------- Pedidos de lugar: la persona pide desde juego.html y el lugar solo cuenta si el admin lo acepta ---------- */
+function jvPendWatch(){var d=sdb();if(!d||JV.pw)return;JV.pw=1;JV.pend={};var primera=true;
+  d.ref("cfg/jv/pend").on("value",function(x){var o=x.val()||{},k;
+    if(!primera)for(k in o)if(!JV.pend[k]&&!o[k].st)toast("📩 Nuevo pedido: "+(o[k].n||"alguien")+" · "+(o[k].q==="r"?"Rojo":"Azul")+" "+jvHora(o[k].s||"m0000"));
+    primera=false;JV.pend=o;jvPendRender()},function(){})}
+function jvPendRender(){
+  var box=$("jv-pend");if(!box)return;
+  var ks=Object.keys(JV.pend||{}).filter(function(k){return !JV.pend[k].st}).sort(function(a,b){return (JV.pend[a].t||0)-(JV.pend[b].t||0)});
+  if(!ks.length){box.innerHTML="";return}
+  box.innerHTML='<div class="jvs" style="border-color:#f6d27a88"><div class="jh"><b>📩 Pedidos para confirmar ('+ks.length+')</b></div>'+
+    '<div class="small" style="margin:2px 0 4px">Todavía <b>no están anotados</b>. Escaneá su QR o tocá Revisar.</div>'+
+    ks.map(function(k){var x=JV.pend[k];return '<div class="jvp"><span class="eq '+x.q+'">'+(x.q==="r"?"Rojo":"Azul")+'</span><span class="m"><b>'+esc(x.n||"(sin nombre)")+'</b> · '+jvHora(x.s)+(x.inv?' · invitado':'')+'</span><button class="p" onclick="jvPendAbrir(\''+k+'\')">Revisar</button></div>'}).join("")+'</div>';
+}
+function jvPqCerrar(){var m=$("jv-pq");if(m)m.classList.add("hide");sheetOpen=false;cam.last=""}
+function jvPqMostrar(html){
+  var m=$("jv-pq");if(!m){m=document.createElement("div");m.id="jv-pq";m.className="jvm hide";m.setAttribute("onclick","if(event.target===this)jvPqCerrar()");document.body.appendChild(m)}
+  m.innerHTML='<div class="jvmb" role="dialog" aria-modal="true">'+html+'</div>';m.classList.remove("hide");sheetOpen=true;
+  try{navigator.vibrate&&navigator.vibrate(40)}catch(e){}
+}
+async function jvPendAbrir(cod){
+  if(!jvOnline())return;
+  var d=sdb();if(!d){toast("Sin conexión con la base");return}
+  sheetOpen=true;
+  var v=null,est=null,cupo=0,tok=null,ban=false,ya=false;
+  try{
+    v=(await d.ref("cfg/jv/pend/"+cod).once("value")).val();
+    if(v){est=(await d.ref("cfg/jv/est/"+v.s).once("value")).val();
+      var eq=(await d.ref("cfg/jv/s/"+v.s+"/"+v.q).once("value")).val()||{},t=Date.now(),k;
+      for(k in eq){var w=eq[k];if(w&&(w.st==="ok"||(w.st==="hold"&&w.exp>t)))cupo++}
+      if(v.inv)tok=(await d.ref("cfg/jv/tok/"+v.inv).once("value")).val();
+      ban=!!(await d.ref("cfg/jv/ban/"+v.h).once("value")).val()||!!(await d.ref("cfg/jv/banu/"+v.u).once("value")).val();
+      var hv=(await d.ref("cfg/jv/h/"+v.h).once("value")).val();ya=!!(hv&&hv!==v.u)}
+  }catch(e){jvPqMostrar('<h3>No se pudo leer el pedido</h3><p class="small">'+esc(e.message||"Revisá la conexión")+'</p><button class="g jvgo" type="button" onclick="jvPqCerrar()">Cerrar</button>');return}
+  if(!v){jvPqMostrar('<h3>Este QR ya no sirve</h3><p class="small">El pedido ya se aceptó, la persona lo canceló o no existe.</p><button class="g jvgo" type="button" onclick="jvPqCerrar()">Cerrar</button>');return}
+  if(v.st==="no"){jvPqMostrar('<h3>Este pedido ya se rechazó</h3><p class="small">'+esc(v.n||"La persona")+' vio el aviso de que no se confirmó.</p><button class="g jvgo" type="button" onclick="jvPqCerrar()">Cerrar</button>');return}
+  var turno=v.s.charAt(0)==="m"?"turno mañana":"turno tarde",eqn=v.q==="r"?"Equipo Rojo":"Equipo Azul",bloq="";
+  if(est==="susp")bloq="Ese horario está suspendido.";else if(est==="jug")bloq="Ese horario ya se jugó.";else if(est==="lleno")bloq="Ese horario está marcado como lleno.";
+  else if(cupo>=2)bloq="Ese equipo ya está completo a las "+jvHora(v.s)+" ("+cupo+"/2).";
+  else if(ban)bloq="Esta persona está bloqueada.";else if(ya)bloq="Ese Gmail ya tiene otro lugar anotado.";
+  else if(tok&&tok.used)bloq="La invitación con la que pidió ya se usó.";
+  jvPqMostrar('<h3>¿Querés que <span style="color:#f6d27a">'+esc(v.n||"esta persona")+'</span> participe a las <span style="color:#f6d27a">'+jvHora(v.s)+'</span> en el <span style="color:#f6d27a">'+turno+'</span>?</h3>'+
+    '<p class="small" style="margin:6px 0">'+eqn+' · lugares ocupados: '+cupo+'/2'+(v.inv&&tok?' · invitado por <b>'+esc(tok.n||"un jugador")+'</b>':'')+'</p>'+
+    (bloq?'<p class="small" style="color:#ffb347;font-weight:800">⚠️ '+esc(bloq)+'</p>':'')+
+    '<button class="p jvgo" type="button" id="jv-pq-ok" onclick="jvPendOk(\''+cod+'\')"'+(bloq?' disabled':'')+'>✅ ACEPTAR</button>'+
+    '<button class="r jvgo" type="button" style="margin-top:8px" onclick="jvPendNo(\''+cod+'\')">✖ RECHAZAR</button>'+
+    '<button class="g jvgo" type="button" style="margin-top:8px" onclick="jvPqCerrar()">Cerrar (decidir después)</button>');
+}
+async function jvPendOk(cod){
+  if(!jvOnline())return;var b=$("jv-pq-ok");if(b)b.disabled=true;
+  var d=sdb();
+  try{
+    var v=(await d.ref("cfg/jv/pend/"+cod).once("value")).val();
+    if(!v||v.st){toast("Ese pedido ya no existe");jvPqCerrar();return}
+    var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now();
+    var res=await d.ref("cfg/jv/s/"+v.s+"/"+v.q).transaction(function(cur){
+      cur=cur||{};var n=0,k,w;for(k in cur){w=cur[k];if(!w)continue;if(w.st==="ok"||(w.st==="hold"&&w.exp>t))n++;else delete cur[k]}
+      if(n>=2)return;cur[seat]={st:"ok",u:v.u,t:t,h:v.h,e:v.e,n:v.n,v:1,inv:v.inv||null};return cur});
+    if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(v.s));jvPqCerrar();return}
+    var up={};up["cfg/jv/u/"+v.u]={s:v.s,q:v.q,k:seat,h:v.h,n:v.n};up["cfg/jv/h/"+v.h]=v.u;up["cfg/jv/pend/"+cod]=null;up["cfg/jv/pu/"+v.u]=null;
+    if(v.inv){up["cfg/jv/tok/"+v.inv+"/used"]=true;up["cfg/jv/tok/"+v.inv+"/usedBy"]=v.u}
+    await d.ref().update(up);
+    jvPqCerrar();toast("✅ "+(v.n||"La persona")+" quedó anotado/a a las "+jvHora(v.s)+" en "+(v.q==="r"?"Rojo":"Azul"));
+  }catch(e){if(b)b.disabled=false;alert("No se pudo aceptar: "+e.message)}
+}
+async function jvPendNo(cod){
+  if(!jvOnline())return;
+  try{var d=sdb(),v=(await d.ref("cfg/jv/pend/"+cod).once("value")).val();
+    if(v)await d.ref("cfg/jv/pend/"+cod+"/st").set("no");
+    jvPqCerrar();toast("Pedido rechazado"+(v&&v.n?": "+v.n:""))}catch(e){alert("No se pudo rechazar: "+e.message)}
+}
 /* Avisos de que alguien se bajó (cancelaron desde su celular) */
 function jvBajaWatch(){var d=sdb();if(!d||JV.bw)return;JV.bw=1;JV.baja={};var primera=true;
   d.ref("cfg/jv/baja").on("value",function(x){var o=x.val()||{},k;
@@ -2778,6 +2849,8 @@ async function saRedeem(){
 var CODE=/([2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[A-Z0-9]{4})/;
 function parseQR(t){t=String(t||"").toUpperCase();var m=t.match(/C[ÓO]DIGO:\s*([A-Z0-9-]+)/);if(m&&CODE.test(m[1]))return m[1].match(CODE)[1];m=t.match(CODE);return m?m[1]:null}
 function onScan(t){
+  var pm=String(t).match(/juego\.html\?(?:[^#]*&)?p=([a-z0-9]{10})(?![a-z0-9])/i);   // QR de pedido de lugar (Rojo vs Azul)
+  if(pm){var pk="p:"+pm[1].toLowerCase(),nn=Date.now();if(pk===cam.last&&nn-cam.lastT<3000)return;cam.last=pk;cam.lastT=nn;return jvPendAbrir(pm[1].toLowerCase())}
   var n=Date.now(),code=parseQR(t);
   if(code&&code===cam.last&&n-cam.lastT<3000)return;cam.last=code||String(t).slice(0,30);cam.lastT=n;
   if(!code)return badSheet("QR QUE NO ES DEL JUEGO","Este QR no es un premio de la trivia.");
