@@ -651,13 +651,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <div class="mem">🏆</div>
   <h2>¡Quedaste en una buena posición!</h2>
   <p>¿Podés quedarte en la muestra hasta las <b id="xt-h">11:15</b> para recibir la recompensa?</p>
-  <div class="mbt"><button onclick="xNo()">CANCELAR</button><button class="r" onclick="xYes()">ACEPTAR</button></div>
+  <div class="mbt"><button class="r" onclick="xNo()">CANCELAR</button><button onclick="xYes()">ACEPTAR</button></div>
  </div>
  <div class="mbox warn hide" id="mb-nosure">
   <div class="mem">⚠️</div>
   <h2>¿Estás seguro?</h2>
   <p class="wbig">SI NO PODÉS QUEDARTE, TU RANKING CUENTA SOLO HASTA EL NIVEL DIFÍCIL Y NO PARTICIPÁS POR EL PREMIO ESPECIAL. ¿ACEPTÁS?</p>
-  <div class="mbt"><button onclick="xTop()">CANCELAR</button><button class="r" onclick="moReally()">ACEPTAR</button></div>
+  <div class="mbt"><button class="r" onclick="xTop()">CANCELAR</button><button onclick="moReally()">ACEPTAR</button></div>
  </div>
  <div class="mbox hide" id="mb-ask">
   <div class="mem">📬</div>
@@ -665,14 +665,14 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <p>Colocá tu Gmail para que te avisemos si te llevás un premio por quedar en el top del ranking.</p>
   <input id="mo-in" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="tunombre@gmail.com">
   <div class="mer" id="mo-err" role="alert"></div>
-  <div class="mbt"><button onclick="moReject()">CANCELAR</button><button class="r" id="mo-ok" onclick="moAccept()">ACEPTAR</button></div>
+  <div class="mbt"><button class="r" onclick="moReject()">CANCELAR</button><button id="mo-ok" onclick="moAccept()">ACEPTAR</button></div>
   <small>Lo usamos solo para avisarte de este concurso.</small>
  </div>
  <div class="mbox warn hide" id="mb-warn">
   <div class="mem">⚠️</div>
   <h2>¡ATENCIÓN!</h2>
   <p class="wbig">SI NO PONÉS UN MAIL, TU RANKING CUENTA SOLO HASTA EL NIVEL DIFÍCIL Y NO PARTICIPÁS POR EL PREMIO ESPECIAL. ¿ACEPTÁS?</p>
-  <div class="mbt"><button onclick="moBack()">CANCELAR</button><button class="r" onclick="moReally()">ACEPTAR</button></div>
+  <div class="mbt"><button class="r" onclick="moBack()">CANCELAR</button><button onclick="moReally()">ACEPTAR</button></div>
  </div>
 </div>
 <section id="s-prize" class="hide">
@@ -2571,9 +2571,8 @@ function hardScore(){try{var h=JSON.parse(ls("hard")||"null");if(h&&String(h.gen
 function xPos(sc){var n=0;cache.forEach(function(x){if(!isMe(x)&&x.score>sc)n++});return n+1}   // puesto en el ranking visible de ese momento
 function curScore(){var s=rkClosed()?Math.min(score,cntVal):score;return ls("mailNo")==="1"?Math.min(s,hardScore()):s}
 function xTop(){$("xt-h").textContent=turnoHasta();var x=xGet();if(x&&x.stage!=="top"){x.stage="top";xSet(x)}xShow("mb-top")}
-function xMail(){$("mo-in").value="";$("mo-err").textContent="";$("mo-err").className="mer";$("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},300)}
+function xMail(){$("mo-in").value=ls("mail")||"";$("mo-err").textContent="";$("mo-err").className="mer";$("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},300)}
 function xYes(){
-  if(ls("mail")){moClose("ok");return}                      // ya había dejado su Gmail
   var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()}
 function xNo(){xShow("mb-nosure")}
 var xRes=null;
@@ -2585,7 +2584,7 @@ function xDecide(){return new Promise(function(res){
     x.stage="top";xSet(x)
   }
   xRes=res;
-  if(x.stage==="mail"&&!ls("mail"))xMail();else xTop();
+  if(x.stage==="mail")xMail();else xTop();
 })}
 /* Si alguien se equivocó y dijo que no, la pregunta sigue disponible mientras el ranking esté abierto: vuelve a salir y, si acepta las dos ventanas, recupera todo su puntaje */
 function xRedoPaint(){var on=false;try{on=XFLOW&&!test&&ls("mailNo")==="1"&&!rkClosed()&&hasPlayed()}catch(e){}document.querySelectorAll(".x-redo").forEach(function(e){e.classList.toggle("hide",!on)})}
