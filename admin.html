@@ -1962,7 +1962,7 @@ async function boot(){
   loadCfgUI();loadRank();watchRs();watchPr();watchSa();jvBajaWatch();jvPendWatch();
   setTimeout(admHydrate,2500);setTimeout(admHydrate,6000);offPaint();
   var qOk=await Promise.race([FB.loadQuestions().then(function(q){lsS("adm_qs",q);return q}),new Promise(function(r){setTimeout(function(){r(null)},4000)})]);
-  qs=qOk||lsJ("adm_qs",null)||(window.SEED||[]).map(function(a,i){return{id:"q"+(i+1),q:a[0],ok:a[1],bad:a[2]||[]}});renderQs();
+  qs=qOk||lsJ("adm_qs",null)||(window.SEED||[]).map(function(a,i){return{id:"q"+(i+1),q:a[0],ok:a[1],bad:a[2]||[]}});renderQs();qsWatch();
   FB.watchCfg(function(){loadCfgUI();watchPr();watchRank()});
 }
 
@@ -2068,7 +2068,7 @@ async function jvUnlock(){
     var k=await crypto.subtle.deriveKey({name:"PBKDF2",salt:jvB(JV_PRIV.s),iterations:200000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["decrypt"]);
     var jwk=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:jvB(JV_PRIV.i)},k,jvB(JV_PRIV.c))));
     JV.key=await crypto.subtle.importKey("jwk",jwk,{name:"ECDH",namedCurve:"P-256"},false,["deriveKey"]);
-    $("jv-pw").value="";toast("Mails desbloqueados ✓");jvRender();
+    $("jv-pw").value="";toast("Mails desbloqueados ✓");jvRender();try{mailsDec()}catch(x){}
   }catch(e){toast("Clave incorrecta")}
 }
 async function jvMail(e){
@@ -2207,13 +2207,18 @@ async function jvPendAbrir(cod){
   else if(cupo>=2)bloq="Ese equipo ya está completo a las "+jvHora(v.s)+" ("+cupo+"/2).";
   else if(ban)bloq="Esta persona está bloqueada.";else if(ya)bloq="Ese Gmail ya tiene otro lugar anotado.";
   else if(tok&&tok.used)bloq="La invitación con la que pidió ya se usó.";
+  var mailHtml;
+  if(JV.key){var gm=await jvMail(v.e);mailHtml='<p style="margin:8px 0;font:800 17px system-ui;word-break:break-all;color:#fff">📧 '+esc(gm||"(sin Gmail)")+'</p><p class="small" style="margin:0 0 6px">Revisá que esté bien escrito: es donde le avisamos 5 minutos antes.</p>'}
+  else mailHtml='<p class="small" style="margin:8px 0 4px">📧 Gmail cifrado: poné la clave para verlo y comprobar que sea válido.</p><div class="row" style="gap:6px"><input id="jv-pq-pw" type="password" placeholder="Clave de los mails" autocomplete="off" style="margin:0" data-c="'+cod+'" onkeydown="if(event.key===String.fromCharCode(69,110,116,101,114))jvPqClave(this.dataset.c)"><button class="p" type="button" style="margin:0" data-c="'+cod+'" onclick="jvPqClave(this.dataset.c)">VER MAIL</button></div>';
   jvPqMostrar('<h3>¿Querés que <span style="color:#f6d27a">'+esc(v.n||"esta persona")+'</span> participe a las <span style="color:#f6d27a">'+jvHora(v.s)+'</span> en el <span style="color:#f6d27a">'+turno+'</span>?</h3>'+
     '<p class="small" style="margin:6px 0">'+eqn+' · lugares ocupados: '+cupo+'/2'+(v.inv&&tok?' · invitado por <b>'+esc(tok.n||"un jugador")+'</b>':'')+'</p>'+
+    mailHtml+
     (bloq?'<p class="small" style="color:#ffb347;font-weight:800">⚠️ '+esc(bloq)+'</p>':'')+
     '<button class="p jvgo" type="button" id="jv-pq-ok" onclick="jvPendOk(\''+cod+'\')"'+(bloq?' disabled':'')+'>✅ ACEPTAR</button>'+
     '<button class="r jvgo" type="button" style="margin-top:8px" onclick="jvPendNo(\''+cod+'\')">✖ RECHAZAR</button>'+
     '<button class="g jvgo" type="button" style="margin-top:8px" onclick="jvPqCerrar()">Cerrar (decidir después)</button>');
 }
+async function jvPqClave(cod){var i=$("jv-pq-pw");if(!i||!i.value)return;$("jv-pw").value=i.value;await jvUnlock();if(JV.key)jvPendAbrir(cod)}
 async function jvPendOk(cod){
   if(!jvOnline())return;var b=$("jv-pq-ok");if(b)b.disabled=true;
   var d=sdb();
@@ -2522,12 +2527,17 @@ var MAILS={},mailSel={},mailEd={},mailSent={},mailOff=null,mailErr="",MROWS=[];
 var PREMIO_URL="https://ale3317h.github.io/trivia-input/premio.html";
 function watchMails(){
   var d=sdb();if(!d||mailOff)return;
-  var ref=d.ref("emails"),h=ref.on("value",function(s){var o={};
-    s.forEach(function(c){var v=c.val()||{};if(v.email)o[c.key]=String(v.email)});
-    MAILS=o;mailErr="";renderMails()},
+  var ref=d.ref("cfg/mails"),h=ref.on("value",function(s){MAILENC={};
+    s.forEach(function(c){var v=c.val()||{};if(v.e)MAILENC[c.key]=v.e});
+    mailsDec()},
     function(e){MAILS={};mailErr="No se pueden leer los mails guardados ("+((e&&e.message)||"sin permiso")+"): escribilos a mano.";renderMails()});
   mailOff=function(){ref.off("value",h)};
 }
+var MAILENC={};
+/* los mails llegan cifrados: con la clave de los mails (pestaña Juego → VER MAILS) se descifran acá */
+async function mailsDec(){var o={},k,n=0;
+  for(k in MAILENC){n++;if(JV.key){var m=await jvMail(MAILENC[k]);if(m&&m.indexOf("@")>0)o[k]=m}}
+  MAILS=o;mailErr=(n&&!JV.key)?"Los mails están cifrados: poné la clave de los mails (pestaña Juego → VER MAILS) para verlos.":"";renderMails()}
 function mailOf(uid){return String(mailEd[uid]!=null?mailEd[uid]:(MAILS[uid]||"")).trim()}
 function okMail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)}
 function renderMails(){
@@ -2988,11 +2998,37 @@ function addQ(){
   qs=collect();qs.push({q:"",ok:"",bad:["","","","",""]});renderQs();
   window.scrollTo(0,document.body.scrollHeight);
 }
-function delQ(i){
+/* Guardado automático: lo que se borra o se edita se sube solo a la base (todos los dispositivos lo ven). */
+function qsListas(){return qs.filter(function(x){return x.q&&x.ok&&x.bad&&x.bad.length})}
+var qsAutoT=null,qsBusy=0;
+async function qsGuardarAuto(msg){
+  if(!enLinea()){toast("Sin internet: no se guardó. Tocá GUARDAR PREGUNTAS cuando vuelva la conexión.");return false}
+  qsBusy++;
+  try{await Promise.race([FB.saveQuestions(qsListas()),new Promise(function(_,no){setTimeout(function(){no(new Error("tardó demasiado"))},10000)})]);toast(msg||"Preguntas guardadas ✓");return true}
+  catch(e){alert("No se pudo guardar: "+((e&&e.message)||"sin conexión")+". Tocá GUARDAR PREGUNTAS para reintentar.");return false}
+  finally{setTimeout(function(){qsBusy--},1500)}
+}
+async function delQ(i){
   qs=collect();
   if(!confirm("¿Borrar la pregunta "+(i+1)+"?"))return;
   qs.splice(i,1);renderQs();
+  await qsGuardarAuto("Pregunta borrada y guardada para todos ✓");
 }
+/* al editar un campo se guarda solo (con una pausa corta) */
+document.addEventListener("change",function(e){
+  var t=e.target;if(!t||!t.dataset||!t.dataset.f||!$("qs")||!$("qs").contains(t))return;
+  clearTimeout(qsAutoT);qsAutoT=setTimeout(function(){qsAutoT=null;qs=collect();qsGuardarAuto("Cambio guardado ✓")},700);
+});
+/* si otro dispositivo cambia las preguntas, esta pantalla se actualiza sola (así no pisa lo de los demás) */
+var qsWatching=false;
+function qsWatch(){var d=sdb();if(!d||qsWatching)return;qsWatching=true;
+  d.ref("questions").on("value",function(x){
+    if(qsBusy||qsAutoT)return;var a=document.activeElement;if(a&&$("qs")&&$("qs").contains(a))return;
+    var v=x.val();if(!v)return;
+    var lst=Object.keys(v).sort().map(function(k){var o=v[k]||{};return{id:k,q:o.q||"",ok:o.ok||"",bad:o.bad||[]}}).filter(function(o){return o.q&&o.ok});
+    var mine=JSON.stringify(qsListas().map(function(o){return[o.q,o.ok,o.bad]})),theirs=JSON.stringify(lst.map(function(o){return[o.q,o.ok,o.bad]}));
+    if(mine!==theirs&&lst.length){qs=lst;try{lsS("adm_qs",lst)}catch(e){}renderQs()}
+  },function(){})}
 function restoreQs(){
   if(!confirm("Reemplazar todas las preguntas por las del archivo original (questions.js)?"))return;
   qs=SEED.map(function(a){return{q:a[0],ok:a[1],bad:(a[2]||[]).slice()}});

@@ -671,7 +671,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="xn0"><em>🏆</em><span>Tu premio ya está ganado: lo que pase acá no te lo quita. Ahora competís contra los demás por el <b class="yel">ranking</b>.</span></div>
 <div class="xg">
 <div class="xt" style="--c:#b86bff;--i:0"><div class="xi">🎯</div><div class="xv">6</div><div class="xl"><b>opciones</b> por pregunta</div></div>
-<div class="xt" style="--c:#ffe14d;--i:1"><div class="xi">⏱️</div><div class="xv" id="ex-t">12</div><div class="xl"><b>segundos</b> para responder</div></div>
+<div class="xt" style="--c:#ffe14d;--i:1"><div class="xi">⏱️</div><div class="xv" id="ex-t">15</div><div class="xl"><b>segundos</b> para responder</div></div>
 <div class="xt" style="--c:#ff4d7d;--i:2"><div class="xi">💔</div><div class="xv">1</div><div class="xl"><b>sola vida</b><small>un error y termina</small></div></div>
 <div class="xt" style="--c:#3dff8a;--i:3"><div class="xi">🧠</div><div class="xv" id="ex-n">100</div><div class="xl"><b>preguntas</b> en total<small>seguís desde la <b id="ex-from">17</b></small></div></div>
 </div>
@@ -706,8 +706,21 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
     return function(){ref.off("value",h)}};
   FB.claimPrize=function(gen,id){return db().ref("prizes/"+gen+"/"+id).update({claimed:true,claimedAt:Date.now()})};
   /* Mail de quien jugó el modo experto, para avisarle si gana un premio: emails/<uid> (el admin elige a quién escribirle). */
-  FB.saveMail=function(r){var d=db();if(!d)return Promise.reject(new Error("sin base"));
-    return d.ref("emails/"+r.uid).set({email:r.email,name:r.name,score:r.score|0,gen:r.gen,ts:Date.now()})};
+  /* El Gmail se guarda CIFRADO en cfg/mails/<uid> (solo el admin, con su clave, puede leerlo): las reglas de la base no dejan escribir en emails/. */
+  var MPUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
+  function mb64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
+  async function mCifrar(texto){
+    var pub=await crypto.subtle.importKey("jwk",MPUB,{name:"ECDH",namedCurve:"P-256"},false,[]);
+    var eph=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]);
+    var k=await crypto.subtle.deriveKey({name:"ECDH",public:pub},eph.privateKey,{name:"AES-GCM",length:256},false,["encrypt"]);
+    var iv=crypto.getRandomValues(new Uint8Array(12));
+    var c=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(texto));
+    var j=await crypto.subtle.exportKey("jwk",eph.publicKey);
+    return{x:j.x,y:j.y,i:mb64(iv),c:mb64(c)};
+  }
+  FB.saveMail=async function(r){var d=db();if(!d)throw new Error("sin base");
+    var e=await mCifrar(r.email);
+    return d.ref("cfg/mails/"+r.uid).set({e:e,name:String(r.name||"").slice(0,20),score:r.score|0,gen:r.gen||0,ts:Date.now()})};
 })();
 </script>
 <script>
@@ -2300,7 +2313,7 @@ var fitT=null;
 window.addEventListener("resize",function(){clearTimeout(fitT);fitT=setTimeout(function(){if(!$("s-game").classList.contains("hide"))fitExp()},200)});
 function ask(){
   var d=order[qi],l=lvOf(cq),L=LV[l],n=L[3];locked=false;tictacPlayed=false;$("next").disabled=true;$("next").classList.add("off");$("next").textContent="SIGUIENTE →";
-  TT=(l===3)?Math.max(3000,T-3000):T; // experto: 3 segundos menos
+  TT=(l===3)?15000:T; // experto: 15 segundos fijos
   // Al entrar al nivel EXPERTO (pregunta 17) queda 1 sola vida.
   if(l===3&&!expertHp){expertHp=true;if(hp>1)hp=1}
   var g=$("s-game");g.style.setProperty("--lc",L[4]);g.style.setProperty("--lg",L[4]+"88");
@@ -2376,7 +2389,7 @@ async function showPrize(){
 }
 function prizeExit(){go()}
 function expIntro(){
-  $("ex-t").textContent=Math.round(Math.max(3000,T-3000)/1000);$("ex-n").textContent=order.length;$("ex-from").textContent=cq+1;
+  $("ex-t").textContent=15;$("ex-n").textContent=order.length;$("ex-from").textContent=cq+1;
   show("s-exp");
 }
 function prizeGo(){expIntro()}
