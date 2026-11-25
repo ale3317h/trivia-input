@@ -2141,7 +2141,8 @@ async function init(){
   D=await FB.loadQuestions();
   cache=await getList();loaded=true;renderStart();
   var _cfgT=0;FB.watchCfg(function(){clearTimeout(_cfgT);_cfgT=setTimeout(function(){applyCfg();playerReset();reqSync();renderStart()},800)});   // varios cambios seguidos de la config = un solo repintado
-  FB.watchScores(function(l){cache=l;loaded=true;repaint()});
+  var _rpT=0;function repaintSoon(){if(_rpT)return;_rpT=setTimeout(function(){_rpT=0;repaint()},400)}   // muchos puntajes que cambian juntos = un solo repintado (sin trabas)
+  FB.watchScores(function(l){cache=l;loaded=true;repaintSoon()});
   if(xGet())xDecide().then(function(){go()});   // recargó en medio de la ventana del Gmail: vuelve a salir hasta que acepte o rechace
 }
 /* El Excel manda en lo que lleva cada premio */
@@ -2512,14 +2513,14 @@ var xRes=null;
 function xDecide(){return new Promise(function(res){
   var x=xGet();if(!x||test){res("ya");return}
   if(x.stage==="calc"){
-    if(xPos(x.score)>3){xSet(null);res("fuera");return}       // fuera del top 3: no se muestra nada
+    if(xPos(x.score)>3){xSet(null);try{FB.setXw(FB.uid(),false).catch(function(){})}catch(e){}res("fuera");return}       // fuera del top 3: no se muestra nada y no queda en espera
     x.stage="top";xSet(x)
   }
   xRes=res;
   if(x.stage==="mail"&&!ls("mail"))xMail();else xTop();
 })}
 function moClose(r){
-  var hs=hardScore();$("mail-ov").classList.add("hide");xSet(null);
+  var hs=hardScore();$("mail-ov").classList.add("hide");xSet(null);try{FB.setXw(FB.uid(),false).catch(function(){})}catch(e){}   // ya respondió: sale de «en espera"
   if(r==="no"){ls("mailNo","1");try{FB.setXs(FB.uid(),hs).catch(function(){})}catch(e){}}
   var f=xRes;xRes=null;if(f)f(r)}
 function moAccept(){
@@ -2570,7 +2571,7 @@ async function end(win){
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
   var expertEnd=(win||lvOf(cq)===3)&&!test;
-  if(expertEnd)xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});   // queda guardado ya: si recarga, la ventana vuelve a salir
+  if(expertEnd){xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
   show("s-end");countTo($("st-pts"),score,true);
   await saveScore(true);await refresh();
   var m=merged();

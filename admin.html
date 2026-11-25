@@ -2220,26 +2220,46 @@ async function jvPendAbrir(cod){
 }
 async function jvPqClave(cod){var i=$("jv-pq-pw");if(!i||!i.value)return;$("jv-pw").value=i.value;await jvUnlock();if(JV.key)jvPendAbrir(cod)}
 async function jvPendOk(cod){
-  if(!jvOnline())return;var b=$("jv-pq-ok");if(b)b.disabled=true;
-  var d=sdb();
+  if(!jvOnline())return;var bt=$("jv-pq-ok");if(bt)bt.disabled=true;
+  var d=sdb(),claimed=false,hNuevo=false,v=null;
+  var suelta=async function(msg){   // algo no cuadra: el pedido vuelve a quedar pendiente y se avisa
+    try{if(claimed)await d.ref("cfg/jv/pend/"+cod+"/st").remove();if(hNuevo&&v)await d.ref("cfg/jv/h/"+v.h).remove()}catch(e){}
+    if(bt)bt.disabled=false;if(msg)toast(msg);jvPqCerrar()};
   try{
-    var v=(await d.ref("cfg/jv/pend/"+cod).once("value")).val();
-    if(!v||v.st){toast("Ese pedido ya no existe");jvPqCerrar();return}
+    // 1) un solo admin a la vez: el pedido se "reserva" (si otro admin lo está aceptando o ya lo atendió, se frena acá)
+    var cl=await d.ref("cfg/jv/pend/"+cod).transaction(function(cur){if(cur===null)return null;if(cur.st)return;cur.st="acc";return cur});   // (con null devuelve null: Firebase reintenta con el dato real)
+    v=cl.snapshot&&cl.snapshot.val();
+    if(!cl.committed||!v||v.st!=="acc"){toast("Ese pedido ya no existe o ya lo atendió otro admin");jvPqCerrar();return}
+    claimed=true;
+    // 2) comprobaciones (por si cambió algo desde que se abrió el cartel)
+    var est=(await d.ref("cfg/jv/est/"+v.s).once("value")).val();
+    if(est==="susp"||est==="jug"||est==="lleno"){await suelta("Ese horario está "+(est==="susp"?"suspendido":est==="jug"?"jugado":"marcado como lleno"));return}
+    if((await d.ref("cfg/jv/ban/"+v.h).once("value")).val()||(await d.ref("cfg/jv/banu/"+v.u).once("value")).val()){await suelta("Esta persona está bloqueada");return}
+    if(v.inv){var tk=(await d.ref("cfg/jv/tok/"+v.inv).once("value")).val();if(tk&&tk.used){await suelta("La invitación con la que pidió ya se usó");return}}
+    // 3) un Gmail, un lugar (se reserva el Gmail de forma atómica)
+    var hPrev=(await d.ref("cfg/jv/h/"+v.h).once("value")).val();
+    var hr=await d.ref("cfg/jv/h/"+v.h).transaction(function(cur){if(cur&&cur!==v.u)return;return v.u});
+    if(!hr.committed){await suelta("Ese Gmail ya tiene otro lugar anotado");return}
+    hNuevo=(hPrev!==v.u);
+    // 4) el lugar (máximo 2 por equipo)
     var seat="p"+Math.random().toString(36).slice(2,9),t=Date.now();
     var res=await d.ref("cfg/jv/s/"+v.s+"/"+v.q).transaction(function(cur){
       cur=cur||{};var n=0,k,w;for(k in cur){w=cur[k];if(!w)continue;if(w.st==="ok"||(w.st==="hold"&&w.exp>t))n++;else delete cur[k]}
       if(n>=2)return;cur[seat]={st:"ok",u:v.u,t:t,h:v.h,e:v.e,n:v.n,v:1,inv:v.inv||null};return cur});
-    if(!res.committed){toast("Ese equipo ya está completo a las "+jvHora(v.s));jvPqCerrar();return}
-    var up={};up["cfg/jv/u/"+v.u]={s:v.s,q:v.q,k:seat,h:v.h,n:v.n};up["cfg/jv/h/"+v.h]=v.u;up["cfg/jv/pend/"+cod]=null;up["cfg/jv/pu/"+v.u]=null;
+    if(!res.committed){await suelta("Ese equipo ya está completo a las "+jvHora(v.s));return}
+    var up={};up["cfg/jv/u/"+v.u]={s:v.s,q:v.q,k:seat,h:v.h,n:v.n};up["cfg/jv/pend/"+cod]=null;up["cfg/jv/pu/"+v.u]=null;
     if(v.inv){up["cfg/jv/tok/"+v.inv+"/used"]=true;up["cfg/jv/tok/"+v.inv+"/usedBy"]=v.u}
     await d.ref().update(up);
+    claimed=false;hNuevo=false;
     jvPqCerrar();toast("✅ "+(v.n||"La persona")+" quedó anotado/a a las "+jvHora(v.s)+" en "+(v.q==="r"?"Rojo":"Azul"));
-  }catch(e){if(b)b.disabled=false;alert("No se pudo aceptar: "+e.message)}
+  }catch(e){try{await suelta("")}catch(x){}alert("No se pudo aceptar: "+e.message)}
 }
 async function jvPendNo(cod){
   if(!jvOnline())return;
-  try{var d=sdb(),v=(await d.ref("cfg/jv/pend/"+cod).once("value")).val();
-    if(v)await d.ref("cfg/jv/pend/"+cod+"/st").set("no");
+  try{var d=sdb();
+    var r=await d.ref("cfg/jv/pend/"+cod).transaction(function(cur){if(cur===null)return null;if(cur.st)return;cur.st="no";return cur});   // si otro admin lo está aceptando, no se pisa
+    var v=r.snapshot&&r.snapshot.val();
+    if(!r.committed||!v||v.st!=="no"){toast("Ese pedido ya lo atendió otro admin o ya no existe");jvPqCerrar();return}
     jvPqCerrar();toast("Pedido rechazado"+(v&&v.n?": "+v.n:""))}catch(e){alert("No se pudo rechazar: "+e.message)}
 }
 /* Avisos de que alguien se bajó (cancelaron desde su celular) */
