@@ -590,7 +590,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <button class="hide" id="contbtn" onclick="resume()">CONTINUAR PARA AVANZAR EN EL RANKING →</button>
 <div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="start()">JUGAR →</button><small id="err" class="red"></small></div>
 <button class="p" id="home-rk" onclick="showRank()">VER RANKING</button>
-<button class="p hide x-redo" onclick="xRedo()">🔄 CAMBIÉ DE IDEA: QUIERO QUEDARME HASTA EL CIERRE</button>
+<div class="x-redo xr hide"></div>
 <div id="rk-cut" class="c hide" style="margin:10px 0"></div>
 <div id="rankpub"><h2>TOP 3</h2><div class="pod" id="pod"></div>
 <h2>TOP 10</h2><div class="card"><div id="tb" class="scr"></div></div><div id="rkst" class="c"></div></div>
@@ -634,7 +634,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="endh" id="end-c"><div class="big" id="end-t"></div><p id="end-pz"></p><div class="hide" id="end-badge"></div></div>
 <div class="card y c qrc hide" id="end-qr"></div>
 <div class="card" id="end-d"><div class="stats"><div class="st" style="--c:#ffe14d"><small>PUNTOS</small><b id="st-pts">0</b></div><div class="st" style="--c:#b86bff"><small>PREGUNTA</small><b id="st-q">0</b></div><div class="st" id="st-pc" style="--c:#3dff8a"><small>POSICIÓN</small><b id="st-pos">–</b></div></div>
-<p class="hide" id="end-p"></p><button class="p hide x-redo" onclick="xRedo()">🔄 CAMBIÉ DE IDEA: QUIERO QUEDARME HASTA EL CIERRE</button><div id="rk-cut2" class="c hide" style="margin:10px 0"></div></div>
+<p class="hide" id="end-p"></p><div class="x-redo xr hide"></div><div id="rk-cut2" class="c hide" style="margin:10px 0"></div></div>
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
 <button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button>
@@ -2587,7 +2587,11 @@ function xDecide(){return new Promise(function(res){
   if(x.stage==="mail")xMail();else xTop();
 })}
 /* Si alguien se equivocó y dijo que no, la pregunta sigue disponible mientras el ranking esté abierto: vuelve a salir y, si acepta las dos ventanas, recupera todo su puntaje */
-function xRedoPaint(){var on=false;try{on=XFLOW&&!test&&ls("mailNo")==="1"&&!rkClosed()&&hasPlayed()}catch(e){}document.querySelectorAll(".x-redo").forEach(function(e){e.classList.toggle("hide",!on)})}
+(function(){var s=document.createElement("style");s.textContent=".xr{margin:12px 0;padding:14px;border-radius:18px;border:2px solid #2ee6c5;background:linear-gradient(160deg,#2ee6c524,#0000 70%),#0d1d22;text-align:center}.xr .xi{font-size:38px;line-height:1}.xr b{display:block;font:800 18px/1.15 system-ui,sans-serif;color:#2ee6c5;margin:6px 0 4px}.xr span{display:block;font:600 13px/1.35 system-ui,sans-serif;color:#cfeee8;margin-bottom:12px}.xr button{width:100%;margin:0;border:0;border-radius:14px;padding:13px;font:900 16px system-ui,sans-serif;letter-spacing:.06em;color:#04201b;background:linear-gradient(180deg,#5cf5dc,#1fc9ab);box-shadow:0 4px 0 #0f7f6c}";document.head.appendChild(s)})();
+function xRedoPaint(){var on=false;try{on=XFLOW&&!test&&ls("mailNo")==="1"&&!rkClosed()&&hasPlayed()}catch(e){}
+  document.querySelectorAll(".x-redo").forEach(function(e){
+    if(on&&!e.firstChild)e.innerHTML='<div class="xi">🙋</div><b>¿Te arrepentiste?</b><span>Podés quedarte hasta las '+turnoHasta()+' y recuperar tu puntaje completo en el ranking.</span><button onclick="xRedo()">SÍ, ME QUEDO</button>';
+    e.classList.toggle("hide",!on)})}
 setInterval(xRedoPaint,5000);
 function xRedo(){
   if(rkClosed()){xRedoPaint();return}
