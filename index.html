@@ -704,7 +704,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script>window.FB_IDLE_MS=180000;</script>
-<script src="fb.js?v=22"></script>
+<script src="fb.js?v=23"></script>
 <script src="sheet-config.js?v=1"></script>
 <script>window.ST3_POLL_MS=120000;window.ST3_ONLY_ACTIVE=true;window.ST3_RULETA_TAB=null;</script>
 <script src="sheet.js?v=6"></script>
@@ -2133,19 +2133,21 @@ function repaint(){
 }
 function mineIdx(){if(!cache)return-1;for(var i=0;i<cache.length;i++)if(isMe(cache[i]))return i;return-1}
 (function(){var s=document.createElement("style");s.textContent=
+".pod{gap:10px;align-items:flex-end}"+
 ".tw{--c:#ffd23f}.tw.k2{--c:#5ee7ff}.tw.k3{--c:#ff7eb6}"+
-".tn{font-size:1rem}.ts{color:var(--c);font-weight:700}"+
-".bl{background:linear-gradient(180deg,color-mix(in srgb,var(--c) 38%,#1a1030),color-mix(in srgb,var(--c) 10%,#120a22));border:1.5px solid color-mix(in srgb,var(--c) 70%,transparent);border-bottom:0;font-size:1.7rem}"+
+".tw .pm{font-size:34px;line-height:1;margin-bottom:4px}.tw.k1 .pm{font-size:44px}"+
+".tn{font-size:1rem;color:var(--c);text-shadow:none}.ts{color:var(--c);font-weight:800;opacity:1;margin-bottom:8px}"+
+".bl{background:linear-gradient(180deg,var(--c),color-mix(in srgb,var(--c) 35%,#140b26));border:0;border-radius:14px 14px 0 0;padding:0;box-shadow:none}"+
+".tw.vac .pm{opacity:.35;filter:grayscale(1)}.tw.vac .tn{color:var(--mut)}.tw.vac .bl{background:#ffffff12}"+
 "table{border-spacing:0 6px}"+
 "th{color:#9fb4ff}"+
 "td{background:#ffffff0d}td:first-child{border-left:3px solid #b86bff}"+
 "td:nth-child(3){color:#b86bff;font-weight:700}td:last-child{color:#5ee7ff;font-weight:800}"+
-"tr:has(.n1) td{background:#ffd23f14}tr:has(.n1) td:first-child{border-left-color:#ffd23f}"+
-"tr:has(.n2) td{background:#5ee7ff12}tr:has(.n2) td:first-child{border-left-color:#5ee7ff}"+
-"tr:has(.n3) td{background:#ff7eb612}tr:has(.n3) td:first-child{border-left-color:#ff7eb6}"+
-"td.n1{color:#ffd23f}td.n2{color:#5ee7ff}td.n3{color:#ff7eb6}"+
+"tr:has(.n1) td{background:#ffd23f17;color:#ffd23f}tr:has(.n1) td:first-child{border-left-color:#ffd23f}"+
+"tr:has(.n2) td{background:#5ee7ff14;color:#5ee7ff}tr:has(.n2) td:first-child{border-left-color:#5ee7ff}"+
+"tr:has(.n3) td{background:#ff7eb614;color:#ff7eb6}tr:has(.n3) td:first-child{border-left-color:#ff7eb6}"+
 "td.rk{font-size:1.15rem}"+
-"tr.me td{background:#3dff8a14}tr.me td:first-child{border-left-color:#3dff8a}tr.me td.nm{color:#3dff8a}";
+"tr.me:not(:has(.n1)):not(:has(.n2)):not(:has(.n3)) td{background:#3dff8a14}tr.me:not(:has(.n1)):not(:has(.n2)):not(:has(.n3)) td:first-child{border-left-color:#3dff8a}tr.me:not(:has(.n1)):not(:has(.n2)):not(:has(.n3)) td.nm{color:#3dff8a}";
 document.head.appendChild(s)})();
 function tbl(el){
   if(!loaded){$(el).textContent="Cargando ranking…";return}
@@ -2164,8 +2166,8 @@ function tbl(el){
 function podium(id){
   id=id||"pod";
   if(!loaded){$(id).innerHTML="<div class='ts' style='flex:1'>Cargando ranking…</div>";return}
-  var h=[100,74,54],s="";
-  [1,0,2].forEach(function(k){var r=cache[k];s+="<div class='tw k"+(k+1)+"'><div class='tn"+(r?"":" empty")+"'>"+(r?esc(r.name):"—")+"</div><div class='ts'>"+(r?r.score+" pts":"")+"</div><div class='bl' style='height:"+h[k]+"px'>"+(k+1)+"</div></div>"});
+  var h=[78,56,40],s="";
+  [1,0,2].forEach(function(k){var r=cache[k];s+="<div class='tw k"+(k+1)+(r?"":" vac")+"'><div class='pm'>"+["🥇","🥈","🥉"][k]+"</div><div class='tn"+(r?"":" empty")+"'>"+(r?esc(r.name):"Libre")+"</div><div class='ts'>"+(r?Number(r.score||0).toLocaleString("es-AR")+" pts":"&nbsp;")+"</div><div class='bl' style='height:"+h[k]+"px'></div></div>"});
   var e=$(id);e.innerHTML=s;
   if(!e.dataset.a){e.dataset.a="1";e.classList.add("first");setTimeout(function(){e.classList.remove("first")},1500)}
 }
@@ -2505,7 +2507,7 @@ function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><
 /* Premio ya reclamado en el stand: en lugar del QR sale la pantalla de «premio reclamado» con su puesto en el ranking */
 var myClaimed=false,claimOff=null,claimKey="";
 function claimBind(){
-  var r=qrGet();if(!r||test||!FB.shared())return;var k=r.gen+"/"+r.id;if(k===claimKey)return;
+  var r=qrGet();if(!r||test||!FB.shared()||!FB.watchPrize)return;var k=r.gen+"/"+r.id;if(k===claimKey)return;
   if(claimOff)try{claimOff()}catch(e){}claimKey=k;
   claimOff=FB.watchPrize(r.gen,r.id,function(c){var ch=c!==myClaimed;myClaimed=c;if(ch){claimPaint();if(c)try{confetti()}catch(e){}}});
 }
