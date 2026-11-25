@@ -31,8 +31,7 @@ body{display:flex;align-items:flex-start;justify-content:flex-end;padding:20px}
  border:1px solid color-mix(in srgb,var(--c) 35%,transparent);border-top:2px solid var(--c);border-bottom:0;border-radius:8px 8px 0 0;
  box-shadow:0 -4px 14px -5px var(--c),inset 0 8px 14px -10px var(--c);
  transition:height .9s var(--ease)}
-.b1 .step{height:132px;box-shadow:0 -6px 22px -5px var(--c),inset 0 10px 18px -10px var(--c)}
-.b2 .step{height:90px}.b3 .step{height:66px}
+.b1 .step{box-shadow:0 -6px 22px -5px var(--c),inset 0 10px 18px -10px var(--c)}
 /* tabular-nums: cada dígito ocupa el mismo ancho, así el «1» queda centrado */
 .p{font:600 32px/1 var(--num);font-variant-numeric:tabular-nums;text-align:center;color:var(--c);
  text-shadow:0 0 10px color-mix(in srgb,var(--c) 65%,transparent)}
@@ -57,6 +56,7 @@ body:not(.ready) .step{height:0!important}
 <script src="fb.js?v=23"></script>
 <script>
 var cur=[],gen=null,fresh={},slots=[],lastUid=[];
+var HMIN=66,HMAX=156;
 var fmt=new Intl.NumberFormat("es-AR");
 function $(i){return document.getElementById(i)}
 // Nombres largos se cortan a mano (sin overflow:hidden, que recorta la sombra en forma de caja).
@@ -77,6 +77,11 @@ function paint(){
     e.className="col b"+(i+1)+(r?"":" empty")+(r&&fresh[uid]?" fresh":"")+(r&&lastUid[i]&&lastUid[i]!==uid?" swap":"");
     e.querySelector(".n").textContent=r?corto(r.name):"—";
     e.querySelector(".s").textContent=r?fmt.format(r.score)+" pts":"—";
+    // Alto del escalón: mínimo fijo (siempre entra el número) y crece según el puntaje
+    // respecto al líder, sin ser estricto (r^0.6) para que el 2° y el 3° no queden diminutos.
+    var top=list[0]?Math.max(1,list[0].score):1,ratio=r?Math.min(1,Math.max(0,r.score)/top):0;
+    var h=i===0?HMAX:Math.round(HMIN+(HMAX-18-HMIN)*Math.pow(ratio,.6));
+    e.querySelector(".step").style.height=(i===0&&!r?HMIN+30:h)+"px";
     lastUid[i]=uid;
   });
   fresh={};
