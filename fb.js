@@ -39,7 +39,8 @@ var FB = (function () {
       stk: (v.stk && typeof v.stk === "object") ? v.stk : {},   // stock en vivo por turno: stk/<turno>/<premio>/{n, used/<código>}
       turno: v.turno === "tarde" ? "tarde" : "manana",   // turno activo (lo elige producción en el admin): decide qué hoja en vivo manda
       px: (v.px && typeof v.px === "object") ? v.px : {},   // personas que producción reinició: uid -> hora
-      pv: (v.pv && typeof v.pv === "object") ? v.pv : {}    // premios/QR anulados: id -> hora
+      pv: (v.pv && typeof v.pv === "object") ? v.pv : {},   // premios/QR anulados: id -> hora
+      xs: (v.xs && typeof v.xs === "object") ? v.xs : {}    // quien rechazó el aviso al terminar el modo experto: uid -> puntos que tenía al ganar el nivel difícil (su ranking llega hasta ahí)
     };
   }
 
@@ -158,7 +159,9 @@ var FB = (function () {
       if (cfg.px && cfg.px[c.key]) return;   // reiniciada por producción
       if (pend[c.key]) return;               // su QR todavía no fue validado en el stand
       var v = c.val() || {};
-      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: v.score | 0, lvl: v.lvl || 1, ts: v.ts || 0 });
+      var sc = v.score | 0, lv = v.lvl || 1;
+      if (cfg.xs && cfg.xs[c.key] != null) { sc = Math.min(sc, cfg.xs[c.key] | 0); lv = Math.min(lv, 3); }   // rechazó seguir: cuenta solo hasta el nivel difícil
+      out.push({ id: c.key, uid: c.key, name: v.name || "?", score: sc, lvl: lv, ts: v.ts || 0 });
     });
     out.sort(function (a, b) { return b.score - a.score || a.ts - b.ts; });
     return out;
@@ -182,6 +185,7 @@ var FB = (function () {
       var last = null;
       query(c.gen).on("value", function (s) { last = s; cb(fromSnap(s)); }, function (e) { lastError = e.message; });
       db.ref("cfg/px").on("value", function (s) { cfg.px = s.val() || {}; if (last) cb(fromSnap(last)); });
+      db.ref("cfg/xs").on("value", function (s) { cfg.xs = s.val() || {}; if (last) cb(fromSnap(last)); });
       db.ref("prizes/" + c.gen).on("value", function (s) { calcPend(s); if (last) cb(fromSnap(last)); });
     });
   }
@@ -211,6 +215,7 @@ var FB = (function () {
     cfg: function () { return cfg; },
     loadQuestions: loadQuestions,
     saveQuestions: saveQuestions,
+    setXs: function (u, pts) { cfg.xs = cfg.xs || {}; cfg.xs[u] = pts | 0; return db ? db.ref("cfg/xs/" + u).set(pts | 0) : Promise.resolve(); },
     listScores: listScores,
     watchScores: watchScores,
     saveScore: saveScore,

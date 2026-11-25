@@ -448,7 +448,7 @@ button{font-weight:800}
 .mov{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:#07030ed9;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);overflow:auto}
 .mbox{width:100%;max-width:420px;text-align:center;background:var(--card);border:2px solid #ffe14d;border-radius:24px;padding:22px 18px;box-shadow:0 0 36px -6px #ffe14d99}
 .mbox .mem{font-size:3rem;line-height:1}
-.mbox h2{font:900 1.35rem/1.15 var(--disp);margin:8px 0 6px;color:#fff;letter-spacing:.02em}
+.mbox h2{font:900 1.35rem/1.15 var(--disp);margin:8px 0 6px;color:#fff;letter-spacing:.02em;display:block;text-align:center}.mbox h2::after{display:none}
 .mbox p{margin:0 0 6px;color:var(--mut);font-size:1rem}
 .mbox input{margin:12px 0 6px;text-align:center}
 .mbox .mer{min-height:1.2em;margin:2px 0 8px;font-weight:700;color:var(--red);font-size:.95rem}
@@ -645,7 +645,19 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <small class="mut" style="display:block;margin-top:6px">Lo usamos solo para avisarte de este concurso.</small></div>
 </section>
 <div class="mov hide" id="mail-ov" role="dialog" aria-modal="true" aria-labelledby="mo-t">
- <div class="mbox" id="mb-ask">
+ <div class="mbox hide" id="mb-top">
+  <div class="mem">🏆</div>
+  <h2>¡Quedaste en una buena posición!</h2>
+  <p>¿Podés quedarte en la muestra hasta las <b id="xt-h">11:15</b> para recibir la recompensa?</p>
+  <div class="mbt"><button onclick="xYes()">SÍ</button><button class="r" onclick="xNo()">NO</button></div>
+ </div>
+ <div class="mbox warn hide" id="mb-nosure">
+  <div class="mem">⚠️</div>
+  <h2>¿Estás seguro?</h2>
+  <p class="wbig">SI LO RECHAZÁS, NO VAS A APARECER EN EL RANKING Y NO VAS A PODER RECIBIR EL PREMIO ESPECIAL.</p>
+  <div class="mbt"><button onclick="xYes()">ACEPTAR</button><button class="r" onclick="xTop()">VOLVER</button></div>
+ </div>
+ <div class="mbox hide" id="mb-ask">
   <div class="mem">📬</div>
   <h2 id="mo-t">¿Querés que te avisemos si ganás?</h2>
   <p>Colocá tu Gmail para que te avisemos si te llevás un premio por quedar en el top del ranking.</p>
@@ -657,8 +669,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
  <div class="mbox warn hide" id="mb-warn">
   <div class="mem">⚠️</div>
   <h2>¡ATENCIÓN!</h2>
-  <p class="wbig">SI RECHAZÁS, NO PODREMOS AVISARTE SI GANÁS EL PREMIO.</p>
-  <div class="mbt"><button onclick="moBack()">PONER MI GMAIL</button><button class="r" onclick="moReally()">RECHAZAR IGUAL</button></div>
+  <p class="wbig">SI NO PONÉS UN MAIL, NO VAS A APARECER EN EL RANKING Y NO VAS A PODER RECIBIR EL PREMIO ESPECIAL.</p>
+  <div class="mbt"><button onclick="moBack()">CANCELAR</button><button class="r" onclick="moReally()">CONFIRMAR</button></div>
  </div>
 </div>
 <section id="s-prize" class="hide">
@@ -2130,6 +2142,7 @@ async function init(){
   cache=await getList();loaded=true;renderStart();
   var _cfgT=0;FB.watchCfg(function(){clearTimeout(_cfgT);_cfgT=setTimeout(function(){applyCfg();playerReset();reqSync();renderStart()},800)});   // varios cambios seguidos de la config = un solo repintado
   FB.watchScores(function(l){cache=l;loaded=true;repaint()});
+  if(xGet())xDecide().then(function(){go()});   // recargó en medio de la ventana del Gmail: vuelve a salir hasta que acepte o rechace
 }
 /* El Excel manda en lo que lleva cada premio */
 function planSheet(){}
@@ -2144,7 +2157,7 @@ function playerReset(){
   try{
     var q=JSON.parse(ls("qr")||"null");
     if(q&&pv[q.id]){localStorage.removeItem("qr");ls("qrv",q.id);ch=true}          // premio/QR anulado
-    if(px[FB.uid()]){["played","cont","trivia_uid","qrv"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
+    if(px[FB.uid()]){["played","cont","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
   }catch(e){}
   if(!ch)return;
   if(!$("s-end").classList.contains("hide")||!$("s-rank").classList.contains("hide"))go();else renderStart();
@@ -2179,7 +2192,7 @@ async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i
 /* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
 function pdteMe(){return !test&&!!qrGet()&&!FB.isClaimed(FB.uid())}
 function merged(){
-  var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:score,id:"cur"});
+  var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:curScore(),id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
   return{l:l,p:l.findIndex(function(x){return x.id==="cur"})};
 }
@@ -2377,7 +2390,7 @@ function hasCont(){
   try{var c=JSON.parse(ls("cont")||"null");return !!(c&&String(c.gen)===String(FB.cfg().gen))}catch(e){return false}
 }
 async function showPrize(){
-  stopT();contSave();
+  stopT();contSave();if(!test)ls("hard",JSON.stringify({gen:FB.cfg().gen,score:score}));
   try{await Promise.race([ST3Sheet.load(),new Promise(function(r){setTimeout(r,2500)})])}catch(e){}
   var li=efLi(3),ok=!!QPZ[li];
   $("pz-em").textContent=ok?"🏆":"😢";$("pz-t").textContent=ok?"¡FELICIDADES!":"LO SIENTO";$("pz-t").className="big "+(ok?"yel":"red");
@@ -2476,16 +2489,39 @@ function gmailCheck(raw){
     return{ok:false,msg:"Ese Gmail parece inventado. Escribí el tuyo."};
   return{ok:true,mail:v};
 }
-function mailGate(){
-  if(test||ls("mail"))return Promise.resolve("ya");
-  return new Promise(function(res){
-    moRes=res;$("mo-in").value="";$("mo-err").textContent="";$("mo-err").className="mer";
-    $("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";
-    $("mb-ask").classList.remove("hide");$("mb-warn").classList.add("hide");$("mail-ov").classList.remove("hide");
-    setTimeout(function(){try{$("mo-in").focus()}catch(e){}},350);
-  });
-}
-function moClose(r){$("mail-ov").classList.add("hide");var f=moRes;moRes=null;if(f)f(r)}
+/* ===== Final del modo experto (sobrevive a recargar la página) =====
+   Solo si terminó el experto Y quedó en el top 3 del ranking de ese momento:
+   1) «¿podés quedarte hasta las 11:15/16:15?»  SÍ → pide el Gmail · NO → «¿estás seguro?» (ACEPTAR → Gmail, VOLVER → pregunta)
+   2) Gmail: ACEPTAR guarda · RECHAZAR → aviso, CONFIRMAR deja de contar el experto (el ranking llega hasta el nivel difícil), CANCELAR vuelve al Gmail
+   El estado queda en localStorage («xflow») hasta que se resuelve: si recarga, la ventana vuelve a salir. Fuera del top 3 no se pregunta nada. */
+function turnoHasta(){return turnoNow()==="tarde"?"16:15":"11:15"}
+function xGet(){try{var x=JSON.parse(ls("xflow")||"null");return x&&String(x.gen)===String(FB.cfg().gen)?x:null}catch(e){return null}}
+function xSet(x){if(test)return;try{if(x)localStorage.setItem("xflow",JSON.stringify(x));else localStorage.removeItem("xflow")}catch(e){}}
+function xShow(id){["mb-top","mb-nosure","mb-ask","mb-warn"].forEach(function(k){$(k).classList.toggle("hide",k!==id)});$("mail-ov").classList.remove("hide")}
+function hardScore(){try{var h=JSON.parse(ls("hard")||"null");if(h&&String(h.gen)===String(FB.cfg().gen)&&h.score>=0)return h.score|0}catch(e){}var x=xGet();return score||(x&&x.score)||0}
+function xPos(sc){var n=0;cache.forEach(function(x){if(!isMe(x)&&x.score>sc)n++});return n+1}   // puesto en el ranking visible de ese momento
+function curScore(){return ls("mailNo")==="1"?Math.min(score,hardScore()):score}
+function xTop(){$("xt-h").textContent=turnoHasta();var x=xGet();if(x&&x.stage!=="top"){x.stage="top";xSet(x)}xShow("mb-top")}
+function xMail(){$("mo-in").value="";$("mo-err").textContent="";$("mo-err").className="mer";$("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},300)}
+function xYes(){
+  if(ls("mail")){moClose("ok");return}                      // ya había dejado su Gmail
+  var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()}
+function xNo(){xShow("mb-nosure")}
+var xRes=null;
+/* decide si hay que mostrar la ventana (top 3) y la muestra; devuelve una promesa que se cumple cuando la persona resolvió */
+function xDecide(){return new Promise(function(res){
+  var x=xGet();if(!x||test){res("ya");return}
+  if(x.stage==="calc"){
+    if(xPos(x.score)>3){xSet(null);res("fuera");return}       // fuera del top 3: no se muestra nada
+    x.stage="top";xSet(x)
+  }
+  xRes=res;
+  if(x.stage==="mail"&&!ls("mail"))xMail();else xTop();
+})}
+function moClose(r){
+  var hs=hardScore();$("mail-ov").classList.add("hide");xSet(null);
+  if(r==="no"){ls("mailNo","1");try{FB.setXs(FB.uid(),hs).catch(function(){})}catch(e){}}
+  var f=xRes;xRes=null;if(f)f(r)}
 function moAccept(){
   var c=gmailCheck($("mo-in").value),e=$("mo-err");
   if(!c.ok){e.textContent=c.msg;e.className="mer big";try{navigator.vibrate&&navigator.vibrate(80)}catch(x){}return}
@@ -2497,14 +2533,14 @@ function moAccept(){
     e.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";e.className="mer big";
   });
 }
-function moReject(){$("mb-ask").classList.add("hide");$("mb-warn").classList.remove("hide")}
-function moBack(){$("mb-warn").classList.add("hide");$("mb-ask").classList.remove("hide");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},200)}
-function moReally(){ls("mailNo","1");moClose("no")}
+function moReject(){xShow("mb-warn")}
+function moBack(){xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},200)}
+function moReally(){moClose("no")}
 $("mo-in").addEventListener("keydown",function(e){if(e.key==="Enter")moAccept()});
 /* Aviso por mail al final del modo experto */
 function mailBox(on){
   var mb=$("end-menu");if(mb)mb.classList.toggle("hide",!on);   // terminó el modo experto: botón para volver al menú principal
-  var e=$("end-mail");if(!e)return;on=on&&!test;e.classList.toggle("hide",!on);if(!on)return;
+  var e=$("end-mail");if(!e)return;on=false;e.classList.add("hide");return;   // el Gmail ahora se pide solo en la ventana del top 3
   $("mail-in").value=ls("mail")||"";$("mail-btn").disabled=false;$("mail-msg").textContent="";$("mail-msg").className="mut";
 }
 function mailSend(){
@@ -2533,15 +2569,24 @@ async function end(win){
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
+  var expertEnd=(win||lvOf(cq)===3)&&!test;
+  if(expertEnd)xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});   // queda guardado ya: si recarga, la ventana vuelve a salir
   show("s-end");countTo($("st-pts"),score,true);
-  // terminó el modo experto: lo primero que se ve es la ventana para dejar el Gmail (aceptar o rechazar)
-  (win||lvOf(cq)===3?mailGate():Promise.resolve("ya")).then(function(r){if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");if(good)confetti()});
   await saveScore(true);await refresh();
   var m=merged();
   var pdte=pdteMe();
   $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
   if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
   $("end-rk").classList.toggle("hide",!rankVisible());
+  // solo si terminó el experto y quedó en el top 3: preguntas de la muestra y del Gmail (no se pueden cerrar sin responder)
+  var r=expertEnd?await xDecide():"ya";
+  if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");
+  if(r==="no"){
+    var hs=hardScore();$("st-pts").textContent=hs;m=merged();
+    $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
+    $("end-p").textContent="No dejaste tu Gmail: tu ranking cuenta solo hasta el nivel difícil ("+hs+" pts) y no participás por el premio especial. "+(pdte?"Tu posición aparece cuando un admin valide tu QR en el stand.":"");$("end-p").classList.remove("hide");
+  }
+  if(good)confetti();
 }
 var taps=0,tt=0;
 $("ttl").onclick=function(){var n=Date.now();if(n-tt>4000)taps=0;tt=n;if(++taps>=7){taps=0;$("pw").value="";$("pe").textContent="";$("adm").classList.remove("hide");$("pw").focus()}};
