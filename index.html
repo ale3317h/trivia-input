@@ -656,7 +656,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <div class="mem">⚠️</div>
   <h2>¿Estás seguro?</h2>
   <p class="wbig">SI LO RECHAZÁS, NO VAS A APARECER EN EL RANKING Y NO VAS A PODER RECIBIR EL PREMIO ESPECIAL.</p>
-  <div class="mbt"><button onclick="xYes()">ACEPTAR</button><button class="r" onclick="xTop()">VOLVER</button></div>
+  <div class="mbt"><button onclick="xTop()">CANCELAR</button><button class="r" onclick="moReally()">CONFIRMAR</button></div>
  </div>
  <div class="mbox hide" id="mb-ask">
   <div class="mem">📬</div>
@@ -2554,8 +2554,8 @@ function gmailCheck(raw){
    1) «¿podés quedarte hasta las 11:15/16:15?»  SÍ → pide el Gmail · NO → «¿estás seguro?» (ACEPTAR → Gmail, VOLVER → pregunta)
    2) Gmail: ACEPTAR guarda · RECHAZAR → aviso, CONFIRMAR deja de contar el experto (el ranking llega hasta el nivel difícil), CANCELAR vuelve al Gmail
    El estado queda en localStorage («xflow») hasta que se resuelve: si recarga, la ventana vuelve a salir. Fuera del top 3 no se pregunta nada. */
-/* false: el Gmail/teléfono ya no se pide en el celular; lo pide el admin cuando valida el QR en el stand */
-var XFLOW=false;
+/* true: al terminar el modo experto, si los puntos alcanzan para el top 10 del ranking de ese momento, sale la pregunta de quedarse hasta el cierre y la del Gmail */
+var XFLOW=true;
 function turnoHasta(){return turnoNow()==="tarde"?"16:15":"11:15"}
 function xGet(){try{var x=JSON.parse(ls("xflow")||"null");return x&&String(x.gen)===String(FB.cfg().gen)?x:null}catch(e){return null}}
 function xSet(x){if(test)return;try{if(x)localStorage.setItem("xflow",JSON.stringify(x));else localStorage.removeItem("xflow")}catch(e){}}
@@ -2574,7 +2574,7 @@ var xRes=null;
 function xDecide(){return new Promise(function(res){
   var x=xGet();if(!x||test){res("ya");return}
   if(x.stage==="calc"){
-    if(xPos(x.score)>3){xSet(null);try{FB.setXw(FB.uid(),false).catch(function(){})}catch(e){}res("fuera");return}       // fuera del top 3: no se muestra nada y no queda en espera
+    if(xPos(x.score)>10){xSet(null);try{FB.setXw(FB.uid(),false).catch(function(){})}catch(e){}res("fuera");return}       // fuera del top 10: no se muestra nada y no queda en espera
     x.stage="top";xSet(x)
   }
   xRes=res;
@@ -2631,7 +2631,7 @@ async function end(win){
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
-  var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test;
+  var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test&&!rkClosed();
   if(expertEnd){xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
   show("s-end");countTo($("st-pts"),score,true);
   await saveScore(true);await refresh();
