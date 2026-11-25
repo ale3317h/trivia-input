@@ -41,6 +41,19 @@ var FB = (function () {
     if (m && (m.t === "tarde" || m.t === "manana") && m.d === a.dia && m.a === auto) return m.t;   // cambio manual: vale hasta que el automático cambie de turno
     return auto;
   }
+  function nowMs() { return Date.now() + srvOff; }
+  function horaAR(ms) { var d = new Date(ms - 3 * 3600 * 1000); return d.getUTCHours() + ":" + ("0" + d.getUTCMinutes()).slice(-2); }
+  /* Estado del ranking de un turno: automático (cierra a las 11:10 / 16:10) o a mano (abierto, cerrado, o abierto un rato más) */
+  function rankInfo(t) {
+    t = t || cfg.turno; var a = ahoraAR(), m = cfg.rkm, c = HORARIOS.cierre[t];
+    var o = { turno: t, modo: "auto", cerrado: a.min >= c, hora: hhmm(c), final: hhmm(c), seg: Math.max(0, c * 60 - (a.min * 60 + a.seg)) };
+    if (m && m.t === t && m.d === a.dia) {
+      if (m.m === "open") { o.modo = "open"; o.cerrado = false; o.seg = null; o.hora = ""; }
+      else if (m.m === "closed") { o.modo = "closed"; o.cerrado = true; o.seg = 0; }
+      else if (m.m === "until" && m.u) { o.modo = "until"; var r = Math.round((m.u - nowMs()) / 1000); o.cerrado = r <= 0; o.seg = Math.max(0, r); o.hora = horaAR(m.u); }
+    }
+    return o;
+  }
   function hhmm(min) { return Math.floor(min / 60) + ":" + ("0" + (min % 60)).slice(-2); }
   function norm(v) {
     v = v || {};
@@ -56,6 +69,7 @@ var FB = (function () {
       pv: (v.pv && typeof v.pv === "object") ? v.pv : {},   // premios/QR anulados: id -> hora
       xw: (v.xw && typeof v.xw === "object") ? v.xw : {},   // en espera: terminó el experto y todavía no respondió la ventana (no aparece en el ranking)
       xs: (v.xs && typeof v.xs === "object") ? v.xs : {},   // quien rechazó el aviso al terminar el modo experto: uid -> puntos que tenía al ganar el nivel difícil (su ranking llega hasta ahí)
+      rkm: (v.rkm && typeof v.rkm === "object") ? v.rkm : null,   // cierre del ranking a mano: {m: "open"|"closed"|"until", t (turno), d (día), u (hasta cuándo, ms)}
       xr: (v.xr && typeof v.xr === "object") ? v.xr : {}    // «no anotar al ranking final»: quien no va a estar o no quiere el premio (aparece en el ranking pero no entra al top 3 final)
     };
     // turno activo: se calcula con la hora (y el cambio manual si lo hay), así cambia solo a las 12:00 sin que nadie toque nada
@@ -224,7 +238,7 @@ var FB = (function () {
       return Promise.resolve();
     }
     return readCfg().then(function (c) {
-      var t = rec.t === "tarde" ? "tarde" : (rec.t === "manana" ? "manana" : c.turno), tarde = ahoraAR().min >= HORARIOS.cierre[t];
+      var t = rec.t === "tarde" ? "tarde" : (rec.t === "manana" ? "manana" : c.turno), tarde = rankInfo(t).cerrado;
       var up = { name: rec.name, score: rec.score | 0, lvl: rec.lvl || 1, ts: rec.ts || Date.now(), t: t };
       if (!tarde) up.c = rec.score | 0;    // si ya cerró el ranking de su turno, el puntaje sigue creciendo pero lo que cuenta queda en el de antes del cierre
       return db.ref("scores/" + c.gen + "/" + rec.uid).update(up);
@@ -243,7 +257,10 @@ var FB = (function () {
     cfg: function () { return cfg; },
     ahoraAR: ahoraAR, turnoAuto: turnoAuto, HORARIOS: HORARIOS, hhmm: hhmm,
     /* ¿ya cerró el ranking de este turno? {cerrado, hora} */
-    rankInfo: function (t) { t = t || cfg.turno; var c = HORARIOS.cierre[t]; return { turno: t, cerrado: ahoraAR().min >= c, hora: hhmm(c), final: hhmm(HORARIOS.final[t]) }; },
+    rankInfo: rankInfo,
+    /* cierre a mano: modo "open" (abierto hasta que lo cambien), "closed" (cerrado ya) o "until" (abierto N minutos desde ahora). Vale para el turno activo y ese día. */
+    setRankMode: function (modo, mins) { var o = { m: modo, t: cfg.turno, d: ahoraAR().dia }; if (modo === "until") o.u = nowMs() + Math.round(mins * 60000); return db ? db.ref("cfg/rkm").set(o).then(readCfg) : Promise.resolve(cfg); },
+    clearRankMode: function () { return db ? db.ref("cfg/rkm").remove().then(readCfg) : Promise.resolve(cfg); },
     setTurnoManual: function (t) { var a = ahoraAR(); return db ? db.ref("cfg/tman").set({ t: t, a: turnoAuto(), d: a.dia, ts: firebase.database.ServerValue.TIMESTAMP }).then(readCfg) : Promise.resolve(cfg); },
     clearTurnoManual: function () { return db ? db.ref("cfg/tman").remove().then(readCfg) : Promise.resolve(cfg); },
     setXr: function (u, on) { cfg.xr = cfg.xr || {}; if (on) cfg.xr[u] = Date.now(); else delete cfg.xr[u]; return db ? db.ref("cfg/xr/" + u).set(on ? firebase.database.ServerValue.TIMESTAMP : null) : Promise.resolve(); },

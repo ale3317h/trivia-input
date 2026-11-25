@@ -268,6 +268,10 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="row" style="margin-bottom:8px"><div class="fix"><span class="badge" id="rkgen">—</span></div></div>
       <input id="rk-q" placeholder="Buscar por nombre" oninput="renderRk()" autocomplete="off" style="margin-bottom:10px">
       <div id="rk-list">Cargando…</div>
+      <div class="card" id="rkm-card" style="margin-top:16px"><h2 style="margin:0 0 4px">⏱ Cierre del ranking</h2><div class="small" id="rkm-st" style="margin:4px 0 8px"></div>
+        <div class="row"><button class="g" id="rkm-a" onclick="rkModo('auto')">AUTOMÁTICO</button><button class="p" id="rkm-o" onclick="rkModo('open')">ABRIR (sin límite)</button><button class="p" id="rkm-c" onclick="rkModo('closed')">CERRAR AHORA</button></div>
+        <div class="row" style="gap:6px;margin-top:6px"><input id="rkm-min" type="number" min="1" max="600" value="10" style="margin:0;max-width:90px"><button class="p" onclick="rkModo('until')" style="margin:0">ABRIR POR ESOS MINUTOS</button></div>
+        <p class="small" style="margin:8px 0 0">Automático: cierra solo a las 11:10 (mañana) y 16:10 (tarde). Los modos a mano valen para el turno activo y solo por hoy. Después de cerrar, la gente puede seguir jugando pero sus puntos ya no cuentan.</p></div>
       <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
@@ -1977,7 +1981,7 @@ function loadCfgUI(){
   $("c-n1").value=c.n[0];$("c-n2").value=c.n[1];$("c-n3").value=c.n[2];
   $("c-show").checked=c.showRank!==false;
   $("genb").textContent="Ranking #"+c.gen;
-  stkTurnoPaint();
+  stkTurnoPaint();try{rkModoPaint()}catch(e){}
 }
 /* ---------- Stock en vivo: planilla de Google (stock) + Firebase (entregas) ---------- */
 function stkTurno(){return FB.cfg().turno||"manana"}
@@ -2756,6 +2760,23 @@ function top3Calc(){
   });
   return{top:out,skip:skip};
 }
+async function rkModo(m){
+  try{
+    if(m==="auto")await FB.clearRankMode();
+    else if(m==="until"){var n=+$("rkm-min").value;if(!(n>0)){toast("Poné cuántos minutos");return}await FB.setRankMode("until",n)}
+    else{if(m==="closed"&&!confirm("¿Cerrar el ranking ahora? Los puntos nuevos dejan de contar para todos."))return;await FB.setRankMode(m)}
+    rkModoPaint();toast("Ranking: listo ✓")}catch(e){alert("No se pudo: "+(e&&e.message))}
+}
+function rkModoPaint(){
+  var s=$("rkm-st");if(!s)return;var i=FB.rankInfo(),t=i.turno==="tarde"?"tarde":"mañana",x;
+  if(i.modo==="open")x="🟢 <b>Abierto a mano</b> (sin límite). No se cierra hasta que lo cambies.";
+  else if(i.modo==="until")x=i.cerrado?"🔴 <b>Cerrado</b> (venció el tiempo que habías dado, "+i.hora+").":"🟢 <b>Abierto hasta las "+i.hora+"</b> (a mano) · faltan "+Math.ceil(i.seg/60)+" min.";
+  else if(i.modo==="closed")x="🔴 <b>Cerrado a mano.</b>";
+  else x=i.cerrado?"🔴 <b>Cerrado</b> (automático, cerró a las "+i.hora+").":"🟢 <b>Abierto</b> (automático) · cierra a las "+i.hora+" · faltan "+Math.ceil(i.seg/60)+" min.";
+  s.innerHTML="Turno "+t+": "+x;
+  ["a","o","c"].forEach(function(k){var b=$("rkm-"+k);if(b)b.className=((k==="a"&&i.modo==="auto")||(k==="o"&&i.modo==="open")||(k==="c"&&i.modo==="closed"))?"g":"p"});
+}
+setInterval(function(){try{rkModoPaint()}catch(e){}},15000);
 function top3Key(){return FB.cfg().gen+"_"+FB.cfg().turno}
 var RKFIN={},rkfinOff=null;
 function top3Watch(){var d=sdb();if(!d||rkfinOff)return;var ref=d.ref("cfg/rkfin"),h=ref.on("value",function(s){RKFIN=s.val()||{};top3Paint()});rkfinOff=function(){ref.off("value",h)}}
@@ -2768,7 +2789,7 @@ async function top3Redo(){
   if(!await askSteps([{icon:"🔁",title:"¿Rehacer el top 3?",text:"Se vuelve a calcular con el ranking, los QR validados y los contactos de <b>ahora</b>. Los que ya recibieron su mail conservan su QR de puesto; si cambia el puesto, se anula el anterior y se crea otro.",ok:"REHACER TOP 3"}]))return;
   await top3Freeze(true);toast("Top 3 recalculado ✓")
 }
-function top3Due(){var i=FB.rankInfo(),n=FB.ahoraAR();return n.min>=FB.HORARIOS.final[FB.cfg().turno]}
+function top3Due(){return FB.rankInfo().cerrado}
 async function top3Send(uid,kind){
   var f=(RKFIN[top3Key()]||{}),i=(f.u||[]).findIndex(function(x){return x.uid===uid});if(i<0)return;
   var m={uid:uid,name:f.u[i].name,score:f.u[i].score,pos:i+1},to=mailOf(uid);

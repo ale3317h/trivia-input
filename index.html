@@ -2094,6 +2094,7 @@ function rkClosed(){try{return !test&&FB.rankInfo(ls("tj")||turnoNow()).cerrado}
 function rkCut(){
   var e=$("rk-cut");if(!e)return;var i=FB.rankInfo(ls("tj")||turnoNow()),t=i.turno==="tarde"?"de la tarde":"de la mañana";
   if(i.cerrado){e.className="c red";e.innerHTML="⏰ El ranking "+t+" ya cerró ("+i.hora+"). Podés seguir participando y ganar el premio por tu nivel, pero ya no se anota en el ranking.";}
+  else if(i.seg==null){e.className="c yel";e.innerHTML="⏰ El ranking "+t+" está abierto: tus puntos se anotan.";}
   else{e.className="c yel";e.innerHTML="⏰ El ranking "+t+" se cerrará dentro de <b class=\"rk-cd\"></b> (a las "+i.hora+"). Después podés seguir participando, pero no se anota en el ranking.";}
   cdTick();
   var q=$("s-name");if(q&&q.classList.contains("hide"))e.classList.add("hide");
@@ -2101,8 +2102,8 @@ function rkCut(){
 setInterval(function(){try{rkCut()}catch(e){}},30000);
 /* contador: «el ranking se cerrará dentro de mm:ss» (se ve en el inicio, mientras se juega y al terminar) */
 function cdTxt(){
-  var i=FB.rankInfo(ls("tj")||turnoNow()),a=FB.ahoraAR(),mm=i.hora.split(":"),s=(+mm[0])*3600+(+mm[1])*60-(a.min*60+a.seg);
-  if(s<=0)return null;var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  var i=FB.rankInfo(ls("tj")||turnoNow());if(i.seg==null||i.cerrado)return null;var s=i.seg;
+  var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
   return (h?h+" h ":"")+("0"+m).slice(-2)+":"+("0"+x).slice(-2);
 }
 (function(){var b=document.createElement("div");b.id="rk-bar";b.className="hide";b.setAttribute("style","position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:50;background:#000c;color:#ffe14d;border:1px solid #ffe14d66;border-radius:99px;padding:5px 14px;font:600 13px system-ui,sans-serif;pointer-events:none;white-space:nowrap");document.body.appendChild(b)})();
@@ -2110,9 +2111,10 @@ function cdTick(){
   var t=null;try{t=cdTxt()}catch(e){}
   document.querySelectorAll(".rk-cd").forEach(function(e){e.textContent=t||""});
   var b=$("rk-bar");if(!b||test)return;
-  if(t){b.innerHTML="⏰ El ranking se cierra en <b>"+t+"</b>";b.classList.remove("hide")}
+  var i0=FB.rankInfo(ls("tj")||turnoNow());if(i0.seg==null&&!i0.cerrado){b.classList.add("hide")}
+  else if(t){b.innerHTML="⏰ El ranking se cierra en <b>"+t+"</b>";b.classList.remove("hide")}
   else{var i=FB.rankInfo(ls("tj")||turnoNow());b.innerHTML="⏰ Ranking cerrado ("+i.hora+"): ya no se anotan puntos";b.classList.remove("hide")}
-  if(!t&&$("rk-cut")&&/se cerrar/.test($("rk-cut").textContent))rkCut();
+  if((!t&&$("rk-cut")&&/se cerrar/.test($("rk-cut").textContent))||(!window.__ri||window.__ri!==i0.modo+i0.cerrado)){window.__ri=i0.modo+i0.cerrado;rkCut()}
 }
 setInterval(function(){try{cdTick()}catch(e){}},1000);
 function status(){
@@ -2156,10 +2158,12 @@ function renderStart(){
   $("rankpub").classList.toggle("hide",!rankVisible());$("home-rk").classList.toggle("hide",!rankVisible());
   var p=hasPlayed(),i=mineIdx();
   $("form").classList.toggle("hide",p);$("played").classList.toggle("hide",!p);$("tst").classList.toggle("hide",!test);
-  if(p)$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
-  if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
+  if(p&&!(qrGet()&&(myClaimed||FB.isClaimed())))$("played").innerHTML=i>=0?"Ya jugaste y ya figurás en la tabla: <b>puesto #"+(i+1)+"</b> con <b>"+cache[i].score+" pts</b>. Solo se puede jugar una vez.":(pdteMe()?"Ya jugaste. Tu puntaje <b>todavía no está en el ranking</b>: cuenta cuando un admin valide tu QR en el stand. Solo se puede jugar una vez.":"Ya jugaste. Solo se puede jugar una vez.");
+  var rec=p&&qrGet()&&(myClaimed||FB.isClaimed());   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
+  if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:10px;font-size:13px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
+  else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
-  if(p&&hasCont())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
+  if(p&&hasCont()&&!rec)$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
   try{rkCut()}catch(e){}
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
