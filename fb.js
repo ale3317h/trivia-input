@@ -270,6 +270,7 @@ var FB = (function () {
     loadQuestions: loadQuestions,
     saveQuestions: saveQuestions,
     setXw: function (u, on) { cfg.xw = cfg.xw || {}; if (on) cfg.xw[u] = true; else delete cfg.xw[u]; return db ? db.ref("cfg/xw/" + u).set(on ? true : null) : Promise.resolve(); },
+    clearXs: function (u) { cfg.xs = cfg.xs || {}; delete cfg.xs[u]; return db ? db.ref("cfg/xs/" + u).remove() : Promise.resolve(); },
     setXs: function (u, pts) { cfg.xs = cfg.xs || {}; cfg.xs[u] = pts | 0; return db ? db.ref("cfg/xs/" + u).set(pts | 0) : Promise.resolve(); },
     listScores: listScores,
     fromSnap: fromSnap,

@@ -590,6 +590,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <button class="hide" id="contbtn" onclick="resume()">CONTINUAR PARA AVANZAR EN EL RANKING →</button>
 <div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="start()">JUGAR →</button><small id="err" class="red"></small></div>
 <button class="p" id="home-rk" onclick="showRank()">VER RANKING</button>
+<button class="p hide x-redo" onclick="xRedo()">🔄 CAMBIÉ DE IDEA: QUIERO QUEDARME HASTA EL CIERRE</button>
 <div id="rk-cut" class="c hide" style="margin:10px 0"></div>
 <div id="rankpub"><h2>TOP 3</h2><div class="pod" id="pod"></div>
 <h2>TOP 10</h2><div class="card"><div id="tb" class="scr"></div></div><div id="rkst" class="c"></div></div>
@@ -633,7 +634,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="endh" id="end-c"><div class="big" id="end-t"></div><p id="end-pz"></p><div class="hide" id="end-badge"></div></div>
 <div class="card y c qrc hide" id="end-qr"></div>
 <div class="card" id="end-d"><div class="stats"><div class="st" style="--c:#ffe14d"><small>PUNTOS</small><b id="st-pts">0</b></div><div class="st" style="--c:#b86bff"><small>PREGUNTA</small><b id="st-q">0</b></div><div class="st" id="st-pc" style="--c:#3dff8a"><small>POSICIÓN</small><b id="st-pos">–</b></div></div>
-<p class="hide" id="end-p"></p><div id="rk-cut2" class="c hide" style="margin:10px 0"></div></div>
+<p class="hide" id="end-p"></p><button class="p hide x-redo" onclick="xRedo()">🔄 CAMBIÉ DE IDEA: QUIERO QUEDARME HASTA EL CIERRE</button><div id="rk-cut2" class="c hide" style="margin:10px 0"></div></div>
 <div id="end-btns">
 <button class="p" id="end-rk" onclick="showRank()">VER RANKING</button>
 <button class="r hide" id="end-r" onclick="play()">REINTENTAR (PRUEBA)</button>
@@ -650,13 +651,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <div class="mem">🏆</div>
   <h2>¡Quedaste en una buena posición!</h2>
   <p>¿Podés quedarte en la muestra hasta las <b id="xt-h">11:15</b> para recibir la recompensa?</p>
-  <div class="mbt"><button onclick="xYes()">SÍ</button><button class="r" onclick="xNo()">NO</button></div>
+  <div class="mbt"><button onclick="xNo()">CANCELAR</button><button class="r" onclick="xYes()">ACEPTAR</button></div>
  </div>
  <div class="mbox warn hide" id="mb-nosure">
   <div class="mem">⚠️</div>
   <h2>¿Estás seguro?</h2>
-  <p class="wbig">SI LO RECHAZÁS, NO VAS A APARECER EN EL RANKING Y NO VAS A PODER RECIBIR EL PREMIO ESPECIAL.</p>
-  <div class="mbt"><button onclick="xTop()">CANCELAR</button><button class="r" onclick="moReally()">CONFIRMAR</button></div>
+  <p class="wbig">SI NO PODÉS QUEDARTE, TU RANKING CUENTA SOLO HASTA EL NIVEL DIFÍCIL Y NO PARTICIPÁS POR EL PREMIO ESPECIAL. ¿ACEPTÁS?</p>
+  <div class="mbt"><button onclick="xTop()">CANCELAR</button><button class="r" onclick="moReally()">ACEPTAR</button></div>
  </div>
  <div class="mbox hide" id="mb-ask">
   <div class="mem">📬</div>
@@ -664,14 +665,14 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <p>Colocá tu Gmail para que te avisemos si te llevás un premio por quedar en el top del ranking.</p>
   <input id="mo-in" type="email" inputmode="email" autocomplete="email" autocapitalize="none" spellcheck="false" maxlength="80" placeholder="tunombre@gmail.com">
   <div class="mer" id="mo-err" role="alert"></div>
-  <div class="mbt"><button id="mo-ok" onclick="moAccept()">ACEPTAR</button><button class="r" onclick="moReject()">RECHAZAR</button></div>
+  <div class="mbt"><button onclick="moReject()">CANCELAR</button><button class="r" id="mo-ok" onclick="moAccept()">ACEPTAR</button></div>
   <small>Lo usamos solo para avisarte de este concurso.</small>
  </div>
  <div class="mbox warn hide" id="mb-warn">
   <div class="mem">⚠️</div>
   <h2>¡ATENCIÓN!</h2>
-  <p class="wbig">SI NO PONÉS UN MAIL, NO VAS A APARECER EN EL RANKING Y NO VAS A PODER RECIBIR EL PREMIO ESPECIAL.</p>
-  <div class="mbt"><button onclick="moBack()">CANCELAR</button><button class="r" onclick="moReally()">CONFIRMAR</button></div>
+  <p class="wbig">SI NO PONÉS UN MAIL, TU RANKING CUENTA SOLO HASTA EL NIVEL DIFÍCIL Y NO PARTICIPÁS POR EL PREMIO ESPECIAL. ¿ACEPTÁS?</p>
+  <div class="mbt"><button onclick="moBack()">CANCELAR</button><button class="r" onclick="moReally()">ACEPTAR</button></div>
  </div>
 </div>
 <section id="s-prize" class="hide">
@@ -2174,7 +2175,7 @@ function renderStart(){
   else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   $("contbtn").classList.toggle("hide",!(p&&hasCont()));
   if(p&&hasCont()&&!rec)$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
-  try{rkCut()}catch(e){}
+  try{rkCut()}catch(e){}try{xRedoPaint()}catch(e){}
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
 async function init(){
@@ -2585,10 +2586,20 @@ function xDecide(){return new Promise(function(res){
   xRes=res;
   if(x.stage==="mail"&&!ls("mail"))xMail();else xTop();
 })}
+/* Si alguien se equivocó y dijo que no, la pregunta sigue disponible mientras el ranking esté abierto: vuelve a salir y, si acepta las dos ventanas, recupera todo su puntaje */
+function xRedoPaint(){var on=false;try{on=XFLOW&&!test&&ls("mailNo")==="1"&&!rkClosed()&&hasPlayed()}catch(e){}document.querySelectorAll(".x-redo").forEach(function(e){e.classList.toggle("hide",!on)})}
+setInterval(xRedoPaint,5000);
+function xRedo(){
+  if(rkClosed()){xRedoPaint();return}
+  try{localStorage.removeItem("mailNo")}catch(e){}
+  try{FB.clearXs(FB.uid()).catch(function(){});FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}   // mientras responde, queda «en espera» (fuera del ranking)
+  xSet({gen:FB.cfg().gen,stage:"top",score:+ls("xscore")||0,name:ls("name")||name});
+  xDecide().then(function(){xRedoPaint();try{go()}catch(e){}});
+}
 function moClose(r){
   var hs=hardScore();$("mail-ov").classList.add("hide");xSet(null);try{FB.setXw(FB.uid(),false).catch(function(){})}catch(e){}   // ya respondió: sale de «en espera"
   if(r==="no"){ls("mailNo","1");try{FB.setXs(FB.uid(),hs).catch(function(){})}catch(e){}}
-  var f=xRes;xRes=null;if(f)f(r)}
+  try{xRedoPaint()}catch(e){}var f=xRes;xRes=null;if(f)f(r)}
 function moAccept(){
   var c=gmailCheck($("mo-in").value),e=$("mo-err");
   if(!c.ok){e.textContent=c.msg;e.className="mer big";try{navigator.vibrate&&navigator.vibrate(80)}catch(x){}return}
@@ -2637,7 +2648,7 @@ async function end(win){
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
   var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test&&!rkClosed();
-  if(expertEnd){xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
+  if(expertEnd){try{ls("xscore",String(score))}catch(e){}xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
   show("s-end");countTo($("st-pts"),score,true);
   await saveScore(true);await refresh();
   var m=merged();
