@@ -2541,7 +2541,7 @@ function renderLists(){
 
 /* ---------- ranking por persona ---------- */
 var RK=[],RKALL=[],rkOff=null,rkGen=null,personOpen=null;
-/* Cada turno tiene su ranking: acá solo cuenta el del turno activo, y el puntaje que vale es el de antes del cierre (11:05 / 16:05). */
+/* Cada turno tiene su ranking: acá solo cuenta el del turno activo, y el puntaje que vale es el de antes del cierre (11:10 / 16:10). */
 function rkTurno(){
   var t=FB.cfg().turno;
   RK=RKALL.filter(function(p){return (p.t||"manana")===t}).map(function(p){var q={};for(var k in p)q[k]=p[k];if(p.c!=null)q.score=p.c;return q});

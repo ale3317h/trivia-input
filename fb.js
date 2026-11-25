@@ -30,10 +30,10 @@ var FB = (function () {
 
   /* ---------- HORARIOS (hora de Argentina, con la hora del servidor) ----------
      · Turno: hasta las 12:00 es «mañana»; desde las 12:00 es «tarde». Producción puede forzar uno a mano (dura hasta el próximo cambio automático) o volver a «automático».
-     · Ranking: cada turno tiene su propio ranking. Cierra a las 11:05 / 16:05 (después se puede jugar, pero ya no suma) y a las 11:10 / 16:10 se define el top 3. */
+     · Ranking: cada turno tiene su propio ranking. Cierra a las 11:10 / 16:10 (después se puede jugar, pero ya no suma) y a las 11:10 / 16:10 se define el top 3. */
   var srvOff = 0;
   try { if (db) db.ref(".info/serverTimeOffset").on("value", function (s) { srvOff = +s.val() || 0; }); } catch (e) { }
-  var HORARIOS = { cambio: 12 * 60, cierre: { manana: 11 * 60 + 5, tarde: 16 * 60 + 5 }, final: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 } };
+  var HORARIOS = { cambio: 12 * 60, cierre: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 }, final: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 } };
   function ahoraAR() { var d = new Date(Date.now() + srvOff - 3 * 3600 * 1000); return { min: d.getUTCHours() * 60 + d.getUTCMinutes(), seg: d.getUTCSeconds(), dia: d.toISOString().slice(0, 10) }; }
   function turnoAuto() { return ahoraAR().min >= HORARIOS.cambio ? "tarde" : "manana"; }
   function turnoDe(m) {

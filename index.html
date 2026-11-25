@@ -2088,16 +2088,33 @@ function saveScore(force){
   if(!rkClosed())cntVal=score;try{ls("cnt",String(cntVal))}catch(e){}
   return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:ls("tj")||turnoNow()});
 }
-/* Cada turno tiene su ranking: cierra a las 11:05 / 16:05 (hora de Argentina). Después se puede seguir jugando y ganar el premio por el nivel, pero los puntos ya no suman. */
+/* Cada turno tiene su ranking: cierra a las 11:10 / 16:10 (hora de Argentina). Después se puede seguir jugando y ganar el premio por el nivel, pero los puntos ya no suman. */
 var cntVal=+(ls("cnt")||0)||0;
 function rkClosed(){try{return !test&&FB.rankInfo(ls("tj")||turnoNow()).cerrado}catch(e){return false}}
 function rkCut(){
   var e=$("rk-cut");if(!e)return;var i=FB.rankInfo(ls("tj")||turnoNow()),t=i.turno==="tarde"?"de la tarde":"de la mañana";
-  if(i.cerrado){e.className="c red";e.innerHTML="⏰ El ranking "+t+" ya cerró ("+i.hora+"). Podés jugar igual y ganar el premio por tu nivel, pero tus puntos ya no suman al ranking.";}
-  else{e.className="c yel";e.innerHTML="⏰ El ranking "+t+" cierra a las "+i.hora+": los puntos que hagas después ya no suman. El top 3 se define a las "+i.final+".";}
+  if(i.cerrado){e.className="c red";e.innerHTML="⏰ El ranking "+t+" ya cerró ("+i.hora+"). Podés seguir participando y ganar el premio por tu nivel, pero ya no se anota en el ranking.";}
+  else{e.className="c yel";e.innerHTML="⏰ El ranking "+t+" se cerrará dentro de <b class=\"rk-cd\"></b> (a las "+i.hora+"). Después podés seguir participando, pero no se anota en el ranking.";}
+  cdTick();
   var q=$("s-name");if(q&&q.classList.contains("hide"))e.classList.add("hide");
 }
 setInterval(function(){try{rkCut()}catch(e){}},30000);
+/* contador: «el ranking se cerrará dentro de mm:ss» (se ve en el inicio, mientras se juega y al terminar) */
+function cdTxt(){
+  var i=FB.rankInfo(ls("tj")||turnoNow()),a=FB.ahoraAR(),mm=i.hora.split(":"),s=(+mm[0])*3600+(+mm[1])*60-(a.min*60+a.seg);
+  if(s<=0)return null;var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
+  return (h?h+" h ":"")+("0"+m).slice(-2)+":"+("0"+x).slice(-2);
+}
+(function(){var b=document.createElement("div");b.id="rk-bar";b.className="hide";b.setAttribute("style","position:fixed;left:50%;bottom:8px;transform:translateX(-50%);z-index:50;background:#000c;color:#ffe14d;border:1px solid #ffe14d66;border-radius:99px;padding:5px 14px;font:600 13px system-ui,sans-serif;pointer-events:none;white-space:nowrap");document.body.appendChild(b)})();
+function cdTick(){
+  var t=null;try{t=cdTxt()}catch(e){}
+  document.querySelectorAll(".rk-cd").forEach(function(e){e.textContent=t||""});
+  var b=$("rk-bar");if(!b||test)return;
+  if(t){b.innerHTML="⏰ El ranking se cierra en <b>"+t+"</b>";b.classList.remove("hide")}
+  else{var i=FB.rankInfo(ls("tj")||turnoNow());b.innerHTML="⏰ Ranking cerrado ("+i.hora+"): ya no se anotan puntos";b.classList.remove("hide")}
+  if(!t&&$("rk-cut")&&/se cerrar/.test($("rk-cut").textContent))rkCut();
+}
+setInterval(function(){try{cdTick()}catch(e){}},1000);
 function status(){
   var e=$("rkst");if(!e)return;
   e.textContent=FB.shared()?(loaded?"Ranking compartido en vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Conectando al ranking…"):"Sin conexión: el ranking se guarda solo en este dispositivo";
