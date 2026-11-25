@@ -14,27 +14,26 @@
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:transparent;color:#fff;font:700 14px/1.2 var(--sans)}
 body{display:flex;align-items:flex-start;justify-content:flex-end;padding:20px}
-#panel{background:var(--bg);border:1px solid #ffffff1a;border-radius:14px;padding:12px 14px 0;box-shadow:0 10px 30px #000b,0 0 22px #b86bff22}
-#list{display:flex;align-items:flex-end;justify-content:center;gap:10px;height:150px}
-.col{--c:var(--c1);width:98px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+#panel{padding:4px 6px}
+#list{display:flex;align-items:flex-end;justify-content:center;gap:14px;height:230px}
+.col{--c:var(--c1);width:92px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .col.b2{--c:var(--c2)}.col.b3{--c:var(--c3)}
-.n{max-width:100%;padding:0 2px;margin-bottom:6px;text-align:center;font:800 13px/1.1 var(--sans);color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 0 8px var(--c),0 0 18px var(--c)}
-.col.b1 .n{font-size:15px;color:var(--c);text-shadow:0 0 6px var(--c),0 0 16px var(--c),0 0 30px var(--c)}
-.bar{width:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;border-radius:8px 8px 0 0;
- background:linear-gradient(180deg,color-mix(in srgb,var(--c) 38%,#07050f) 0,color-mix(in srgb,var(--c) 6%,#07050f) 100%);
- border:2px solid var(--c);border-bottom:0;box-shadow:0 0 10px var(--c),0 0 26px color-mix(in srgb,var(--c) 55%,transparent),inset 0 0 14px color-mix(in srgb,var(--c) 35%,transparent);
+.n{width:100%;padding:8px 10px;margin:0 -10px -2px;box-sizing:content-box;text-align:center;font:800 13px/1.2 var(--sans);letter-spacing:.02em;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px #000a,0 0 9px color-mix(in srgb,var(--c) 70%,transparent)}
+.col.b1 .n{font-size:15px;color:var(--c);text-shadow:0 1px 3px #000a,0 0 10px color-mix(in srgb,var(--c) 75%,transparent)}
+.bar{width:44px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;border-radius:7px 7px 0 0;
+ background:linear-gradient(180deg,color-mix(in srgb,var(--c) 40%,#07050f) 0,color-mix(in srgb,var(--c) 8%,#07050f) 100%);
+ border:2px solid var(--c);border-bottom:0;box-shadow:0 0 8px var(--c),0 0 22px color-mix(in srgb,var(--c) 50%,transparent),inset 0 0 12px color-mix(in srgb,var(--c) 30%,transparent);
  transition:height .8s var(--ease)}
-.b1 .bar{height:96px}.b2 .bar{height:70px}.b3 .bar{height:50px}
-.p{font:900 italic 12px/1 var(--mono);color:var(--c);opacity:.85;letter-spacing:.06em}
-.s{font:900 24px/1 var(--mono);color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 8px var(--c),0 0 18px var(--c);margin-top:4px}
-.b1 .s{font-size:30px}.b3 .s{font-size:20px}
+.b1 .bar{height:150px}.b2 .bar{height:112px}.b3 .bar{height:82px}
+.p{font:900 italic 11px/1 var(--mono);color:var(--c);opacity:.9;letter-spacing:.04em}
+.s{font:900 20px/1 var(--mono);color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 8px var(--c);margin-top:4px}
+.b1 .s{font-size:24px}.b3 .s{font-size:18px}
 .col.empty{opacity:.35}
 .col.empty .n{text-shadow:none;color:#fff}
 .col.fresh .s{animation:pop .7s var(--ease)}
 .col.swap .n{animation:in .5s var(--ease)}
 @keyframes pop{0%{transform:scale(1.35)}100%{transform:none}}
 @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-#base{height:3px;margin:0 -14px;background:linear-gradient(90deg,var(--c2),var(--c1),var(--c3));box-shadow:0 0 12px var(--c1)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
@@ -42,7 +41,6 @@ body{display:flex;align-items:flex-start;justify-content:flex-end;padding:20px}
 <body>
 <div id="panel">
   <div id="list"></div>
-  <div id="base"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
