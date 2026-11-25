@@ -2154,7 +2154,8 @@ async function init(){
   cache=await getList();loaded=true;renderStart();
   var _cfgT=0;FB.watchCfg(function(){clearTimeout(_cfgT);_cfgT=setTimeout(function(){applyCfg();playerReset();reqSync();renderStart()},800)});   // varios cambios seguidos de la config = un solo repintado
   var _rpT=0;function repaintSoon(){if(_rpT)return;_rpT=setTimeout(function(){_rpT=0;repaint()},400)}   // muchos puntajes que cambian juntos = un solo repintado (sin trabas)
-  FB.watchScores(function(l){cache=l;loaded=true;repaintSoon()});
+  FB.watchScores(function(l){cache=l;loaded=true;repaintSoon();if(myClaimed)try{claimPaint()}catch(e){}});
+  try{claimBind()}catch(e){}
   if(XFLOW&&xGet())xDecide().then(function(){go()});   // recargó en medio de la ventana del Gmail: vuelve a salir hasta que acepte o rechace
 }
 /* El Excel manda en lo que lleva cada premio */
@@ -2203,7 +2204,7 @@ document.addEventListener("animationend",scrollSoon,true);
 try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catch(e){setInterval(scrollState,1000)}
 async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
 /* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
-function pdteMe(){return !test&&!!qrGet()&&!FB.isClaimed(FB.uid())}
+function pdteMe(){return !test&&!!qrGet()&&!myClaimed&&!FB.isClaimed(FB.uid())}
 function merged(){
   var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:curScore(),id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
@@ -2463,8 +2464,24 @@ function qrSvg(r){var q=qrMat(r.txt),n=q.getModuleCount(),m=4,s=n+2*m,p="",x,y;
   for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
   return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="Código QR"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
 function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+QPZ[r.li][1].toUpperCase()+'</b><span>'+QPZ[r.li][2]+'</span></div></div><div class="tk-cut"></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
-function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}e.innerHTML=qrHTML(r);e.classList.remove("hide")}
-function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=qrHTML(r)+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
+/* Premio ya reclamado en el stand: en lugar del QR sale la pantalla de «premio reclamado» con su puesto en el ranking */
+var myClaimed=false,claimOff=null,claimKey="";
+function claimBind(){
+  var r=qrGet();if(!r||test||!FB.shared())return;var k=r.gen+"/"+r.id;if(k===claimKey)return;
+  if(claimOff)try{claimOff()}catch(e){}claimKey=k;
+  claimOff=FB.watchPrize(r.gen,r.id,function(c){var ch=c!==myClaimed;myClaimed=c;if(ch)claimPaint()});
+}
+function claimPaint(){
+  try{qrShow("end-qr");qrShow("played-qr")}catch(e){}
+  try{if(!$("s-name").classList.contains("hide"))renderStart()}catch(e){}
+  try{if(!$("s-end").classList.contains("hide")){var m=merged(),pd=pdteMe();$("st-pos").innerHTML=(rankVisible()&&!pd?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");$("st-pc").classList.toggle("hide",!rankVisible()||pd);if(myClaimed){$("end-p").textContent="✅ Premio reclamado: tu puesto en el ranking ya está validado.";$("end-p").classList.remove("hide")}}}catch(e){}
+  try{if(!$("qr-ov").classList.contains("hide"))qrOpen()}catch(e){}
+}
+function claimHTML(r){
+  var i=mineIdx(),pos=i>=0?(i<3?"🏆 ¡Estás en el top "+(i+1)+"!":"Tu posición: #"+(i+1)+" de "+cache.length):"Tu puesto aparece en un momento";
+  return '<div class="tk" style="--c:#3dff8a"><div class="tk-top"><em>✅</em><div><small>PREMIO RECLAMADO</small><b>'+QPZ[r.li][1].toUpperCase()+'</b><span>¡Ya lo retiraste! Gracias por jugar.</span></div></div><div class="tk-cut"></div><p class="c" style="margin:10px 0 0;font-weight:700">'+pos+'</p><p class="c mut" style="margin:4px 0 10px">Ranking validado ✓'+(i>=0?' · '+cache[i].score+' pts':'')+'</p></div>'}
+function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}claimBind();e.innerHTML=myClaimed?claimHTML(r):qrHTML(r);e.classList.remove("hide")}
+function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=(myClaimed?claimHTML(r):qrHTML(r))+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
 function qrClose(){$("qr-ov").classList.add("hide")}
 function qrSave(){
   var r=qrGet();if(!r)return;

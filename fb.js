@@ -253,6 +253,14 @@ var FB = (function () {
     setXs: function (u, pts) { cfg.xs = cfg.xs || {}; cfg.xs[u] = pts | 0; return db ? db.ref("cfg/xs/" + u).set(pts | 0) : Promise.resolve(); },
     listScores: listScores,
     fromSnap: fromSnap,
+    /* ¿ya se reclamó (se validó en el stand) este premio? Avisa al instante, también si el admin lo revierte (cfg/ovp) */
+    watchPrize: function (gen, id, cb) {
+      if (!db) return function () { };
+      var p = null, o = null, rp = db.ref("prizes/" + gen + "/" + id), ro = db.ref("cfg/ovp/" + id);
+      function ev() { var s = o && o.s; cb(s === "c" ? true : (s === "p" ? false : !!(p && p.claimed === true))); }
+      var a = rp.on("value", function (s) { p = s.val(); ev(); }, function () { }), b = ro.on("value", function (s) { o = s.val(); ev(); }, function () { });
+      return function () { rp.off("value", a); ro.off("value", b); };
+    },
     watchScores: watchScores,
     saveScore: saveScore,
     isPending: isPending,
