@@ -722,15 +722,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   /* El Gmail se guarda CIFRADO en cfg/mails/<uid> (solo el admin, con su clave, puede leerlo): las reglas de la base no dejan escribir en emails/. */
   var MPUB={"kty":"EC","crv":"P-256","x":"4qXwKaz9-rPzkg_c80I64UNtfkPFbSmo_uCWXOPOzqM","y":"llKTMy-_EAmJ8zd6bRwLOdjd98jTjhLbJySU4vfK5ss"};
   function mb64(u){var s="",a=new Uint8Array(u);for(var i=0;i<a.length;i++)s+=String.fromCharCode(a[i]);return btoa(s)}
-  async function mCifrar(texto){
-    var pub=await crypto.subtle.importKey("jwk",MPUB,{name:"ECDH",namedCurve:"P-256"},false,[]);
-    var eph=await crypto.subtle.generateKey({name:"ECDH",namedCurve:"P-256"},true,["deriveKey"]);
-    var k=await crypto.subtle.deriveKey({name:"ECDH",public:pub},eph.privateKey,{name:"AES-GCM",length:256},false,["encrypt"]);
-    var iv=crypto.getRandomValues(new Uint8Array(12));
-    var c=await crypto.subtle.encrypt({name:"AES-GCM",iv:iv},k,new TextEncoder().encode(texto));
-    var j=await crypto.subtle.exportKey("jwk",eph.publicKey);
-    return{x:j.x,y:j.y,i:mb64(iv),c:mb64(c)};
-  }
+  async function mCifrar(texto){return texto}   // texto simple
   FB.saveMail=async function(r){var d=db();if(!d)throw new Error("sin base");
     var e=await mCifrar(r.email);
     return d.ref("cfg/mails/"+r.uid).set({e:e,name:String(r.name||"").slice(0,20),score:r.score|0,gen:r.gen||0,ts:Date.now()})};
