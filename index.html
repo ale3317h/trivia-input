@@ -2590,7 +2590,7 @@ function xDecide(){return new Promise(function(res){
 (function(){var s=document.createElement("style");s.textContent=".xr{margin:12px 0;padding:14px;border-radius:18px;border:2px solid #2ee6c5;background:linear-gradient(160deg,#2ee6c524,#0000 70%),#0d1d22;text-align:center}.xr .xi{font-size:38px;line-height:1}.xr b{display:block;font:800 18px/1.15 system-ui,sans-serif;color:#2ee6c5;margin:6px 0 4px}.xr span{display:block;font:600 13px/1.35 system-ui,sans-serif;color:#cfeee8;margin-bottom:12px}.xr button{width:100%;margin:0;border:0;border-radius:14px;padding:13px;font:900 16px system-ui,sans-serif;letter-spacing:.06em;color:#04201b;background:linear-gradient(180deg,#5cf5dc,#1fc9ab);box-shadow:0 4px 0 #0f7f6c}";document.head.appendChild(s)})();
 function xRedoPaint(){var on=false;try{on=XFLOW&&!test&&ls("mailNo")==="1"&&!rkClosed()&&hasPlayed()}catch(e){}
   document.querySelectorAll(".x-redo").forEach(function(e){
-    if(on&&!e.firstChild)e.innerHTML='<div class="xi">🙋</div><b>¿Te arrepentiste?</b><span>Podés quedarte hasta las '+turnoHasta()+' y recuperar tu puntaje completo en el ranking.</span><button onclick="xRedo()">SÍ, ME QUEDO</button>';
+    if(on&&!e.firstChild)e.innerHTML='<b>¿Te arrepentiste?</b><span>Podés quedarte hasta las '+turnoHasta()+' y recuperar tu puntaje completo en el ranking.</span><button onclick="xRedo()">SÍ, ME QUEDO</button>';
     e.classList.toggle("hide",!on)})}
 setInterval(xRedoPaint,5000);
 function xRedo(){
