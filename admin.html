@@ -275,13 +275,14 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
-        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear).</p>
+        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR también se descarga la imagen del QR y se copia: en Gmail pegala con Ctrl+V (o adjuntá el archivo descargado).</p>
         <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
         <div id="mail-list" class="small">Cargando…</div>
         <input id="mail-su" value="🏆 ¡Felicidades! Quedaste en el top del ranking de la Trivia de Streaming Room T3" style="margin-top:10px">
         <textarea id="mail-bd" rows="5" style="margin-top:8px">¡Felicidades {nombre}! 🎉 Quedaste en el puesto #{puesto} del top del ranking del turno de la Trivia de Streaming Room T3 y te llevás un premio especial.
 Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 {link}
+Si no podés abrir el link, usá la imagen del QR que va adjunta en este mail.
 ¡Gracias por jugar!</textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {puesto} y {link} se completan solos para cada persona.</p>
         <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR POR GMAIL</button><button class="p" onclick="mailNext('mailto')">OTRA APP DE MAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
@@ -2561,7 +2562,7 @@ async function loadRank(){watchRank();watchMails();renderRk()}
    si no, se escriben a mano en la lista. El QR del puesto es un premio más en prizes/<ronda>/<id>: se canjea con
    el mismo escáner y queda marcado como reclamado (un solo uso). La persona lo abre en premio.html. */
 var MAILS={},mailSel={},mailEd={},mailSent={},mailOff=null,mailErr="",MROWS=[];
-var PREMIO_URL="https://ale3317h.github.io/trivia-input/premio.html";
+var PREMIO_URL="https://trivia-streamingroom-t3.web.app/premio.html";
 function watchMails(){
   var d=sdb();if(!d||mailOff)return;
   var ref=d.ref("cfg/mails"),h=ref.on("value",function(s){MAILENC={};
@@ -2604,6 +2605,32 @@ function mailStatus(){
   st.textContent=sel.length?"Marcados: "+sel.length+" · ya abiertos: "+sent+". Cada clic abre el mail de la siguiente persona marcada.":"";
 }
 function fillTpl(t,m,link){return t.replace(/\{nombre\}/g,m.name).replace(/\{puesto\}/g,m.pos).replace(/\{link\}/g,link)}
+/* QR del premio como imagen PNG (mismo contenido que muestra premio.html): se descarga y se copia al portapapeles para adjuntarlo o pegarlo en el mail */
+function qrPremioBlob(name,pos,code){
+  var txt="ST3 ROOM · RANKING\nJugador: "+name+"\nPremio: Puesto #"+pos+" del ranking\nCódigo: "+code;
+  var u8;try{u8=String.fromCharCode.apply(null,new TextEncoder().encode(txt))}catch(e){u8=unescape(encodeURIComponent(txt))}
+  var q=new QRC.Q(-1,QRC.L.M);q.addData(u8);q.make();
+  var n=q.getModuleCount(),m=4,u=Math.floor(560/(n+2*m)),S=u*(n+2*m),W=720,H=S+330,x0=(W-S)/2,y0=150,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
+  c.width=W;c.height=H;g.fillStyle="#07030e";g.fillRect(0,0,W,H);g.textAlign="center";
+  g.fillStyle="#ffe14d";g.font="700 38px monospace";g.fillText("ST3 ROOM · TRIVIA",W/2,58);
+  g.fillStyle="#fff";g.font="800 34px sans-serif";g.fillText(String(name).slice(0,26),W/2,100);
+  g.fillStyle="#3dff8a";g.font="700 26px sans-serif";g.fillText("PUESTO #"+pos+" DEL RANKING",W/2,134);
+  g.fillStyle="#fff";g.fillRect(x0-14,y0-14,S+28,S+28);g.fillStyle="#000";
+  for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))g.fillRect(x0+(x+m)*u,y0+(y+m)*u,u,u);
+  g.fillStyle="#ffe14d";g.font="700 30px monospace";g.fillText(code,W/2,y0+S+58);
+  g.fillStyle="#cfc7e6";g.font="600 22px sans-serif";g.fillText("Mostrá este QR en el stand para retirar tu premio",W/2,y0+S+98);
+  return new Promise(function(res){c.toBlob(res,"image/png")});
+}
+async function adjuntarQR(m,link){
+  try{
+    var code=new URL(link).searchParams.get("c"),blob=await qrPremioBlob(m.name,m.pos,code),
+        fn="QR premio - "+String(m.name).replace(/[^\wÁÉÍÓÚáéíóúñÑ ]+/g,"").trim()+" - puesto "+m.pos+".png";
+    var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();
+    setTimeout(function(){try{a.remove();URL.revokeObjectURL(a.href)}catch(e){}},5000);
+    var ok=false;try{await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);ok=true}catch(e){}
+    toast("QR descargado ("+fn+")"+(ok?" y copiado: en el mail pegalo con Ctrl+V":" · adjuntalo al mail"));
+  }catch(e){toast("No se pudo preparar el QR como imagen")}
+}
 function premioLink(g,c){return PREMIO_URL+"?g="+encodeURIComponent(g)+"&c="+encodeURIComponent(c)}
 /* QR de premio del puesto: uno por persona y ronda; si cambió de puesto, el anterior se anula y se hace otro. */
 async function rankPrizeLink(m){
@@ -2624,6 +2651,7 @@ async function mailNext(kind){
   var to=mailOf(m.uid);if(!okMail(to)&&!isTel(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
   var w=(kind==="gmail"||isTel(to))?window.open("","_blank"):null;   // la pestaña se abre ya, dentro del clic, para que el navegador no la bloquee
   var link;try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
+  await adjuntarQR(m,link);
   var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link);
   if(isTel(to)){var wu="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);if(w){try{w.opener=null}catch(e){}w.location.href=wu}else window.open(wu,"_blank")}
   else if(kind==="gmail"){var url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
@@ -2789,6 +2817,7 @@ async function top3Send(uid,kind){
   if(!to){alert(JV.key?"No se pudo leer el contacto de "+m.name+".":"No hay contacto guardado para enviar.");return}
   var tel=isTel(to),w=window.open("","_blank"),link;
   try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
+  await adjuntarQR(m,link);
   var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link),url;
   if(tel)url="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);
   else url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
