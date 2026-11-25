@@ -2079,13 +2079,18 @@ function saveScore(force){
   if(test)return Promise.resolve();
   if(score<=0&&!force)return Promise.resolve();
   if(!rkClosed())cntVal=score;try{ls("cnt",String(cntVal))}catch(e){}
-  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:ls("tj")||turnoNow()});
+  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:tjNow()});
 }
 /* Cada turno tiene su ranking: cierra a las 11:10 / 16:10 (hora de Argentina). Después se puede seguir jugando y ganar el premio por el nivel, pero los puntos ya no suman. */
 var cntVal=+(ls("cnt")||0)||0;
-function rkClosed(){try{return !test&&FB.rankInfo(ls("tj")||turnoNow()).cerrado}catch(e){return false}}
+/* Turno cuyo ranking cuenta para esta persona: el de cuando jugó; pero si ese ranking ya cerró y el del turno activo está abierto (cambio de turno o ranking abierto a mano desde el admin), pasa a ese */
+function tjNow(){
+  var t=ls("tj")||turnoNow();
+  try{var a=turnoNow();if(t!==a&&FB.rankInfo(t).cerrado&&!FB.rankInfo(a).cerrado){ls("tj",a);return a}}catch(e){}
+  return t}
+function rkClosed(){try{return !test&&FB.rankInfo(tjNow()).cerrado}catch(e){return false}}
 function rkCut(){
-  var e=$("rk-cut");if(!e)return;var i=FB.rankInfo(ls("tj")||turnoNow()),t=i.turno==="tarde"?"de la tarde":"de la mañana";
+  var e=$("rk-cut");if(!e)return;var i=FB.rankInfo(tjNow()),t=i.turno==="tarde"?"de la tarde":"de la mañana";
   var pill="display:inline-block;border-radius:99px;padding:7px 16px;font:700 14px system-ui,sans-serif;";
   if(i.cerrado){e.className="c";e.innerHTML='<span style="'+pill+'background:#ff4d6d22;border:1.5px solid #ff4d6d;color:#ff8fa3">🔒 RANKING CERRADO</span><div class="mut" style="font-size:12px;margin-top:5px">Podés seguir jugando, pero ya no suma puntos</div>';}
   else if(i.seg==null){e.className="c";e.innerHTML='<span style="'+pill+'background:#3dff8a22;border:1.5px solid #3dff8a;color:#3dff8a">🟢 RANKING ABIERTO</span>';}
@@ -2097,7 +2102,7 @@ function rkCut(){
 setInterval(function(){try{rkCut()}catch(e){}},30000);
 /* contador: «el ranking se cerrará dentro de mm:ss» (se ve en el inicio, mientras se juega y al terminar) */
 function cdTxt(){
-  var i=FB.rankInfo(ls("tj")||turnoNow());if(i.seg==null||i.cerrado)return null;var s=i.seg;
+  var i=FB.rankInfo(tjNow());if(i.seg==null||i.cerrado)return null;var s=i.seg;
   var h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;
   return (h?h+" h ":"")+("0"+m).slice(-2)+":"+("0"+x).slice(-2);
 }
@@ -2105,7 +2110,7 @@ function cdTxt(){
 function cdTick(){
   var t=null;try{t=cdTxt()}catch(e){}
   document.querySelectorAll(".rk-cd").forEach(function(e){e.textContent=t||""});
-  var b=$("rk-bar");if(b)b.classList.add("hide");var i0=FB.rankInfo(ls("tj")||turnoNow());
+  var b=$("rk-bar");if(b)b.classList.add("hide");var i0=FB.rankInfo(tjNow());
   if((!t&&$("rk-cut")&&/cierra en/.test($("rk-cut").textContent))||(!window.__ri||window.__ri!==i0.modo+i0.cerrado)){window.__ri=i0.modo+i0.cerrado;rkCut()}
 }
 setInterval(function(){try{cdTick()}catch(e){}},1000);
