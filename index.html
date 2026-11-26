@@ -2101,11 +2101,38 @@ function buildOrder(){
 }
 function isMe(x){return x.uid===FB.uid()}
 function getList(){return FB.listScores()}
+/* ---------- Sin internet ----------
+   La base no contesta ni falla cuando no hay conexión: se queda esperando. En la trivia ninguna lectura espera más de unos segundos
+   (se usa la última copia guardada en el celular), así se puede recargar y seguir la partida. */
+function conTope(p,ms,alt){return new Promise(function(ok){var listo=false,t=setTimeout(function(){if(!listo){listo=true;ok(alt())}},ms);
+  p.then(function(v){if(!listo){listo=true;clearTimeout(t);ok(v)}},function(){if(!listo){listo=true;clearTimeout(t);ok(alt())}})})}
+(function(){
+  var rc=FB.readCfg,lq=FB.loadQuestions,ls_=FB.listScores;
+  FB.readCfg=function(){return conTope(rc(),3500,function(){try{FB.loadCachedCfg()}catch(e){}return FB.cfg()})};
+  FB.loadQuestions=function(){
+    var guardadas=function(){try{var q=JSON.parse(localStorage.getItem("st3_preguntas")||"null");if(q&&q.length)return q}catch(e){}return []};
+    var red=lq().then(function(q){if(q&&q.length){try{localStorage.setItem("st3_preguntas",JSON.stringify(q))}catch(e){}return q}return guardadas()});
+    return conTope(red,4000,guardadas)};
+  FB.listScores=function(){return conTope(ls_(),4000,function(){return cache||[]})};
+})();
+/* El último puntaje queda anotado en el celular hasta que la base confirma que lo recibió; si no llegó, se vuelve a mandar. */
+function subirPuntaje(rec){
+  var p=FB.saveScore(rec).then(function(){try{var a=JSON.parse(ls("sc_pend")||"null");if(a&&a.ts===rec.ts&&a.score===rec.score)localStorage.removeItem("sc_pend")}catch(e){}}).catch(function(){});
+  return conTope(p,4000,function(){});
+}
+function subirPendiente(){
+  if(test||!hasPlayed())return;
+  var a=null;try{a=JSON.parse(ls("sc_pend")||"null")}catch(e){}
+  if(a&&String(a.gen)===String(FB.cfg().gen)&&a.uid===FB.uid())subirPuntaje(a);
+}
+window.addEventListener("online",subirPendiente);
 function saveScore(force){
   if(test)return Promise.resolve();
   if(score<=0&&!force)return Promise.resolve();
   if(!rkClosed())cntVal=score;try{ls("cnt",String(cntVal))}catch(e){}
-  return FB.saveScore({uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:tjNow()});
+  var rec={uid:FB.uid(),name:name,score:score,lvl:lvOf(cq)+1,ts:Date.now(),t:tjNow(),gen:FB.cfg().gen};
+  ls("sc_pend",JSON.stringify(rec));
+  return subirPuntaje(rec);
 }
 /* Cada turno tiene su ranking: cierra a las 11:10 / 16:10 (hora de Argentina). Después se puede seguir jugando y ganar el premio por el nivel, pero los puntos ya no suman. */
 var cntVal=+(ls("cnt")||0)||0;
@@ -2210,6 +2237,7 @@ async function init(){
   if(hasPlayed()&&!ls("juego")&&$("arranque"))show("s-name");
   ST3Sheet.load().then(planSheet);
   D=await FB.loadQuestions();
+  subirPendiente();
   var seguia=liveRestore();   // recargó en medio de la partida: vuelve a la misma pregunta
   if($("arranque")){if(hasPlayed())show("s-name");else reqShow()}
   cache=await getList();loaded=true;renderStart();if(seguia)live();
@@ -2232,7 +2260,7 @@ function playerReset(){
   try{
     var q=JSON.parse(ls("qr")||"null");
     if(q&&pv[q.id]){localStorage.removeItem("qr");ls("qrv",q.id);ch=true}          // premio/QR anulado
-    if(px[FB.uid()]){["played","cont","juego","acc","ver","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
+    if(px[FB.uid()]){["played","cont","juego","sc_pend","acc","ver","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
   }catch(e){}
   if(!ch)return;
   if(!$("s-end").classList.contains("hide")||!$("s-rank").classList.contains("hide"))go();else renderStart();
@@ -2730,12 +2758,19 @@ function pedirEscaneo(){ls("quiere","1");if(myClaimed){avisoAnotado();return}xSh
 function avisoAnotado(){ls("quiere","0");try{qrClose()}catch(e){}xShow("mb-ok");try{confetti()}catch(e){}}
 function mailCuenta(){var a=window.accInfo&&accInfo();return a&&a.via==="google"&&a.mail?a.mail:""}
 var xGuardando=false;
+function xSinRed(on){
+  var box=$("mb-top"),n=$("xt-net");
+  if(!n){n=document.createElement("p");n.id="xt-net";n.style.cssText="margin:0 0 10px;padding:10px;border-radius:12px;border:1.5px dashed #ffe14d;color:#ffe14d;font-weight:700;text-align:center";
+    n.textContent="📶 Sin internet. Conectate y no cierres la página: se guarda solo apenas vuelva.";var m=box.querySelector(".mbt");m.parentNode.insertBefore(n,m)}
+  n.classList.toggle("hide",!on);
+}
 function xConCuenta(){
   var m=mailCuenta();if(!m)return false;
-  if(xGuardando)return true;xGuardando=true;
+  if(xGuardando){xSinRed(true);return true}xGuardando=true;
+  var tn=setTimeout(function(){xSinRed(true)},3500);
   FB.saveMail({uid:FB.uid(),email:m,name:name||ls("name")||"",score:score||(xGet()||{}).score||0,gen:FB.cfg().gen}).then(function(){
-    xGuardando=false;ls("mail",m);moClose("ok");pedirEscaneo();
-  }).catch(function(){xGuardando=false;var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()});
+    xGuardando=false;clearTimeout(tn);xSinRed(false);ls("mail",m);moClose("ok");pedirEscaneo();
+  }).catch(function(){xGuardando=false;clearTimeout(tn);xSinRed(false);var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()});
   return true;
 }
 function xYes(){
@@ -2825,7 +2860,7 @@ async function end(win){
   await saveScore(true);await refresh();
   var m=merged();
   var pdte=pdteMe();
-  $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
+  $("st-pos").innerHTML=(rankVisible()&&m.p>=0?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
   if(rkClosed()){$("end-p").textContent="🔒 Ranking cerrado: tu premio por nivel sigue valiendo, pero estos puntos ya no suman."+(pdte?" Igual, pasá por el stand con tu QR.":"");$("end-p").classList.remove("hide")}else if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
   $("end-rk").classList.toggle("hide",!rankVisible());
   // solo si terminó el experto y quedó en el top 3: preguntas de la muestra y del Gmail (no se pueden cerrar sin responder)
@@ -2833,7 +2868,7 @@ async function end(win){
   if(r==="ok"&&$("end-mail"))$("end-mail").classList.add("hide");
   if(r==="no"){
     var hs=hardScore();$("st-pts").textContent=hs;m=merged();
-    $("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
+    $("st-pos").innerHTML=(rankVisible()&&m.p>=0?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
     $("end-p").textContent="No dejaste tu Gmail: tu ranking cuenta solo hasta el nivel difícil ("+hs+" pts) y no participás por el premio especial. "+(pdte?"Tu posición aparece cuando un admin valide tu QR en el stand.":"");$("end-p").classList.remove("hide");
   }
   if(good)confetti();
