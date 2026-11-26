@@ -575,7 +575,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-.rqcaja{display:block;width:100%;max-width:440px;flex:none;margin:0;padding:14px 14px 10px;border:2.5px solid #ffe14d;border-radius:18px;background:#ffe14d17;box-shadow:0 0 22px -4px #ffe14d88;text-align:center;cursor:text}.rqcaja .tit{display:block;font:800 1.15rem/1.3 var(--disp);letter-spacing:.04em;color:#ffe14d;margin-bottom:10px}.rqcaja .sub{display:block;color:var(--mut);font-size:.85rem;font-weight:600;letter-spacing:0;text-transform:none;margin-top:8px}.rqcaja small{display:block}.sl-life{gap:12px}.sl-life .hero{padding:16px;gap:8px}.sl-life .hearts-big{font-size:clamp(2rem,6vh,3rem)}.rqnom{width:100%;text-align:center;font-size:1.5rem!important;font-weight:800;background:#fff!important;color:#17102b!important;border:0!important;border-radius:12px!important;margin:0!important}.rqnom::placeholder{color:#7a7290;font-size:1.05rem;font-weight:600}.rqcaja.falta{animation:rqpulso 1.4s ease-in-out infinite}@keyframes rqpulso{50%{box-shadow:0 0 34px 2px #ffe14dcc}}@media (prefers-reduced-motion:reduce){.rqcaja.falta{animation:none}}
+.rqcaja{display:block;width:100%;max-width:440px;flex:none;margin:0;padding:14px 14px 10px;border:2.5px solid #ffe14d;border-radius:18px;background:#ffe14d17;box-shadow:0 0 22px -4px #ffe14d88;text-align:center;cursor:text}.rqcaja .tit{display:block;font:800 1.15rem/1.3 var(--disp);letter-spacing:.04em;color:#ffe14d;margin-bottom:10px}.rqcaja .sub{display:block;color:var(--mut);font-size:.85rem;font-weight:600;letter-spacing:0;text-transform:none;margin-top:8px}.rqcaja small{display:block}.sl-name .rqcaja{padding:26px 16px 20px}.steps i{min-width:0;flex-direction:column;gap:3px;padding:7px 2px!important;border-radius:14px;letter-spacing:.04em}.rqnom{width:100%;text-align:center;font-size:1.5rem!important;font-weight:800;background:#fff!important;color:#17102b!important;border:0!important;border-radius:12px!important;margin:0!important}.rqnom::placeholder{color:#7a7290;font-size:1.05rem;font-weight:600}.rqcaja.falta{animation:rqpulso 1.4s ease-in-out infinite}@keyframes rqpulso{50%{box-shadow:0 0 34px 2px #ffe14dcc}}@media (prefers-reduced-motion:reduce){.rqcaja.falta{animation:none}}
 .dibu{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px}.dibu span{font-size:2.6rem;line-height:1}.dibu i{font-style:normal;color:var(--mut);font-size:1.3rem}.mbox p.grande{font-size:1.2rem;color:#fff}.mbox p.grande b{color:#ffe14d}
 .tk-nom{text-align:center;margin:10px 12px 8px}.tk-nom small{display:block;font:700 .68rem/1 var(--disp);letter-spacing:.2em;color:var(--mut);margin-bottom:5px}.tk-nom b{display:block;font:800 1.5rem/1.15 var(--sans);color:#fff;overflow-wrap:anywhere}
 </style>
@@ -600,11 +600,12 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 </section>
 <section id="s-how" class="hide">
 <p class="hi">Hola <b class="yel" id="hi"></b> 👋</p>
-<div class="steps" id="dots"><i><b>1</b>Vidas</i><i><b>2</b>Premios</i><i><b>3</b>Tiempo</i></div>
+<div class="steps" id="dots"><i><b>1</b>Nombre</i><i><b>2</b>Vidas</i><i><b>3</b>Premios</i><i><b>4</b>Tiempo</i></div>
 <div class="view" id="view"><div class="track" id="track">
-<div class="slide sl-life"><label class="rqcaja" id="how-caja" for="how-nom"><span class="tit">✏️ PONÉ TU NOMBRE</span>
+<div class="slide sl-name"><label class="rqcaja" id="how-caja" for="how-nom"><span class="tit">✏️ PONÉ TU NOMBRE</span>
 <input id="how-nom" class="rqnom" maxlength="20" autocomplete="given-name" enterkeyhint="next" placeholder="Tocá acá y escribí" oninput="howNombre()" onkeydown="if(event.key==='Enter'){this.blur();howNext()}">
-<span class="sub">Así vas a aparecer en el ranking. Lo podés cambiar.</span><small class="red" id="how-err"></small></label><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span class="lose">♥</span></div>
+<span class="sub">Así vas a aparecer en el ranking. Lo podés cambiar.</span><small class="red" id="how-err"></small></label></div>
+<div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span class="lose">♥</span></div>
 <div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
 <div class="slide sl-prize"><div class="t" style="--c:#ffe14d;margin:0 0 clamp(14px,3vh,24px);text-align:center">Subí de nivel, <b>ganá premios</b></div>
 <div class="dif"><p style="--c:#ff4d5e"><em>🎁</em><span><b>SI LLEGÁS AL DIFÍCIL:</b> te llevás un premio normal</span></p>
@@ -2270,15 +2271,15 @@ function live(){
 
 var howI=0;
 function howGo(i){
-  i=Math.max(0,Math.min(2,i));if(i>0&&!nombreOk())i=0;howI=i;
+  i=Math.max(0,Math.min(3,i));if(i>0&&!nombreOk())i=0;howI=i;
   $("track").style.transform="translateX(-"+i*100+"%)";
   Array.prototype.forEach.call($("track").children,function(s,k){s.classList.toggle("on",k===i)});
   Array.prototype.forEach.call($("dots").children,function(d,k){d.classList.toggle("on",k===i);d.classList.toggle("done",k<i)});
-  $("how-n").textContent=i===2?"¡A JUGAR! →":"SIGUIENTE →";
-  ringDemo(i===2);
+  $("how-n").textContent=i===3?"¡A JUGAR! →":"SIGUIENTE →";
+  ringDemo(i===3);
 }
 function howBack(){if(howI>0)howGo(howI-1);else if(!test&&!hasPlayed())reqShow();else go()}
-function howNext(){if(howI<2){howGo(howI+1);return}if(nombreOk())start();else howGo(0)}
+function howNext(){if(howI<3){howGo(howI+1);return}if(nombreOk())start();else howGo(0)}
 /* nombre por defecto: el que ya usó en este celular o el de su cuenta de Google (se puede cambiar) */
 function nombreDefecto(){
   var a=window.accInfo&&accInfo();
@@ -2290,7 +2291,7 @@ function nombreOk(){
   if(mal){$("how-err").textContent=mal;return false}
   $("how-err").textContent="";$("nom").value=n;return true
 }
-/* al tocar JUGAR: las 3 pantallas de cómo se juega (el nombre va en la primera) */
+/* al tocar JUGAR: 4 pasos (nombre, vidas, premios y tiempo) */
 function comoJugar(){
   if(hasPlayed()){show("s-name");renderStart();return}
   $("err").textContent="";$("how-nom").value=nombreDefecto();howNombre();show("s-how");howGo(0)
