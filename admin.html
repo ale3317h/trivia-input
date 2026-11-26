@@ -275,14 +275,14 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
-        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con el QR adjunto, siempre con la misma plantilla. El texto de abajo se usa solo para quienes dejaron celular (WhatsApp).</p>
+        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con la imagen del QR dentro del mail, siempre con la misma plantilla. El texto de abajo se usa solo para quienes dejaron celular (WhatsApp).</p>
         <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
         <div id="mail-list" class="small">Cargando…</div>
         <input id="mail-su" value="🏆 ¡Felicidades! Quedaste en el top del ranking de la Trivia de Streaming Room T3" style="margin-top:10px">
         <textarea id="mail-bd" rows="5" style="margin-top:8px">¡Felicidades {nombre}! 🎉 Quedaste en el puesto #{puesto} del top del ranking del turno de la Trivia de Streaming Room T3 y te llevás un premio especial.
 Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 {link}
-Si no podés abrir el link, usá la imagen del QR que va adjunta en este mail.
+Si no podés abrir el link, usá la imagen del QR que te mandamos.
 ¡Gracias por jugar!</textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {puesto} y {link} se completan solos para cada persona.</p>
         <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR MAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
@@ -2642,7 +2642,7 @@ async function qrPremioBlob(name,pos,code){
   g.fillText("Mostrá este QR en el stand del stream para retirar tu",cx,cy2+56);g.fillText("premio. Es de un solo uso.",cx,cy2+92);
   return new Promise(function(res){c.toBlob(res,"image/png")});
 }
-/* Envío automático desde la cuenta del stream (Google Apps Script). El script no recibe ningún texto ni mail: lee el premio y el contacto de la base y manda siempre la misma plantilla, con el QR adjunto. */
+/* Envío automático desde la cuenta del stream (Google Apps Script). El script no recibe ningún texto ni mail: lee el premio y el contacto de la base y manda siempre la misma plantilla, con la imagen del QR dentro del mail. */
 var MAIL_API="https://script.google.com/macros/s/AKfycbwnDclrTyUrK5BeZ_gG6oBZH4_EvmySNPoa96ctC-Cb351WO5YO7u_YIGNWteh9-IoU/exec";
 var API_ERR={datos:"datos incompletos",premio_inexistente:"ese premio no existe",no_es_premio_de_puesto:"no es un premio de puesto",premio_anulado:"el premio está anulado",no_esta_en_el_top_3:"todavía no está en un top 3 definido (tocá REHACER TOP 3)",contacto_es_celular:"dejó un celular, no un mail",sin_mail:"no tiene un Gmail guardado",ya_reclamado:"ya retiró ese premio"};
 async function apiEnviar(m,link){
