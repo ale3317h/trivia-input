@@ -2175,8 +2175,8 @@ function renderStart(){
   claimBind();var rec=p&&qrGet()&&myClaimed;   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
   if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:6px;font-size:12px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
-  $("contbtn").classList.toggle("hide",!(p&&hasCont()));
-  if(p&&hasCont()&&!rec)$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
+  $("contbtn").classList.toggle("hide",!(p&&hasCont()&&!noExperto()));
+  if(p&&hasCont()&&!rec&&!noExperto())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
   try{rkCut()}catch(e){}try{xRedoPaint()}catch(e){}
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
@@ -2467,16 +2467,25 @@ async function showPrize(){
   $("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"Igual podés seguir jugando para avanzar en el ranking.";
   $("pz-btn").classList.toggle("hide",!ok);
   if(ok)qrIssue(3,qi);
-  show("s-prize");if(ok){playSonido("tada");confetti()}
+  if(noExperto()){contClear();$("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"¡Gracias por jugar!"}
+  pzPaint();show("s-prize");if(ok){playSonido("tada");confetti()}
+}
+/* Quien se verificó en el stand (sin Gmail) juega hasta el nivel difícil: el modo experto es solo para quien tiene mail, para poder avisarle si queda arriba */
+function noExperto(){var a=window.accInfo&&accInfo();return !test&&!!(a&&a.via==="stand")}
+function pzPaint(){
+  var c=document.querySelector("#s-prize .pz2");if(!c)return;
+  var n=$("pz-noexp");if(!n){n=document.createElement("div");n.id="pz-noexp";n.className="card c hide";n.innerHTML='<p><b>¡Llegaste al final de tu partida!</b></p><p class="mut">El modo experto es solo para quienes entran con Google, para poder avisarles si ganan.</p><button onclick="prizeExit()">LISTO</button>';c.parentNode.insertBefore(n,c.nextSibling)}
+  var no=noExperto();c.classList.toggle("hide",no);n.classList.toggle("hide",!no);
 }
 function prizeExit(){go()}
 function expIntro(){
   $("ex-t").textContent=15;$("ex-n").textContent=order.length;$("ex-from").textContent=cq+1;
   show("s-exp");
 }
-function prizeGo(){expIntro()}
-function startExpert(){contClear();$("live").classList.toggle("hide",!rankVisible());ask()}
+function prizeGo(){if(noExperto()){go();return}expIntro()}
+function startExpert(){if(noExperto()){go();return}contClear();$("live").classList.toggle("hide",!rankVisible());ask()}
 function resume(){
+  if(noExperto()){contClear();go();return}
   var c=null;try{c=JSON.parse(ls("cont")||"null")}catch(e){}
   if(!c||!D.length){contClear();go();return}
   var map={};D.forEach(function(x){if(isValid(x))map[x.q]=x});
@@ -2800,7 +2809,7 @@ init();
   function pantalla(msg){
     caja('<div class="ic">'+ICUSER+'</div><h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se juega <b>una sola vez</b> por persona.</p>'+
       '<button class="g" id="lg-g">'+G+'<span>Continuar con Google</span></button><div class="sep">o</div>'+
-      '<button class="o" id="lg-s">'+ICQR+'<span>Verificar en el stand</span></button><p class="nota">Si no tenés Gmail, el stand te habilita.</p>'+
+      '<button class="o" id="lg-s">'+ICQR+'<span>Verificar en el stand</span></button><p class="nota">Sin Gmail el stand te habilita, pero sin modo experto.</p>'+
       '<p class="er" id="lg-er">'+(msg||"")+'</p>'+(oblig?"":'<button class="x" id="lg-v">Volver</button>'));
     btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
     var ic=document.querySelector("#lg .ic"),tq=0;if(ic)ic.onclick=function(){if(++tq>=7){cerrar();$("pw").value="";$("pe").textContent="";$("adm").classList.remove("hide");$("pw").focus()}};   // 7 toques en el ícono: clave de producción (modo prueba)
@@ -2834,7 +2843,7 @@ init();
     var ref=firebase.database().ref("cfg/ver/"+p.c),n=($("nom").value||ls("name")||"").trim().slice(0,20);
     var q=qrMat("ST3-VERIFICAR:"+p.c),k=q.getModuleCount(),m=4,s=k+2*m,d="",x,y;
     for(y=0;y<k;y++)for(x=0;x<k;x++)if(q.isDark(y,x))d+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
-    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand.</p>'+
+    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand. Sin Gmail jugás hasta el nivel difícil.</p>'+
       '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" aria-label="QR de verificación"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
       '<div class="esp"><i></i><span>Esperando que te habiliten…</span></div><p class="nota">Cuando te habiliten, esta pantalla sigue sola.</p><p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
     btn("lg-v",function(){if(verOff){verOff();verOff=null}pantalla()});
