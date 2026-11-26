@@ -615,7 +615,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="rqt">REQUISITOS</div><div class="rqs">Seguinos en:</div>
 <div class="rq" id="rq">
 <a class="rqi" data-k="ig" style="--b:#ff5fb0;--i:0" href="https://www.instagram.com/streaming_roomt3/" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3zm0 2A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19h9a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 16.5 5zM12 7.6a4.4 4.4 0 1 1 0 8.8 4.4 4.4 0 0 1 0-8.8zm0 2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM17 6a1.1 1.1 0 1 1 0 2.2A1.1 1.1 0 0 1 17 6z"/></svg></em><b class="nm">Instagram</b><span class="st"></span></a>
-<a class="rqi" data-k="yt" style="--b:#ff4d4d;--i:1" href="https://www.youtube.com/@StreamingRoomT3" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg></em><b class="nm">YouTube</b><span class="st"></span></a>
+<a class="rqi" data-k="yt" style="--b:#ff4d4d;--i:1" href="https://www.youtube.com/@StreamingRoomT3?sub_confirmation=1" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg></em><b class="nm">YouTube</b><span class="st"></span></a>
 <a class="rqi" data-k="tt" style="--b:#3de8ff;--i:2" href="https://www.tiktok.com/@streaming_roomt3" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M14 3h3a5 5 0 0 0 4 4v3a8 8 0 0 1-4-1.2V15a6 6 0 1 1-6-6h1v3.2h-1A2.8 2.8 0 1 0 14 15z"/></svg></em><b class="nm">TikTok</b><span class="st"></span></a>
 </div>
 <div class="rqt">PARTICIPÁ POR</div>
@@ -2724,7 +2724,37 @@ init();
   window.accInfo=acc;
   function sinRed(){return navigator.onLine===false||!FB.shared()}
   var css=document.createElement("style");
-  css.textContent="#lg{position:fixed;inset:0;z-index:200;background:#07030ef7;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:22px 16px}#lg .b{width:100%;max-width:400px;margin:auto;text-align:center;border:1.5px solid #ffe14d66;border-radius:22px;background:#130b23;padding:22px 18px}#lg h2{margin:0 0 8px;font:800 22px/1.2 system-ui,sans-serif;color:#ffe14d}#lg p{margin:8px 0;font:500 15px/1.4 system-ui,sans-serif;color:#d9cdf2}#lg button,#lg a.bt{display:block;width:100%;margin:10px 0 0;border:0;border-radius:14px;padding:14px;font:800 16px system-ui,sans-serif;cursor:pointer;text-decoration:none;box-sizing:border-box}#lg .g{background:#fff;color:#1f1f1f}#lg .g b{color:#4285f4;font-size:19px;margin-right:8px}#lg .y{background:#ffe14d;color:#1a1200}#lg .o{background:transparent;border:1.5px solid #ffffff44;color:#f7f2ff}#lg .x{background:transparent;color:#b9a6d6;font-weight:600;text-decoration:underline;box-shadow:none;border:0}#lg h2::after,#lg h2::before{display:none}#lg button,#lg a.bt{letter-spacing:.02em}#lg .er{color:#ff8fa3;font-weight:700;min-height:1.2em}#lg .qr{background:#fff;border-radius:16px;padding:10px;margin:12px auto;max-width:250px}#lg .qr svg{display:block;width:100%}#lg .cod{font:800 24px monospace;letter-spacing:.18em;color:#ffe14d}";
+  css.textContent=
+    "#lg{position:fixed;inset:0;z-index:200;display:flex;overflow:auto;padding:20px 16px;box-sizing:border-box;background:radial-gradient(90% 60% at 50% 0,#3b1670 0,transparent 70%),#07030e;font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif}"+
+    "#lg *{box-sizing:border-box;margin:0;padding:0;text-shadow:none;letter-spacing:normal;text-transform:none}"+
+    "#lg .b{margin:auto;width:100%;max-width:380px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:28px 22px;border-radius:24px;background:#140c25;border:1px solid #ffffff1c;box-shadow:0 24px 60px -20px #000}"+
+    "#lg .ic{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ffffff0f;border:1px solid #ffffff1f}"+
+    "#lg .ic svg{width:30px;height:30px}"+
+    "#lg h2{font:800 22px/1.25 'Manrope',system-ui,sans-serif;color:#fff;width:100%;display:block;text-align:center}"+
+    "#lg h2::before,#lg h2::after{display:none}"+
+    "#lg p{font:500 14.5px/1.5 'Manrope',system-ui,sans-serif;color:#bfb2da;max-width:300px}"+
+    "#lg p b{color:#fff;font-weight:700}"+
+    "#lg button,#lg a.bt{width:100%;min-height:52px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:14px;border:1px solid transparent;box-shadow:none;font:700 15.5px/1.2 'Manrope',system-ui,sans-serif;text-decoration:none;cursor:pointer;padding:10px 16px;transform:none}"+
+    "#lg button:active,#lg a.bt:active{transform:scale(.98)}"+
+    "#lg button:focus-visible,#lg a.bt:focus-visible{outline:3px solid #8ab4f8;outline-offset:2px}"+
+    "#lg button svg{width:20px;height:20px;flex:none}"+
+    "#lg .g{background:#fff;color:#1f1f1f}"+
+    "#lg .y{background:#ffe14d;color:#1a1200}"+
+    "#lg .o{background:transparent;border-color:#ffffff33;color:#efeaff}"+
+    "#lg .x{background:transparent;color:#a99bca;font-weight:600;min-height:36px;font-size:14px}"+
+    "#lg .sep{width:100%;display:flex;align-items:center;gap:12px;color:#8576a6;font:600 12px 'Manrope',sans-serif}"+
+    "#lg .sep::before,#lg .sep::after{content:'';flex:1;height:1px;background:#ffffff1f}"+
+    "#lg .er{color:#ff9db0;font-weight:700}#lg .er:empty{display:none}"+
+    "#lg .nota{font-size:12px;color:#8576a6}"+
+    "#lg .qr{width:min(100%,230px);background:#fff;border-radius:18px;padding:12px}#lg .qr svg{display:block;width:100%;height:auto}"+
+    "#lg .cod{font:800 20px/1 ui-monospace,'JetBrains Mono',monospace;letter-spacing:.2em;color:#ffe14d;background:#ffe14d14;border:1px solid #ffe14d44;border-radius:10px;padding:10px 14px 10px 17px}"+
+    "#lg .esp{display:flex;align-items:center;justify-content:center;gap:8px;color:#8ef0c0;font:700 13px 'Manrope',sans-serif}"+
+    "#lg .esp i{width:14px;height:14px;border-radius:50%;border:2px solid #8ef0c055;border-top-color:#8ef0c0;animation:lgg 1s linear infinite}"+
+    "@keyframes lgg{to{transform:rotate(360deg)}}@media (prefers-reduced-motion:reduce){#lg .esp i{animation:none}}";
+  var G='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.7 1.2 9.2 3.6l6.9-6.9C35.9 2.4 30.5 0 24 0 14.6 0 6.5 5.4 2.6 13.2l8 6.2C12.5 13.7 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M47 24.6c0-1.6-.2-3.2-.4-4.6H24v9h12.9c-.6 3-2.300 5.5-4.8 7.2l7.700 6c4.500-4.200 7.200-10.400 7.200-17.600z"/><path fill="#FBBC05" d="M10.500 28.600c-.5-1.500-.8-3-.8-4.6s.3-3.100.8-4.6l-8-6.200C.9 16.500 0 20.100 0 24s.9 7.500 2.600 10.800l7.900-6.200z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.700-6c-2.200 1.500-4.900 2.300-8.200 2.300-6.200 0-11.500-4.200-13.400-9.900l-8 6.2C6.500 42.600 14.600 48 24 48z"/></svg>';
+  var ICQR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3z"/><path d="M14 14h3v3M21 14v.01M17 21h4v-4M14 21v.01"/></svg>';
+  var ICUSER='<svg viewBox="0 0 24 24" fill="none" stroke="#ffe14d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-5.5 8-5.5s6.500 1.5 8 5.5"/></svg>';
+  var ICWEB='<svg viewBox="0 0 24 24" fill="none" stroke="#ffe14d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
   document.head.appendChild(css);
   var seguir=null,verOff=null;
   function caja(html){var o=$("lg");if(!o){o=document.createElement("div");o.id="lg";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");document.body.appendChild(o)}o.innerHTML='<div class="b">'+html+'</div>';return o}
@@ -2734,9 +2764,10 @@ init();
   function btn(id,fn){var e=$(id);if(e)e.onclick=fn}
 
   function pantalla(msg){
-    caja('<h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se puede jugar <b>una sola vez</b> por persona.</p>'+
-      '<button class="g" id="lg-g"><b>G</b>Continuar con Google</button><button class="o" id="lg-s">No tengo Gmail: verificar en el stand</button>'+
-      '<p class="er" id="lg-er">'+(msg||"")+'</p><p style="font-size:12px">Solo usamos tu mail para este concurso.</p><button class="x" id="lg-v">Volver</button>');
+    caja('<div class="ic">'+ICUSER+'</div><h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se juega <b>una sola vez</b> por persona.</p>'+
+      '<button class="g" id="lg-g">'+G+'<span>Continuar con Google</span></button><div class="sep">o</div>'+
+      '<button class="o" id="lg-s">'+ICQR+'<span>Verificar en el stand</span></button><p class="nota">Si no tenés Gmail, el stand te habilita.</p>'+
+      '<p class="er" id="lg-er">'+(msg||"")+'</p><button class="x" id="lg-v">Volver</button>');
     btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
   }
 
@@ -2768,9 +2799,9 @@ init();
     var ref=firebase.database().ref("cfg/ver/"+p.c),n=($("nom").value||ls("name")||"").trim().slice(0,20);
     var q=qrMat("ST3-VERIFICAR:"+p.c),k=q.getModuleCount(),m=4,s=k+2*m,d="",x,y;
     for(y=0;y<k;y++)for(x=0;x<k;x++)if(q.isDark(y,x))d+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
-    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand. Cuando te habilite, esta pantalla sigue sola.</p>'+
-      '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
-      '<p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
+    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand.</p>'+
+      '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" aria-label="QR de verificación"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
+      '<div class="esp"><i></i><span>Esperando que te habiliten…</span></div><p class="nota">Cuando te habiliten, esta pantalla sigue sola.</p><p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
     btn("lg-v",function(){if(verOff){verOff();verOff=null}pantalla()});
     ref.once("value").then(function(sn){if(!sn.val())return ref.set({u:FB.uid(),n:n,s:"wait",ts:firebase.database.ServerValue.TIMESTAMP})}).catch(function(){err("No se pudo pedir la verificación. Revisá tu internet.")});
     var h=ref.child("s").on("value",function(sn){var v=sn.val();
@@ -2781,7 +2812,7 @@ init();
 
   function abrirNavegador(){
     var url=location.origin+location.pathname,android=/Android/i.test(UA);
-    caja('<h2>Abrí esta página en tu navegador</h2><p>La estás viendo dentro de otra app (Instagram, WhatsApp, TikTok…), y así no se puede jugar.</p>'+
+    caja('<div class="ic">'+ICWEB+'</div><h2>Abrí esta página en tu navegador</h2><p>La estás viendo dentro de otra app (Instagram, WhatsApp, TikTok…), y así no se puede jugar.</p>'+
       (android?'<a class="bt y" href="intent://'+url.replace(/^https?:\/\//,"")+'#Intent;scheme=https;package=com.android.chrome;end">Abrir en Chrome</a>':'<p><b>Tocá los tres puntos «⋯» o el ícono de compartir y elegí «Abrir en el navegador».</b></p>')+
       '<button class="o" id="lg-c">Copiar el link</button><p class="er" id="lg-er"></p><button class="x" id="lg-s">No puedo: verificar en el stand</button>');
     btn("lg-c",function(){navigator.clipboard.writeText(url).then(function(){err("Link copiado. Pegalo en Chrome o Safari.")},function(){err(url)})});
