@@ -2341,6 +2341,12 @@ function reqSync(){
     for(y=0;y<N;y++)for(x=0;x<N;x++)if(d[(y*N+x)*4+3]>90){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
     if(x1<0)return;
     var r=document.createElement("canvas");r.width=x1-x0+1;r.height=y1-y0+1;r.getContext("2d").drawImage(c,x0,y0,r.width,r.height,0,0,r.width,r.height);
+    var rg=r.getContext("2d"),im0=rg.getImageData(0,0,r.width,r.height),p=im0.data,k;
+    for(k=0;k<p.length;k+=4){   // listón violeta: lo rojo/rosado pasa a violeta con el mismo brillo; la caja amarilla queda igual
+      var R=p[k],G=p[k+1],B=p[k+2],mx=Math.max(R,G,B),mn=Math.min(R,G,B),dif=mx-mn;if(dif<30||mx!==R)continue;
+      var tono=60*(G-B)/dif;if(tono>18)continue;
+      p[k]=mn+Math.round(dif*.55);p[k+1]=mn;p[k+2]=mx}
+    rg.putImageData(im0,0,0);
     var u=r.toDataURL();s.textContent="";s.className="listo";
     for(var i=0;i<3;i++){var im=new Image();im.alt=i?"":"🎁";im.src=u;s.appendChild(im)}
   }catch(e){}
