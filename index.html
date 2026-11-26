@@ -2595,7 +2595,20 @@ function xPos(sc){var n=0;cache.forEach(function(x){if(!isMe(x)&&x.score>sc)n++}
 function curScore(){var s=rkClosed()?Math.min(score,cntVal):score;return ls("mailNo")==="1"?Math.min(s,hardScore()):s}
 function xTop(){$("xt-h").textContent=turnoHasta();var x=xGet();if(x&&x.stage!=="top"){x.stage="top";xSet(x)}xShow("mb-top")}
 function xMail(){$("mo-in").value=ls("mail")||"";$("mo-err").textContent="";$("mo-err").className="mer";$("mo-ok").disabled=false;$("mo-ok").textContent="ACEPTAR";xShow("mb-ask");setTimeout(function(){try{$("mo-in").focus()}catch(e){}},300)}
+/* Quien entró con Google ya dejó su Gmail al principio: no se lo vuelve a pedir; al aceptar quedarse se guarda ese y listo.
+   La ventana del Gmail queda solo por si no hay mail (por ejemplo, entró sin internet) o si no se pudo guardar. */
+function mailCuenta(){var a=window.accInfo&&accInfo();return a&&a.via==="google"&&a.mail?a.mail:""}
+var xGuardando=false;
+function xConCuenta(){
+  var m=mailCuenta();if(!m)return false;
+  if(xGuardando)return true;xGuardando=true;
+  FB.saveMail({uid:FB.uid(),email:m,name:name||ls("name")||"",score:score||(xGet()||{}).score||0,gen:FB.cfg().gen}).then(function(){
+    xGuardando=false;ls("mail",m);moClose("ok");
+  }).catch(function(){xGuardando=false;var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()});
+  return true;
+}
 function xYes(){
+  if(xConCuenta())return;
   var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()}
 function xNo(){xShow("mb-nosure")}
 var xRes=null;
@@ -2607,7 +2620,7 @@ function xDecide(){return new Promise(function(res){
     x.stage="top";xSet(x)
   }
   xRes=res;
-  if(x.stage==="mail")xMail();else xTop();
+  if(x.stage==="mail"){if(!xConCuenta())xMail()}else xTop();
 })}
 /* Si alguien se equivocó y dijo que no, la pregunta sigue disponible mientras el ranking esté abierto: vuelve a salir y, si acepta las dos ventanas, recupera todo su puntaje */
 (function(){var s=document.createElement("style");s.textContent=".xr{margin:12px 0;padding:14px;border-radius:18px;border:2px solid #2ee6c5;background:linear-gradient(160deg,#2ee6c524,#0000 70%),#0d1d22;text-align:center}.xr .xi{font-size:38px;line-height:1}.xr b{display:block;font:800 18px/1.15 system-ui,sans-serif;color:#2ee6c5;margin:6px 0 4px}.xr span{display:block;font:600 13px/1.35 system-ui,sans-serif;color:#cfeee8;margin-bottom:12px}.xr button{width:100%;margin:0;border:0;border-radius:14px;padding:13px;font:900 16px system-ui,sans-serif;letter-spacing:.06em;color:#04201b;background:linear-gradient(180deg,#5cf5dc,#1fc9ab);box-shadow:0 4px 0 #0f7f6c}";document.head.appendChild(s)})();
