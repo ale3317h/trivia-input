@@ -2288,10 +2288,31 @@ function reqSync(){
 // Reloj de muestra en la regla del tiempo: se vacía y vuelve a empezar.
 /* El reloj de la regla NO cuenta: muestra el tiempo fijo y el aro solo gira, como una carga (así nadie cree que tiene que esperar). */
 function ringDemo(){var t=Math.max(1,Math.round(T/1000)),b=$("how-t"),e=$("how-ts");if(b)b.textContent=t;if(e)e.textContent=t}
+/* Al tocar «Seguir» el botón sigue en rojo y en silencio: se tilda (con su sonido) recién cuando la persona vuelve de la red social,
+   como mínimo unos segundos después. Si la pantalla nunca se llega a ocultar (no se abrió nada), se tilda igual pasado un rato. */
+var REQ_MIN=3500,REQ_SINSALIR=9000,reqEsp={},reqT=0;
 Array.prototype.forEach.call($("rq").children,function(a){a.addEventListener("click",function(){
-  var r=reqGet();if(!r[a.dataset.k]){r[a.dataset.k]=1;r.rg=+reqRg();ls("req",JSON.stringify(r));withAudio(function(){playSonido("tilde")})}
-  reqPaint();
+  var k=a.dataset.k;unlockAudio();
+  if(!reqGet()[k]&&!reqEsp[k])reqEsp[k]={t:Date.now(),salio:false};
+  reqTick();
 })});
+function reqTick(){
+  clearTimeout(reqT);
+  var falta=0,hay=false;
+  Object.keys(reqEsp).forEach(function(k){
+    var p=reqEsp[k],pas=Date.now()-p.t,espera=(p.salio?REQ_MIN:REQ_SINSALIR)-pas;
+    if(!document.hidden&&espera<=0){
+      delete reqEsp[k];var r=reqGet();
+      if(!r[k]){r[k]=1;r.rg=+reqRg();ls("req",JSON.stringify(r));withAudio(function(){playSonido("tilde")});reqPaint()}
+      return}
+    hay=true;falta=falta?Math.min(falta,espera):espera;
+  });
+  if(hay&&!document.hidden)reqT=setTimeout(reqTick,Math.max(200,falta));
+}
+function reqSalio(){Object.keys(reqEsp).forEach(function(k){reqEsp[k].salio=true})}
+document.addEventListener("visibilitychange",function(){if(document.hidden){reqSalio();clearTimeout(reqT)}else setTimeout(reqTick,700)});
+window.addEventListener("blur",reqSalio);window.addEventListener("focus",function(){setTimeout(reqTick,700)});
+window.addEventListener("pageshow",function(){setTimeout(reqTick,700)});
 Array.prototype.forEach.call($("dots").children,function(d,k){d.onclick=function(){howGo(k)}});
 (function(){var x=null,v=$("view");
   v.addEventListener("touchstart",function(e){x=e.touches[0].clientX},{passive:true});
