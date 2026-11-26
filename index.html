@@ -575,7 +575,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
-.rqs .paso{display:inline-block;width:26px;height:26px;line-height:26px;border-radius:50%;background:#ffe14d;color:#1a1200;font-size:.9rem;margin-right:6px;text-align:center}#rq+.rqs{margin-top:22px}.rqnom{width:100%;text-align:center;font-size:1.25rem;font-weight:700}.rqinfo{display:flex;justify-content:center;gap:18px;margin:12px 0 2px;color:var(--mut);font-weight:700;font-size:.9rem}.rqinfo em{font-style:normal;margin-right:5px}.rqinfo b{color:#fff;margin-right:3px}.rqrk{background:none!important;border:0!important;box-shadow:none!important;color:var(--mut)!important;font-size:.9rem;text-decoration:underline;margin-top:4px}
+.rqcaja{display:block;width:100%;max-width:440px;flex:none;margin:0;padding:14px 14px 10px;border:2.5px solid #ffe14d;border-radius:18px;background:#ffe14d17;box-shadow:0 0 22px -4px #ffe14d88;text-align:center;cursor:text}.rqcaja .tit{display:block;font:800 1.15rem/1.3 var(--disp);letter-spacing:.04em;color:#ffe14d;margin-bottom:10px}.rqcaja .sub{display:block;color:var(--mut);font-size:.85rem;font-weight:600;letter-spacing:0;text-transform:none;margin-top:8px}.rqcaja small{display:block}.sl-life{gap:12px}.sl-life .hero{padding:16px;gap:8px}.sl-life .hearts-big{font-size:clamp(2rem,6vh,3rem)}.rqnom{width:100%;text-align:center;font-size:1.5rem!important;font-weight:800;background:#fff!important;color:#17102b!important;border:0!important;border-radius:12px!important;margin:0!important}.rqnom::placeholder{color:#7a7290;font-size:1.05rem;font-weight:600}.rqcaja.falta{animation:rqpulso 1.4s ease-in-out infinite}@keyframes rqpulso{50%{box-shadow:0 0 34px 2px #ffe14dcc}}@media (prefers-reduced-motion:reduce){.rqcaja.falta{animation:none}}.rqrk{background:none!important;border:0!important;box-shadow:none!important;color:var(--mut)!important;font-size:.9rem;text-decoration:underline;margin-top:4px}
 .dibu{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px}.dibu span{font-size:2.6rem;line-height:1}.dibu i{font-style:normal;color:var(--mut);font-size:1.3rem}.mbox p.grande{font-size:1.2rem;color:#fff}.mbox p.grande b{color:#ffe14d}
 .tk-nom{text-align:center;margin:10px 12px 8px}.tk-nom small{display:block;font:700 .68rem/1 var(--disp);letter-spacing:.2em;color:var(--mut);margin-bottom:5px}.tk-nom b{display:block;font:800 1.5rem/1.15 var(--sans);color:#fff;overflow-wrap:anywhere}
 </style>
@@ -591,7 +591,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="card y hide" id="played"></div>
 <div class="card y c qrc hide" id="played-qr"></div>
 <button class="hide" id="contbtn" onclick="resume()">CONTINUAR PARA AVANZAR EN EL RANKING →</button>
-<div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="start()">JUGAR →</button><small id="err" class="red"></small></div>
+<div class="card y" id="form"><label>Coloca tu Nombre</label><input id="nom" maxlength="20" autocomplete="given-name" placeholder="Como te llamas?"><button onclick="comoJugar()">JUGAR →</button><small id="err" class="red"></small></div>
 <button class="p" id="home-rk" onclick="showRank()">VER RANKING</button>
 <div class="x-redo xr hide"></div>
 <div id="rk-cut" class="c hide" style="margin:10px 0"></div>
@@ -602,7 +602,9 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <p class="hi">Hola <b class="yel" id="hi"></b> 👋</p>
 <div class="steps" id="dots"><i><b>1</b>Vidas</i><i><b>2</b>Premios</i><i><b>3</b>Tiempo</i></div>
 <div class="view" id="view"><div class="track" id="track">
-<div class="slide sl-life"><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span class="lose">♥</span></div>
+<div class="slide sl-life"><label class="rqcaja" id="how-caja" for="how-nom"><span class="tit">✏️ PONÉ TU NOMBRE</span>
+<input id="how-nom" class="rqnom" maxlength="20" autocomplete="given-name" enterkeyhint="next" placeholder="Tocá acá y escribí" oninput="howNombre()" onkeydown="if(event.key==='Enter'){this.blur();howNext()}">
+<span class="sub">Así vas a aparecer en el ranking. Lo podés cambiar.</span><small class="red" id="how-err"></small></label><div class="hero" style="--c:#ff4d7d"><div class="ic hearts-big"><span>♥</span><span>♥</span><span class="lose">♥</span></div>
 <div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
 <div class="slide sl-prize"><div class="t" style="--c:#ffe14d;margin:0 0 clamp(14px,3vh,24px);text-align:center">Subí de nivel, <b>ganá premios</b></div>
 <div class="dif"><p style="--c:#ff4d5e"><em>🎁</em><span><b>SI LLEGÁS AL DIFÍCIL:</b> te llevás un premio normal</span></p>
@@ -615,14 +617,11 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 </section>
 <section id="s-req" class="hide">
 <div class="rqh"><b>STREAMING ROOM T3</b><img id="rq-logo" alt="ST3 ROOM"></div><div class="tube" aria-hidden="true"></div>
-<div class="rqt">PARA JUGAR</div><div class="rqs"><b class="paso">1</b> Seguinos</div>
+<div class="rqt">PARA JUGAR</div><div class="rqs">Seguinos</div>
 <div class="rq" id="rq">
 <a class="rqi" data-k="yt" style="--b:#ff4d4d;--i:0" href="https://www.youtube.com/@StreamingRoomT3?sub_confirmation=1" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2 26 26 0 0 0 2 12a26 26 0 0 0 .4 4.8 2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8A26 26 0 0 0 22 12a26 26 0 0 0-.4-4.8zM10 15V9l5.2 3z"/></svg></em><b class="nm">YouTube</b><span class="st"></span></a>
 <a class="rqi" data-k="ig" style="--b:#ff5fb0;--i:1" href="https://www.instagram.com/streaming_roomt3/" target="_blank" rel="noopener"><em class="app"><svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7.5 3h9A4.5 4.5 0 0 1 21 7.5v9a4.5 4.5 0 0 1-4.5 4.5h-9A4.5 4.5 0 0 1 3 16.5v-9A4.5 4.5 0 0 1 7.5 3zm0 2A2.5 2.5 0 0 0 5 7.5v9A2.5 2.5 0 0 0 7.5 19h9a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 16.5 5zM12 7.6a4.4 4.4 0 1 1 0 8.8 4.4 4.4 0 0 1 0-8.8zm0 2a2.4 2.4 0 1 0 0 4.8 2.4 2.4 0 0 0 0-4.8zM17 6a1.1 1.1 0 1 1 0 2.2A1.1 1.1 0 0 1 17 6z"/></svg></em><b class="nm">Instagram</b><span class="st"></span></a>
 </div>
-<div class="rqs"><b class="paso">2</b> Tu nombre</div>
-<input id="rq-nom" class="rqnom" maxlength="20" autocomplete="given-name" placeholder="¿Cómo te llamás?" oninput="reqPaint()">
-<div class="rqinfo"><span><em>❤️</em><b id="rq-v">3</b> vidas</span><span><em>⏱️</em><b id="rq-s">15</b> seg</span><span><em>🎁</em>premios</span></div>
 <div class="rqf"><div class="nav"><button id="rq-go" class="off" onclick="reqGo()">JUGAR →</button></div><small id="rq-err" class="red"></small><button class="rqrk" id="rq-rk" onclick="showRank()">Ver ranking</button></div>
 <div class="rqt">PARTICIPÁ POR</div>
 <div class="rqg"><p style="--c:#ff5f8a"><em>🍬</em><b>Caramelos</b></p><p style="--c:#ffd21f"><em>⭐</em><b>Stickers</b></p><p style="--c:#3de8ff"><em>🔑</em><b>Llaveros</b></p><p style="--c:#b86bff"><em>✏️</em><b>Lapiceras</b></p><p style="--c:#4ade80"><em>📓</em><b>Cuadernos</b></p><p style="--c:#ffe14d"><em>🏆</em><b>Premios grandes</b></p></div>
@@ -2230,8 +2229,8 @@ function playerReset(){
   if(!$("s-end").classList.contains("hide")||!$("s-rank").classList.contains("hide"))go();else renderStart();
 }
 function qrBlocked(){var v=ls("qrv");return !test&&!!(v&&(FB.cfg().pv||{})[v])}
-var rankFrom="s-end";
-function rankBack(){if(rankFrom==="s-name")go();else show(rankFrom)}
+var rankFrom="s-name";
+function rankBack(){if(rankFrom==="s-req"&&!hasPlayed())reqShow();else if(rankFrom==="s-name"||rankFrom==="s-req")go();else show(rankFrom)}
 /* Botón propio para bajar/subir: aparece solo cuando la pantalla tiene más contenido
    del que entra. Baja de a una pantalla con desplazamiento suave; al llegar al final
    se da vuelta y sube de una. */
@@ -2255,7 +2254,7 @@ $("sc").addEventListener("scroll",scrollSoon,{passive:true});window.addEventList
 if(window.visualViewport)visualViewport.addEventListener("resize",scrollSoon);
 document.addEventListener("animationend",scrollSoon,true);
 try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catch(e){setInterval(scrollState,1000)}
-async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
+async function showRank(){var cur=["s-name","s-req","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
 /* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
 function pdteMe(){return !test&&!!qrGet()&&!myClaimed}
 function merged(){
@@ -2271,15 +2270,32 @@ function live(){
 
 var howI=0;
 function howGo(i){
-  i=Math.max(0,Math.min(2,i));howI=i;
+  i=Math.max(0,Math.min(2,i));if(i>0&&!nombreOk())i=0;howI=i;
   $("track").style.transform="translateX(-"+i*100+"%)";
   Array.prototype.forEach.call($("track").children,function(s,k){s.classList.toggle("on",k===i)});
   Array.prototype.forEach.call($("dots").children,function(d,k){d.classList.toggle("on",k===i);d.classList.toggle("done",k<i)});
   $("how-n").textContent=i===2?"¡A JUGAR! →":"SIGUIENTE →";
   ringDemo(i===2);
 }
-function howBack(){if(howI<=0)go();else howGo(howI-1)}
-function howNext(){if(howI>=2)play();else howGo(howI+1)}
+function howBack(){if(howI>0)howGo(howI-1);else if(!test&&!hasPlayed())reqShow();else go()}
+function howNext(){if(howI<2){howGo(howI+1);return}if(nombreOk())start();else howGo(0)}
+/* nombre por defecto: el que ya usó en este celular o el de su cuenta de Google (se puede cambiar) */
+function nombreDefecto(){
+  var a=window.accInfo&&accInfo(),g="";
+  try{var u=firebase.auth().currentUser;g=String(u&&u.displayName||"").trim().split(/s+/)[0]}catch(e){}
+  return ($("nom").value.trim()||ls("name")||(a&&a.nombre)||g||"").slice(0,20)
+}
+function howNombre(){var n=$("how-nom").value.trim();$("hi").textContent=n;$("how-err").textContent="";$("how-caja").classList.toggle("falta",!n)}
+function nombreOk(){
+  var n=$("how-nom").value.trim(),mal=!n?"Escribí tu nombre para seguir":(malaPalabra(n)?"Ese nombre no está permitido. Elegí otro 🙂":"");
+  if(mal){$("how-err").textContent=mal;return false}
+  $("how-err").textContent="";$("nom").value=n;return true
+}
+/* al tocar JUGAR: las 3 pantallas de cómo se juega (el nombre va en la primera) */
+function comoJugar(){
+  if(hasPlayed()){show("s-name");renderStart();return}
+  $("err").textContent="";$("how-nom").value=nombreDefecto();howNombre();show("s-how");howGo(0)
+}
 /* ---------- Requisitos: seguir las tres cuentas antes de jugar ----------
    Tocar una cuenta la abre en otra pestaña y la marca. No se puede comprobar
    desde acá que de verdad la siguió: es de buena fe. */
@@ -2287,19 +2303,12 @@ function reqGet(){try{return JSON.parse(ls("req")||"{}")||{}}catch(e){return{}}}
 function reqPaint(){
   var r=reqGet(),n=0,it=$("rq").children;
   Array.prototype.forEach.call(it,function(a){var on=!!r[a.dataset.k];a.classList.toggle("on",on);if(on)n++});
-  var nom=($("rq-nom").value||"").trim();
-  var ok=(n>=it.length||test)&&!!nom;
+  var ok=n>=it.length||test;
   $("rq-go").classList.toggle("off",!ok);$("rq-go").disabled=!ok;
-  $("rq-go").textContent=n<it.length&&!test?"Primero seguinos ("+n+"/"+it.length+")":(!nom?"Escribí tu nombre":"JUGAR →");
+  $("rq-go").textContent=ok?"JUGAR →":"Primero seguinos ("+n+"/"+it.length+")";
 }
-/* el nombre ya viene escrito con el de la cuenta de Google (se puede cambiar) */
-function reqNombre(){var e=$("rq-nom");if(!e||e.value)return;var a=window.accInfo&&accInfo();e.value=ls("name")||(a&&a.nombre)||""}
-function reqShow(){if(!$("rq-logo").src)$("rq-logo").src=document.querySelector(".logo-c").src;reqNombre();$("rq-v").textContent=MAXHP;$("rq-s").textContent=Math.round(T/1000);$("rq-rk").classList.toggle("hide",!rankVisible());show("s-req");reqPaint()}
-function reqGo(){
-  if($("rq-go").disabled)return;var n=$("rq-nom").value.trim();
-  if(malaPalabra(n)){$("rq-err").textContent="Ese nombre no está permitido. Elegí otro 🙂";return}
-  $("rq-err").textContent="";$("nom").value=n;start();
-}
+function reqShow(){if(!$("rq-logo").src)$("rq-logo").src=document.querySelector(".logo-c").src;$("rq-rk").classList.toggle("hide",!rankVisible());show("s-req");reqPaint()}
+function reqGo(){if($("rq-go").disabled)return;comoJugar()}
 /* Los requisitos valen para la ronda en que se cumplieron (r.rg): si producción hace "Reiniciar todo"
    (cambia cfg.rg) vuelven a pedirse. Lo guardado sin marca de ronda es de la ronda 0 (antes de cualquier reinicio). */
 function reqRg(){return String(FB.cfg().rg||0)}
@@ -2308,7 +2317,7 @@ function reqDone(){var r=reqGet();return !!(r.yt&&r.ig)&&reqOf(r)===reqRg()}
 function reqSync(){
   var r=reqGet();
   if(reqOf(r)!==reqRg())ls("req","{}");   // ronda nueva: hay que seguir las redes otra vez
-  if(!inPlay()&&!test&&!hasPlayed()&&$("s-req").classList.contains("hide"))reqShow();   // mientras no jugó, todo está en esa única pantalla
+  if(!inPlay()&&!test&&!hasPlayed()&&$("s-req").classList.contains("hide"))reqShow();   // mientras no jugó, arranca en la pantalla de seguirnos
   else if(!$("s-req").classList.contains("hide"))reqPaint();
 }
 // Reloj de muestra en la regla del tiempo: se vacía y vuelve a empezar.
@@ -2868,7 +2877,7 @@ init();
       var h=await hashMail(mail),uid=FB.uid();
       var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid)return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
       if(!t.committed){cargando("");err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
-      setAcc({via:"google",mail:mail,nombre:String((r.user&&r.user.displayName)||"").trim().split(/\s+/)[0].slice(0,20)});ls("mail",mail);listo();try{reqNombre();reqPaint()}catch(e){}
+      setAcc({via:"google",mail:mail,nombre:String((r.user&&r.user.displayName)||"").trim().split(/\s+/)[0].slice(0,20)});ls("mail",mail);listo();try{reqPaint()}catch(e){}
     }).catch(function(e){
       cargando("");
       var c=(e&&e.code)||"",m=String((e&&e.message)||"");
@@ -2915,7 +2924,7 @@ init();
   /* apenas se entra: primero identificarse, después los requisitos */
   FB.readCfg().then(function(){
     if(test||acc()||hasPlayed()||sinRed())return;
-    oblig=true;seguir=function(){oblig=false;try{reqSync();reqNombre();reqPaint()}catch(e){}};
+    oblig=true;seguir=function(){oblig=false;try{reqSync();reqPaint()}catch(e){}};
     if(INTERNO)abrirNavegador();else pantalla();
   }).catch(function(){});
 })();
