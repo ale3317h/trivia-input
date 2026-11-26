@@ -275,7 +275,7 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
-        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con la imagen del QR dentro del mail, siempre con la misma plantilla. El texto de abajo se usa solo para quienes dejaron celular (WhatsApp).</p>
+        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con la imagen de su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con la imagen del QR dentro del mail, siempre con la misma plantilla. El texto de abajo se usa solo para quienes dejaron celular (WhatsApp).</p>
         <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
         <div id="mail-list" class="small">Cargando…</div>
         <input id="mail-su" value="🏆 ¡Felicidades! Quedaste en el top del ranking de la Trivia de Streaming Room T3" style="margin-top:10px">
@@ -2886,7 +2886,7 @@ function top3Paint(){
   var t=FB.cfg().turno,tn=t==="tarde"?"tarde":"mañana",info=FB.rankInfo(),k=top3Key(),fin=RKFIN[k],h="";
   var H='<h2 style="margin:0 0 4px">🏆 Top 3 del turno '+tn+'</h2>';
   if(fin&&fin.u){
-    H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón manda el mail solo desde la cuenta del stream, con «felicidades» y su QR de premio (si dejó celular, abre WhatsApp).</p>';
+    H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón manda el mail solo desde la cuenta del stream, con su puesto y la imagen del QR de premio (si dejó celular, abre WhatsApp).</p>';
     if(!JV.key)H+='<div class="small" style="color:var(--yel);margin-bottom:6px">Para enviar, poné la clave de los mails (pestaña Juego → VER MAILS).</div>';
     H+=(fin.u.length?fin.u.map(function(p,i){var s=(fin.sent||{})[p.uid],to=mailOf(p.uid);
       return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts · '+(to?(isTel(to)?'📱 '+esc(to):'✉ '+esc(to)):'contacto cifrado')+(s?' · <span style="color:var(--grn)">✓ enviado '+hm(s)+'</span>':'')+'</div></div><div class="act"><button class="g" onclick="top3Send(\''+esc(p.uid)+'\')">'+(s?'REENVIAR':'ENVIAR')+'</button></div></div>'}).join(""):'<div class="small">Nadie cumplió las condiciones todavía (QR validado + contacto + modo experto).</div>');
