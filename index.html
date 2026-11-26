@@ -575,6 +575,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
+.tk-nom{text-align:center;margin:10px 12px 8px}.tk-nom small{display:block;font:700 .68rem/1 var(--disp);letter-spacing:.2em;color:var(--mut);margin-bottom:5px}.tk-nom b{display:block;font:800 1.5rem/1.15 var(--sans);color:#fff;overflow-wrap:anywhere}
 </style>
 <script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
@@ -2534,7 +2535,7 @@ function qrMat(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();return q
 function qrSvg(r){var q=qrMat(r.txt),n=q.getModuleCount(),m=4,s=n+2*m,p="",x,y;
   for(y=0;y<n;y++)for(x=0;x<n;x++)if(q.isDark(y,x))p+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
   return '<svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" role="img" aria-label="Código QR"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+p+'" fill="#000"/></svg>'}
-function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+QPZ[r.li][1].toUpperCase()+'</b><span>'+QPZ[r.li][2]+'</span></div></div><div class="tk-cut"></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
+function qrHTML(r){var c=LV[r.li][4];return '<div class="tk" style="--c:'+c+'"><div class="tk-top"><em>'+QPZ[r.li][0]+'</em><div><small>TU PREMIO</small><b>'+QPZ[r.li][1].toUpperCase()+'</b><span>'+QPZ[r.li][2]+'</span></div></div><div class="tk-cut"></div><div class="tk-nom"><small>A NOMBRE DE</small><b>'+esc(r.name)+'</b></div><div class="qrbox">'+qrSvg(r)+'</div><div class="qrid">'+r.code+'</div><p class="tk-note">Mostrá este QR en el puesto del streaming para retirar tu premio</p></div><button onclick="qrSave()">GUARDAR QR EN EL CELULAR</button>'}
 /* Premio ya reclamado en el stand: en lugar del QR sale la pantalla de «premio reclamado» con su puesto en el ranking */
 var myClaimed=false,claimOff=null,claimKey="";
 function claimBind(){
