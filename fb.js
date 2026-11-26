@@ -35,9 +35,11 @@ var FB = (function () {
   try { if (db) db.ref(".info/serverTimeOffset").on("value", function (s) { srvOff = +s.val() || 0; }); } catch (e) { }
   var HORARIOS = { cambio: 12 * 60, cierre: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 }, final: { manana: 11 * 60 + 10, tarde: 16 * 60 + 10 } };
   function ahoraAR() { var d = new Date(Date.now() + srvOff - 3 * 3600 * 1000); return { min: d.getUTCHours() * 60 + d.getUTCMinutes(), seg: d.getUTCSeconds(), dia: d.toISOString().slice(0, 10) }; }
-  function turnoAuto() { return ahoraAR().min >= HORARIOS.cambio ? "tarde" : "manana"; }
+  var AMANECE = 6 * 60;   // de 12:00 a 5:59 es «tarde»: a la medianoche el ranking no se vacía ni salta a la mañana
+  function turnoDeMin(min) { return (min >= HORARIOS.cambio || min < AMANECE) ? "tarde" : "manana"; }
+  function turnoAuto() { return turnoDeMin(ahoraAR().min); }
   function turnoDe(m) {
-    var a = ahoraAR(), auto = a.min >= HORARIOS.cambio ? "tarde" : "manana";
+    var a = ahoraAR(), auto = turnoDeMin(a.min);
     if (m && (m.t === "tarde" || m.t === "manana") && m.d === a.dia && m.a === auto) return m.t;   // cambio manual: vale hasta que el automático cambie de turno
     return auto;
   }
@@ -46,7 +48,8 @@ var FB = (function () {
   /* Estado del ranking de un turno: automático (cierra a las 11:10 / 16:10) o a mano (abierto, cerrado, o abierto un rato más) */
   function rankInfo(t) {
     t = t || cfg.turno; var a = ahoraAR(), m = cfg.rkm, c = HORARIOS.cierre[t];
-    var o = { turno: t, modo: "auto", cerrado: a.min >= c, hora: hhmm(c), final: hhmm(c), seg: Math.max(0, c * 60 - (a.min * 60 + a.seg)) };
+    var cerr = a.min >= c || (t === "tarde" && a.min < AMANECE);   // de madrugada el ranking de la tarde sigue cerrado
+    var o = { turno: t, modo: "auto", cerrado: cerr, hora: hhmm(c), final: hhmm(c), seg: cerr ? 0 : Math.max(0, c * 60 - (a.min * 60 + a.seg)) };
     if (m && m.t === t && m.d === a.dia) {
       if (m.m === "open") { o.modo = "open"; o.cerrado = false; o.seg = null; o.hora = ""; }
       else if (m.m === "closed") { o.modo = "closed"; o.cerrado = true; o.seg = 0; }
@@ -55,7 +58,7 @@ var FB = (function () {
     return o;
   }
   /* turno de un puntaje viejo que no lo tiene guardado: se deduce por la hora en que se jugó (desde las 12:00 = tarde) */
-  function turnoDeTs(ts) { if (!ts) return "manana"; var d = new Date(ts - 3 * 3600 * 1000); return d.getUTCHours() * 60 + d.getUTCMinutes() >= HORARIOS.cambio ? "tarde" : "manana"; }
+  function turnoDeTs(ts) { if (!ts) return "manana"; var d = new Date(ts - 3 * 3600 * 1000); return turnoDeMin(d.getUTCHours() * 60 + d.getUTCMinutes()); }
   function hhmm(min) { return Math.floor(min / 60) + ":" + ("0" + (min % 60)).slice(-2); }
   function norm(v) {
     v = v || {};

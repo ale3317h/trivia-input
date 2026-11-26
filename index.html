@@ -705,7 +705,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script>window.FB_IDLE_MS=180000;</script>
-<script src="fb.js?v=24"></script>
+<script src="fb.js?v=25"></script>
 <script src="sheet-config.js?v=1"></script>
 <script>window.ST3_POLL_MS=120000;window.ST3_ONLY_ACTIVE=true;window.ST3_RULETA_TAB=null;</script>
 <script src="sheet.js?v=6"></script>
@@ -2087,7 +2087,8 @@ var cntVal=+(ls("cnt")||0)||0;
 /* Turno cuyo ranking cuenta para esta persona: el de cuando jugó; pero si ese ranking ya cerró y el del turno activo está abierto (cambio de turno o ranking abierto a mano desde el admin), pasa a ese */
 function tjNow(){
   var t=ls("tj")||turnoNow();
-  try{var a=turnoNow();if(t!==a&&FB.rankInfo(t).cerrado&&!FB.rankInfo(a).cerrado){ls("tj",a);return a}}catch(e){}
+  try{if(ls("tj")&&ls("tjd")!==FB.ahoraAR().dia)t=turnoNow()}catch(e){}
+  try{var a=turnoNow();if(t!==a&&FB.rankInfo(t).cerrado&&!FB.rankInfo(a).cerrado){ls("tj",a);ls("tjd",FB.ahoraAR().dia);return a}}catch(e){}
   return t}
 function rkClosed(){try{return !test&&FB.rankInfo(tjNow()).cerrado}catch(e){return false}}
 function rkCut(){
@@ -2344,7 +2345,7 @@ function play(){
   order=buildOrder();
   if(!order.length){show("s-name");$("err").textContent="Las preguntas están incompletas. Avisale al admin.";return}
   qi=0;cq=0;lastGood=false;hp=MAXHP;score=0;racha=0;expertHp=false;
-  if(!test){ls("played",String(FB.cfg().gen));ls("tj",turnoNow());ls("cnt","0");cntVal=0}
+  if(!test){ls("played",String(FB.cfg().gen));ls("tj",turnoNow());try{ls("tjd",FB.ahoraAR().dia)}catch(e){}ls("cnt","0");cntVal=0}
   $("live").classList.toggle("hide",!rankVisible());
   saveScore().then(refresh);lvBanner(0,ask);
 }
