@@ -2902,7 +2902,7 @@ function top3Paint(){
   var t=FB.cfg().turno,tn=t==="tarde"?"tarde":"mañana",info=FB.rankInfo(),k=top3Key(),fin=RKFIN[k],h="";
   var H='<h2 style="margin:0 0 4px">🏆 Top 3 del turno '+tn+'</h2>';
   if(fin&&fin.u){
-    H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón manda el mail solo desde la cuenta del stream, con su puesto y la imagen del QR de premio (si dejó celular, abre WhatsApp).</p>';
+    H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón manda el mail solo desde la cuenta del stream, con «felicidades», su puesto y el QR de premio (si dejó celular, abre WhatsApp).</p>';
     if(!JV.key)H+='<div class="small" style="color:var(--yel);margin-bottom:6px">Para enviar, poné la clave de los mails (pestaña Juego → VER MAILS).</div>';
     H+=(fin.u.length?fin.u.map(function(p,i){var s=(fin.sent||{})[p.uid],to=mailOf(p.uid);
       return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts · '+(to?(isTel(to)?'📱 '+esc(to):'✉ '+esc(to)):'contacto cifrado')+(s?' · <span style="color:var(--grn)">✓ enviado '+hm(s)+'</span>':'')+'</div></div><div class="act">'+(TOPENV[p.uid]?'<button class="g" disabled aria-busy="true">'+RUEDA+' ENVIANDO…</button>':'<button class="g" onclick="top3Send(\''+esc(p.uid)+'\')">'+(s?'REENVIAR':'ENVIAR')+'</button>')+'</div></div>'}).join(""):'<div class="small">Nadie cumplió las condiciones todavía (QR validado + contacto + modo experto).</div>');

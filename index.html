@@ -659,6 +659,13 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
   <p class="wbig">SI NO PODÉS QUEDARTE, TU RANKING CUENTA SOLO HASTA EL NIVEL DIFÍCIL Y NO PARTICIPÁS POR EL PREMIO ESPECIAL. ¿ACEPTÁS?</p>
   <div class="mbt"><button class="r" onclick="xTop()">CANCELAR</button><button onclick="moReally()">ACEPTAR</button></div>
  </div>
+ <div class="mbox hide" id="mb-ok">
+  <div class="mem">🎉</div>
+  <h2>¡Listo, quedaste anotado!</h2>
+  <p>Si te toca retirar un premio, te avisamos a tu Gmail.</p>
+  <p><b>(Revisá también la bandeja de Spam.)</b></p>
+  <div class="mbt"><button onclick="$('mail-ov').classList.add('hide')">ENTENDIDO</button></div>
+ </div>
  <div class="mbox hide" id="mb-ask">
   <div class="mem">📬</div>
   <h2 id="mo-t">¿Querés que te avisemos si ganás?</h2>
@@ -2598,7 +2605,7 @@ var XFLOW=true;
 function turnoHasta(){return turnoNow()==="tarde"?"16:15":"11:15"}
 function xGet(){try{var x=JSON.parse(ls("xflow")||"null");return x&&String(x.gen)===String(FB.cfg().gen)?x:null}catch(e){return null}}
 function xSet(x){if(test)return;try{if(x)localStorage.setItem("xflow",JSON.stringify(x));else localStorage.removeItem("xflow")}catch(e){}}
-function xShow(id){["mb-top","mb-nosure","mb-ask","mb-warn"].forEach(function(k){$(k).classList.toggle("hide",k!==id)});$("mail-ov").classList.remove("hide")}
+function xShow(id){["mb-top","mb-nosure","mb-ask","mb-warn","mb-ok"].forEach(function(k){$(k).classList.toggle("hide",k!==id)});$("mail-ov").classList.remove("hide")}
 function hardScore(){try{var h=JSON.parse(ls("hard")||"null");if(h&&String(h.gen)===String(FB.cfg().gen)&&h.score>=0)return h.score|0}catch(e){}var x=xGet();return score||(x&&x.score)||0}
 function xPos(sc){var n=0;cache.forEach(function(x){if(!isMe(x)&&x.score>sc)n++});return n+1}   // puesto en el ranking visible de ese momento
 function curScore(){var s=rkClosed()?Math.min(score,cntVal):score;return ls("mailNo")==="1"?Math.min(s,hardScore()):s}
@@ -2612,7 +2619,7 @@ function xConCuenta(){
   var m=mailCuenta();if(!m)return false;
   if(xGuardando)return true;xGuardando=true;
   FB.saveMail({uid:FB.uid(),email:m,name:name||ls("name")||"",score:score||(xGet()||{}).score||0,gen:FB.cfg().gen}).then(function(){
-    xGuardando=false;ls("mail",m);moClose("ok");
+    xGuardando=false;ls("mail",m);moClose("ok");xShow("mb-ok");
   }).catch(function(){xGuardando=false;var x=xGet();if(x){x.stage="mail";xSet(x)}xMail()});
   return true;
 }
@@ -2654,7 +2661,7 @@ function moAccept(){
   if(!c.ok){e.textContent=c.msg;e.className="mer big";try{navigator.vibrate&&navigator.vibrate(80)}catch(x){}return}
   var b=$("mo-ok");b.disabled=true;b.textContent="Guardando…";e.textContent="";e.className="mer";
   FB.saveMail({uid:FB.uid(),email:c.mail,name:name,score:score,gen:FB.cfg().gen}).then(function(){
-    ls("mail",c.mail);moClose("ok");
+    ls("mail",c.mail);moClose("ok");xShow("mb-ok");
   }).catch(function(x){
     b.disabled=false;b.textContent="ACEPTAR";var den=/permission/i.test(x&&(x.code||x.message));
     e.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";e.className="mer big";
