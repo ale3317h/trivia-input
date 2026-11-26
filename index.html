@@ -2226,7 +2226,7 @@ function playerReset(){
   try{
     var q=JSON.parse(ls("qr")||"null");
     if(q&&pv[q.id]){localStorage.removeItem("qr");ls("qrv",q.id);ch=true}          // premio/QR anulado
-    if(px[FB.uid()]){["played","cont","juego","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
+    if(px[FB.uid()]){["played","cont","juego","acc","ver","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
   }catch(e){}
   if(!ch)return;
   if(!$("s-end").classList.contains("hide")||!$("s-rank").classList.contains("hide"))go();else renderStart();
@@ -2317,6 +2317,7 @@ function reqRg(){return String(FB.cfg().rg||0)}
 function reqOf(r){return String(r.rg===undefined?0:r.rg)}
 function reqDone(){var r=reqGet();return !!(r.yt&&r.ig)&&reqOf(r)===reqRg()}
 function reqSync(){
+  if(window.pedirLogin)setTimeout(pedirLogin,0);
   var r=reqGet();
   if(reqOf(r)!==reqRg())ls("req","{}");   // ronda nueva: hay que seguir las redes otra vez
   if(hasPlayed()&&!$("s-req").classList.contains("hide")){show("s-name");return}
@@ -2915,7 +2916,7 @@ init();
       if(!mail){cargando("");err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
       cargando("Comprobando…");
       var h=await hashMail(mail),uid=FB.uid();
-      var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid)return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
+      var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid&&!((FB.cfg().px||{})[c.u]))return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
       if(!t.committed){cargando("");err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
       setAcc({via:"google",mail:mail,nombre:String((r.user&&r.user.displayName)||"").trim().split(/\s+/)[0].slice(0,20)});ls("mail",mail);var gn=acc()&&acc().nombre;if(gn){ls("name",gn);$("nom").value=gn}listo();try{reqPaint()}catch(e){}
     }).catch(function(e){
@@ -2961,13 +2962,17 @@ init();
     seguir=_start;
     if(INTERNO)abrirNavegador();else pantalla();
   };
-  /* apenas se entra: primero identificarse, después los requisitos */
-  FB.readCfg().then(function(){
+  /* apenas se entra, y también después de «Reiniciar todo» o de reiniciar a una persona: primero identificarse, después los requisitos */
+  function exigir(){
     var a=acc(),sinNombre=a&&a.via==="google"&&a.nombre===undefined;
-    if(test||(a&&!sinNombre)||hasPlayed()||sinRed())return;
-    oblig=true;seguir=function(){oblig=false;try{reqSync();reqPaint()}catch(e){}};
+    if(test||(a&&!sinNombre)||hasPlayed()||sinRed()||$("lg"))return;
+    if(!$("adm").classList.contains("hide"))return;   // producción está poniendo la clave
+    if(["s-game","s-prize","s-exp","s-end"].some(function(i){return !$(i).classList.contains("hide")}))return;   // nunca encima de una partida
+    oblig=true;seguir=function(){oblig=false;try{reqSync();reqPaint();if(!$("s-how").classList.contains("hide"))comoJugar()}catch(e){}};
     if(INTERNO)abrirNavegador();else pantalla();
-  }).catch(function(){});
+  }
+  window.pedirLogin=exigir;
+  FB.readCfg().then(exigir).catch(function(){});
 })();
 </script>
 </body>
