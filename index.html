@@ -463,7 +463,7 @@ button{font-weight:800}
 .dif{width:100%;max-width:440px;margin:0 auto;padding:clamp(10px,2vh,18px) 18px;border-radius:24px;border:2px solid #ffe14d;background:#ffe14d0a;box-shadow:0 0 22px -4px #ffe14d99,inset 0 0 26px -14px #ffe14d}
 .dif p{margin:0;max-width:none;text-align:left;display:flex;align-items:center;gap:14px;padding:clamp(12px,2.4vh,20px) 0;font:600 clamp(1rem,2.6vh,1.2rem)/1.3 var(--sans);color:var(--tx)}
 .dif p+p{border-top:1px solid #ffffff1a}
-.dif p em.trio{line-height:0}.dif p em.trio svg{display:block;margin:0 auto;overflow:visible}.dif p em.trio svg.del{filter:drop-shadow(0 0 1.5px #000)}
+.dif p em.trio{line-height:1}#trio.listo{display:block;position:relative;width:76px;height:36px}#trio img{position:absolute;bottom:0;display:block;height:auto}#trio img:nth-child(1){width:36px;left:20px}#trio img:nth-child(2){width:21px;left:7px}#trio img:nth-child(3){width:15px;left:49px}#trio img+img{filter:drop-shadow(0 0 1.5px #000)}
 .dif p em{font-style:normal;font-size:1.9rem;width:76px;text-align:center;flex:none;filter:drop-shadow(0 0 10px var(--c))}
 .dif p b{font:900 1.05em var(--disp);letter-spacing:.06em;color:var(--c);text-shadow:0 0 8px var(--c),0 0 20px color-mix(in srgb,var(--c) 60%,transparent)}
 .tm{--c:#ffe14d;width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(16px,4vh,32px)}
@@ -612,7 +612,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="t"><b id="how-v">4</b> vidas</div><p>Cada error o tiempo agotado te saca una.</p></div></div>
 <div class="slide sl-prize"><div class="t" style="--c:#ffe14d;margin:0 0 clamp(14px,3vh,24px);text-align:center">Subí de nivel, <b>ganá premios</b></div>
 <div class="dif"><p style="--c:#ff4d5e"><em>🎁</em><span><b>SI LLEGÁS AL DIFÍCIL:</b> te llevás un premio normal</span></p>
-<p style="--c:#b86bff"><em class="trio"><svg width="76" height="40" viewBox="0 0 76 40" aria-hidden="true"><svg x="19" y="2" width="38" height="38" viewBox="0 0 32 32"><path fill="#e3304f" d="M16 8.5C13 1 5.5.8 6 5.2 6.4 8.4 12 8.5 16 8.5ZM16 8.5C19 1 26.500.8 26 5.2 25.600 8.4 20 8.5 16 8.5Z"/><rect x="3" y="14" width="26" height="18" rx="2" fill="#f6b526"/><rect x="1" y="8" width="30" height="7.500" rx="2" fill="#ffd23f"/><rect x="13" y="8" width="6" height="24" fill="#d92b52"/></svg><svg class="del" x="5" y="18" width="22" height="22" viewBox="0 0 32 32"><path fill="#e3304f" d="M16 8.5C13 1 5.5.8 6 5.2 6.4 8.4 12 8.5 16 8.5ZM16 8.5C19 1 26.500.8 26 5.2 25.600 8.4 20 8.5 16 8.5Z"/><rect x="3" y="14" width="26" height="18" rx="2" fill="#f6b526"/><rect x="1" y="8" width="30" height="7.500" rx="2" fill="#ffd23f"/><rect x="13" y="8" width="6" height="24" fill="#d92b52"/></svg><svg class="del" x="54" y="24" width="16" height="16" viewBox="0 0 32 32"><path fill="#e3304f" d="M16 8.5C13 1 5.5.8 6 5.2 6.4 8.4 12 8.5 16 8.5ZM16 8.5C19 1 26.500.8 26 5.2 25.600 8.4 20 8.5 16 8.5Z"/><rect x="3" y="14" width="26" height="18" rx="2" fill="#f6b526"/><rect x="1" y="8" width="30" height="7.500" rx="2" fill="#ffd23f"/><rect x="13" y="8" width="6" height="24" fill="#d92b52"/></svg></svg></em><span><b>SI GANÁS EL JUEGO:</b> un premio grande</span></p>
+<p style="--c:#b86bff"><em class="trio"><span id="trio">🎁</span></em><span><b>SI GANÁS EL JUEGO:</b> un premio grande</span></p>
 <p style="--c:#ffd21f"><em>🏆</em><span><b>SI QUEDÁS EN EL TOP 3:</b> ¡un premio especial!</span></p></div></div>
 <div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
 <p>Tenés <b id="how-ts">15</b> segundos para responder cada pregunta</p></div></div>
@@ -2331,6 +2331,20 @@ function reqSync(){
 }
 // Reloj de muestra en la regla del tiempo: se vacía y vuelve a empezar.
 /* El reloj de la regla NO cuenta: muestra el tiempo fijo y el aro solo gira, como una carga (así nadie cree que tiene que esperar). */
+/* Premio grande: tres veces el emoji del regalo (grande atrás, mediano y chiquito delante). Cada celular dibuja el emoji
+   distinto, así que se recorta a su dibujo: recién así los tres apoyan exactamente en la misma línea. */
+(function(){
+  try{
+    var s=document.getElementById("trio"),N=160,c=document.createElement("canvas");c.width=c.height=N;
+    var g=c.getContext("2d",{willReadFrequently:true});g.font='112px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';g.textAlign="center";g.textBaseline="middle";g.fillText("🎁",N/2,N/2);
+    var d=g.getImageData(0,0,N,N).data,x0=N,y0=N,x1=-1,y1=-1,x,y;
+    for(y=0;y<N;y++)for(x=0;x<N;x++)if(d[(y*N+x)*4+3]>90){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    if(x1<0)return;
+    var r=document.createElement("canvas");r.width=x1-x0+1;r.height=y1-y0+1;r.getContext("2d").drawImage(c,x0,y0,r.width,r.height,0,0,r.width,r.height);
+    var u=r.toDataURL();s.textContent="";s.className="listo";
+    for(var i=0;i<3;i++){var im=new Image();im.alt=i?"":"🎁";im.src=u;s.appendChild(im)}
+  }catch(e){}
+})();
 function ringDemo(){var t=Math.max(1,Math.round(T/1000)),b=$("how-t"),e=$("how-ts");if(b)b.textContent=t;if(e)e.textContent=t}
 /* Al tocar «Seguir» el botón sigue en rojo y en silencio: se tilda (con su sonido) recién cuando la persona vuelve de la red social,
    como mínimo unos segundos después. Si la pantalla nunca se llega a ocultar (no se abrió nada), se tilda igual pasado un rato. */
