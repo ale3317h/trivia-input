@@ -580,6 +580,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 .dibu{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 12px}.dibu span{font-size:2.6rem;line-height:1}.dibu i{font-style:normal;color:var(--mut);font-size:1.3rem}.mbox p.grande{font-size:1.2rem;color:#fff}.mbox p.grande b{color:#ffe14d}
 #s-req .rqg{flex:none}#s-req .rqg+.rqf{margin-top:auto}#s-req #rq+.rqt{margin-top:auto;padding-top:14px}
 #arranque{width:46px;height:46px;margin:38vh auto 0;border-radius:50%;border:4px solid #ffe14d33;border-top-color:#ffe14d;animation:ringspin .9s linear infinite}
+.qresp{border:2px dashed #ffe14d;border-radius:18px;padding:18px 14px;text-align:center;background:#ffe14d0d}.qresp .ic{font-size:2.6rem;line-height:1}.qresp h3{margin:8px 0 6px;color:#ffe14d;font:900 1.2rem var(--disp)}.qresp p{margin:0 0 12px;color:var(--mut)}
 .tk-nom{text-align:center;margin:10px 12px 8px}.tk-nom small{display:block;font:700 .68rem/1 var(--disp);letter-spacing:.2em;color:var(--mut);margin-bottom:5px}.tk-nom b{display:block;font:800 1.5rem/1.15 var(--sans);color:#fff;overflow-wrap:anywhere}
 </style>
 <script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
@@ -2621,9 +2622,24 @@ function qrIssue(li,q){if(test)return null;if(qrBlocked())return null;
   if(test)QRTEST=r;else{ls("qr",JSON.stringify(r));qrSync()}
   return r;
 }
-// Registra el premio en la base para que el productor lo vea en el admin (se reintenta si no había conexión).
+// Registra el premio en la base para que el productor lo vea en el admin. El QR NO se muestra hasta que la base confirma
+// que quedó cargado (sin internet el escaneo diría «código no válido»). Se reintenta solo al volver la conexión.
 function qrSync(){var r=qrGet();if(!r||test||!FB.shared())return Promise.resolve();
-  return FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:pzName(r.li),score:r.score,q:r.q,ts:r.ts}).catch(function(){})}
+  var code=r.code;
+  var p=FB.savePrize({gen:r.gen,id:r.id,code:r.code,name:r.name,li:r.li,prize:pzName(r.li),score:r.score,q:r.q,ts:r.ts})
+    .then(function(){qrCargado(code)})
+    .catch(function(){return firebase.database().ref("prizes/"+r.gen+"/"+r.id+"/code").once("value").then(function(s){if(s.val()===code)qrCargado(code)})})   // ya estaba cargado (p. ej. reclamado)
+    .catch(function(){});
+  return Promise.race([p,new Promise(function(ok){setTimeout(ok,4000)})])}   // sin conexión no se queda trabado esperando
+function qrListo(r){return !!r&&(test||ls("qrok")===r.code)}
+function qrCargado(code){var r=qrGet();if(!r||r.code!==code||ls("qrok")===code)return;ls("qrok",code);claimPaint()}
+function qrReintentar(b){
+  if(!FB.shared()){location.reload();return}   // la página abrió sin internet: hay que recargarla (la partida no se pierde)
+  b.disabled=true;b.textContent="CARGANDO…";qrSync().then(function(){b.disabled=false;b.textContent="REINTENTAR";claimPaint()})
+}
+function qrEspera(){return '<div class="qresp"><div class="ic">📶</div><h3>Tu premio todavía no se cargó</h3><p>Conectate a internet. Apenas se cargue, acá aparece tu QR.</p><button onclick="qrReintentar(this)">REINTENTAR</button></div>'}
+/* lo que se ve en el lugar del premio: reclamado, el QR, o el aviso de que falta cargarlo */
+function qrVista(r){return myClaimed?claimHTML(r):(qrListo(r)?qrHTML(r):qrEspera())}
 window.addEventListener("online",qrSync);
 function u8(s){try{return String.fromCharCode.apply(null,new TextEncoder().encode(s))}catch(e){return unescape(encodeURIComponent(s))}}
 function qrMat(t){var q=new QRC.Q(-1,QRC.L.M);q.addData(u8(t));q.make();return q}
@@ -2652,11 +2668,11 @@ function claimHTML(r){
   return '<div class="cl"><div class="hd"><div class="gift">🎁</div><div><span class="ok">PREMIO '+QPZ[r.li][1].toUpperCase()+'</span><h3>¡RECOMPENSA RECLAMADA!</h3></div></div>'+
     (me?'<div class="pos"><span class="med">'+med+'</span><div><div class="who">'+esc(me.name||r.name||"")+'</div><div class="top">'+top+'</div><div class="pts">'+pts+' pts</div></div></div>':'<div class="pos"><span class="med">🏅</span><div><div class="who">'+esc(r.name||name||"")+'</div><div class="pts">'+Number(r.score||0).toLocaleString("es-AR")+' pts</div></div></div>')+
     '<div class="val">✓ RANKING VALIDADO</div></div>'}
-function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}claimBind();e.innerHTML=myClaimed?claimHTML(r):qrHTML(r);e.classList.remove("hide")}
-function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=(myClaimed?claimHTML(r):qrHTML(r))+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
+function qrShow(id){var e=$(id),r=qrGet();if(!e)return;if(!r){e.classList.add("hide");e.innerHTML="";return}claimBind();e.innerHTML=qrVista(r);e.classList.remove("hide")}
+function qrOpen(){var r=qrGet();if(!r)return;$("qr-ovc").innerHTML=qrVista(r)+'<button onclick="qrClose()">CERRAR</button>';$("qr-ov").classList.remove("hide")}
 function qrClose(){$("qr-ov").classList.add("hide")}
 function qrSave(){
-  var r=qrGet();if(!r)return;
+  var r=qrGet();if(!r||!qrListo(r))return;
   var q=qrMat(r.txt),n=q.getModuleCount(),m=4,u=Math.floor(560/(n+2*m)),S=u*(n+2*m),W=720,H=S+350,x0=(W-S)/2,y0=100,c=document.createElement("canvas"),g=c.getContext("2d"),x,y;
   c.width=W;c.height=H;g.fillStyle="#07030e";g.fillRect(0,0,W,H);g.textAlign="center";
   g.fillStyle="#ffe14d";g.font="700 38px monospace";g.fillText("ST3 ROOM · TRIVIA",W/2,66);
