@@ -285,7 +285,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 Si no podés abrir el link, usá la imagen del QR que va adjunta en este mail.
 ¡Gracias por jugar!</textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {puesto} y {link} se completan solos para cada persona.</p>
-        <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR POR GMAIL</button><button class="p" onclick="mailNext('mailto')">OTRA APP DE MAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
+        <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR POR GMAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
         <div id="mail-st" class="small" style="margin-top:6px"></div>
       </div>
     </div>
@@ -2679,20 +2679,36 @@ async function rankPrizeLink(m){
   return premioLink(g,code);
 }
 async function mailNext(kind){
-  var sel=MROWS.filter(function(m){return mailSel[m.uid]});if(!sel.length){alert("Marcá al menos una persona.");return}
+  var sel=MROWS.filter(function(m){return mailSel[m.uid]});
+  if(!sel.length){alert("Marcá al menos una persona.");return}
   var m=sel.filter(function(x){return !mailSent[x.uid]})[0];
-  if(!m){if(confirm("Ya se abrió el mail de todos los marcados. ¿Empezar de nuevo?")){mailSent={};renderMails()}return}
-  var to=mailOf(m.uid);if(!okMail(to)&&!isTel(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
-  var w=(!isTel(to)&&MAIL_API)?null:((kind==="gmail"||isTel(to))?window.open("","_blank"):null);  var link;try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
-  if(!isTel(to)&&MAIL_API){var r2=await apiEnviar(m,link);if(r2.ok){if(w)w.close();mailSent[m.uid]=1;renderMails();toast("✓ Mail enviado a "+m.name+" desde la cuenta del stream");return}else toast("Sin envío automático ("+r2.msg+"): se abre Gmail")}
-  await adjuntarQR(m,link);
-  var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link);
-  if(isTel(to)){var wu="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);if(w){try{w.opener=null}catch(e){}w.location.href=wu}else window.open(wu,"_blank")}
-  else if(kind==="gmail"){var url="https://mail.google.com/mail/?view=cm&fs=1&to="+encodeURIComponent(to)+"&su="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
-    if(w){try{w.opener=null}catch(e){}w.location.href=url}else window.open(url,"_blank")}
-  else location.href="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(su)+"&body="+encodeURIComponent(bd);
+  if(!m){if(confirm("Ya se procesaron todos los marcados. ¿Empezar de nuevo?")){mailSent={};renderMails()}return}
+  var to=mailOf(m.uid),tel=isTel(to);
+  if(!tel&&!okMail(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
+  if(!tel&&!MAIL_API){toast("✗ Envío automático no configurado (falta MAIL_API)");return}
+  var esMovil=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var w=(tel&&!esMovil)?window.open("","_blank"):null;
+  var link;
+  try{link=await rankPrizeLink(m)}
+  catch(e){if(w)w.close();toast("✗ No se pudo crear el QR del premio: "+(e&&e.message));return}
+  if(!tel){
+    try{
+      var r=await apiEnviar(m,link);
+      if(r&&r.ok){mailSent[m.uid]=1;renderMails();toast("✓ Mail enviado a "+m.name+" desde la cuenta del stream")}
+      else toast("✗ No se pudo enviar a "+m.name+" ("+((r&&r.msg)||"error desconocido")+")");
+    }catch(e){toast("✗ Error al enviar a "+m.name+": "+(e&&e.message))}
+    return;
+  }
+  try{await adjuntarQR(m,link)}
+  catch(e){toast("⚠ No se pudo descargar el QR: "+(e&&e.message))}
+  var bd=fillTpl($("mail-bd").value,m,link);
+  var wu="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);
   mailSent[m.uid]=1;renderMails();
+  if(esMovil){setTimeout(function(){location.href=wu},700)}
+  else if(w){try{w.opener=null}catch(e){}w.location.href=wu}
+  else window.open(wu,"_blank");
 }
+
 function mailCopy(){
   var a=MROWS.filter(function(m){return mailSel[m.uid]}).map(function(m){return mailOf(m.uid)}).filter(okMail);   // los teléfonos no se copian: van por WhatsApp
   if(!a.length){alert("Marcá al menos una persona con mail.");return}
