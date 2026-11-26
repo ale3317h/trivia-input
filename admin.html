@@ -3141,7 +3141,22 @@ async function saRedeem(){
 /* --- lectura del código --- */
 var CODE=/([2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}-[A-Z0-9]{4})/;
 function parseQR(t){t=String(t||"").toUpperCase();var m=t.match(/C[ÓO]DIGO:\s*([A-Z0-9-]+)/);if(m&&CODE.test(m[1]))return m[1].match(CODE)[1];m=t.match(CODE);return m?m[1]:null}
+/* Verificación en el stand (gente sin Gmail): el QR del celular dice ST3-VERIFICAR:<código> */
+async function verPedido(c){
+  var d=sdb();if(!d)return badSheet("SIN CONEXIÓN","Hace falta internet para habilitar a alguien.");
+  var v;try{v=(await d.ref("cfg/ver/"+c).once("value")).val()}catch(e){return badSheet("NO SE PUDO LEER",esc((e&&e.message)||""))}
+  if(!v)return badSheet("PEDIDO NO ENCONTRADO","Pedile que vuelva a tocar «Verificar en el stand».");
+  if(v.s==="ok")return showSheet("dup",'<div class="tt">YA ESTABA HABILITADO</div><div class="nm">'+esc(v.n||"Sin nombre")+'</div><button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
+  showSheet("pend",'<div class="tt">VERIFICAR SIN GMAIL</div><div class="big">🙋</div><div class="nm">'+esc(v.n||"Sin nombre")+'</div><p class="small">Habilitalo solo si la persona está acá, no tiene Gmail y todavía no jugó.</p><button class="g" onclick="verResp(\''+c+'\',\'ok\')">HABILITAR PARA JUGAR</button><button class="p" onclick="verResp(\''+c+'\',\'no\')">NO HABILITAR</button>');
+}
+async function verResp(c,s){
+  try{await sdb().ref("cfg/ver/"+c).update({s:s,t2:firebase.database.ServerValue.TIMESTAMP});
+    if(s==="ok")showSheet("ok",'<div class="tt">✓ HABILITADO</div><p class="small">Su celular sigue solo.</p><button class="g" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');else closeSheet()}
+  catch(e){alert("No se pudo: "+(e&&e.message))}
+}
 function onScan(t){
+  var vf=String(t).match(/ST3-VERIFICAR:([2-9A-HJ-NP-Z]{8})/i);
+  if(vf){var vk="v:"+vf[1],vn=Date.now();if(vk===cam.last&&vn-cam.lastT<3000)return;cam.last=vk;cam.lastT=vn;return verPedido(vf[1].toUpperCase())}
   var pm=String(t).match(/juego\.html\?(?:[^#]*&)?p=([a-z0-9]{10})(?![a-z0-9])/i);   // QR de pedido de lugar (Rojo vs Azul)
   if(pm){var pk="p:"+pm[1].toLowerCase(),nn=Date.now();if(pk===cam.last&&nn-cam.lastT<3000)return;cam.last=pk;cam.lastT=nn;return jvPendAbrir(pm[1].toLowerCase())}
   var n=Date.now(),code=parseQR(t);

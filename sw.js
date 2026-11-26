@@ -5,7 +5,7 @@
    (esos pedidos pasan directo): para eso cada página tiene su propia copia de datos y su cola de pendientes.
 
    Subí el número de VERSION si se agrega un archivo nuevo a la lista de abajo. */
-var VERSION = "st3-v5";
+var VERSION = "st3-v6";
 var PAGINAS = ["./", "index.html", "admin.html", "saluda.html", "ranking.html", "juego.html", "ruleta-pizarron.html",
   "ruleta-grande.html", "premio.html", "premios.html", "girar.html", "muestra.html", "tutorial-staff.html"];
 var ARCHIVOS = ["fb.js", "fb-config.js", "sheet.js", "sheet-config.js", "qr-lib.js", "questions.js",
@@ -13,6 +13,7 @@ var ARCHIVOS = ["fb.js", "fb-config.js", "sheet.js", "sheet-config.js", "qr-lib.
   "pizarra-chica.webp", "icono-aviso.webp", "ruleta-cara.webp", "mapa-muestra.webp", "bg-estudio.jpg"];
 var EXTERNOS = ["https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js",
   "https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js",
+  "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth-compat.js",
   "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"];
 var HOSTS = /^(www\.gstatic\.com|fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)$/;

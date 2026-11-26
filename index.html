@@ -702,6 +702,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="ov hide" id="adm"><div class="card y"><label>CLAVE</label><input id="pw" type="password" autocomplete="off"><button onclick="adm()">OK</button><button class="p" onclick="$('adm').classList.add('hide')">CANCELAR</button><small id="pe" class="red"></small><a href="admin.html" style="display:block;text-align:center;margin-top:12px;font-size:.9rem">Panel admin completo →</a></div></div>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script>window.FB_IDLE_MS=180000;</script>
@@ -2652,7 +2653,7 @@ async function end(win){
   mailBox(win||lvOf(cq)===3);   // jugó el modo experto (perdió o terminó): ofrecer el aviso por mail
   if(!prize){var bm=$("end-menu");if(bm)bm.classList.remove("hide")}   // en el "lo siento" también hay botón para volver al menú principal
   if(prize){qrIssue(li,win?cq:(cq+1));try{await qrSync()}catch(e){}}qrShow("end-qr");
-  var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test&&!rkClosed();
+  var expertEnd=XFLOW&&(win||lvOf(cq)===3)&&!test&&!rkClosed()&&!(window.accInfo&&accInfo()&&accInfo().via==="stand");
   if(expertEnd){try{ls("xscore",String(score))}catch(e){}xSet({gen:FB.cfg().gen,stage:"calc",score:score,name:name});try{FB.setXw(FB.uid(),true).catch(function(){})}catch(e){}}   // queda guardado ya: si recarga, la ventana vuelve a salir, y mientras no responda está «en espera» (fuera del ranking)
   show("s-end");countTo($("st-pts"),score,true);
   await saveScore(true);await refresh();
@@ -2708,6 +2709,94 @@ document.addEventListener("visibilitychange",function(){if(document.hidden){beat
 // Lo primero que se ve: los requisitos (si ya los cumplió, la portada).
 var rq0=reqGet();if(rq0.yt&&rq0.tt&&rq0.ig)show("s-name");else reqShow();   // la ronda se verifica en init() con reqSync()
 init();
+</script>
+<script>
+/* ---------- Para jugar hay que identificarse ----------
+   · «Continuar con Google»: una cuenta = una partida por ronda (cfg/acc/<ronda>/<hash del mail>). La contraseña la pide Google en su propia ventana, nunca esta página.
+   · Sin Gmail: «Verificar en el stand»: se muestra un QR (cfg/ver/<código>) que el staff escanea y habilita.
+   · Dentro de Instagram, WhatsApp, TikTok, etc. se pide abrir la página en el navegador del celular.
+   · Sin internet no se puede comprobar nada: se deja jugar, como siempre. */
+(function(){
+  var UA=navigator.userAgent||"";
+  var INTERNO=/Instagram|FBAN|FBAV|FB_IAB|WhatsApp|musical_ly|TikTok|Bytedance|Snapchat|Line\/|Twitter|; wv\)/i.test(UA)||(/iPhone|iPad|iPod/.test(UA)&&/AppleWebKit/.test(UA)&&!/Safari/.test(UA));
+  function acc(){try{var a=JSON.parse(localStorage.getItem("acc")||"null");return a&&String(a.gen)===String(FB.cfg().gen)?a:null}catch(e){return null}}
+  function setAcc(a){a.gen=FB.cfg().gen;try{localStorage.setItem("acc",JSON.stringify(a))}catch(e){}}
+  window.accInfo=acc;
+  function sinRed(){return navigator.onLine===false||!FB.shared()}
+  var css=document.createElement("style");
+  css.textContent="#lg{position:fixed;inset:0;z-index:200;background:#07030ef7;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:22px 16px}#lg .b{width:100%;max-width:400px;margin:auto;text-align:center;border:1.5px solid #ffe14d66;border-radius:22px;background:#130b23;padding:22px 18px}#lg h2{margin:0 0 8px;font:800 22px/1.2 system-ui,sans-serif;color:#ffe14d}#lg p{margin:8px 0;font:500 15px/1.4 system-ui,sans-serif;color:#d9cdf2}#lg button,#lg a.bt{display:block;width:100%;margin:10px 0 0;border:0;border-radius:14px;padding:14px;font:800 16px system-ui,sans-serif;cursor:pointer;text-decoration:none;box-sizing:border-box}#lg .g{background:#fff;color:#1f1f1f}#lg .g b{color:#4285f4;font-size:19px;margin-right:8px}#lg .y{background:#ffe14d;color:#1a1200}#lg .o{background:transparent;border:1.5px solid #ffffff44;color:#f7f2ff}#lg .x{background:transparent;color:#b9a6d6;font-weight:600;text-decoration:underline;box-shadow:none;border:0}#lg h2::after,#lg h2::before{display:none}#lg button,#lg a.bt{letter-spacing:.02em}#lg .er{color:#ff8fa3;font-weight:700;min-height:1.2em}#lg .qr{background:#fff;border-radius:16px;padding:10px;margin:12px auto;max-width:250px}#lg .qr svg{display:block;width:100%}#lg .cod{font:800 24px monospace;letter-spacing:.18em;color:#ffe14d}";
+  document.head.appendChild(css);
+  var seguir=null,verOff=null;
+  function caja(html){var o=$("lg");if(!o){o=document.createElement("div");o.id="lg";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");document.body.appendChild(o)}o.innerHTML='<div class="b">'+html+'</div>';return o}
+  function cerrar(){var o=$("lg");if(o)o.remove();if(verOff){verOff();verOff=null}}
+  function listo(){cerrar();var f=seguir;seguir=null;if(f)f()}
+  function err(t){var e=$("lg-er");if(e)e.textContent=t||""}
+  function btn(id,fn){var e=$(id);if(e)e.onclick=fn}
+
+  function pantalla(msg){
+    caja('<h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se puede jugar <b>una sola vez</b> por persona.</p>'+
+      '<button class="g" id="lg-g"><b>G</b>Continuar con Google</button><button class="o" id="lg-s">No tengo Gmail: verificar en el stand</button>'+
+      '<p class="er" id="lg-er">'+(msg||"")+'</p><p style="font-size:12px">Solo usamos tu mail para este concurso.</p><button class="x" id="lg-v">Volver</button>');
+    btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
+  }
+
+  async function hashMail(m){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("st3acc|"+m));return Array.from(new Uint8Array(b)).slice(0,16).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+  function google(){
+    if(!(window.firebase&&firebase.auth)){err("No se pudo cargar el inicio de sesión. Revisá tu internet y recargá.");return}
+    var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
+    err("");
+    firebase.auth().signInWithPopup(p).then(async function(r){
+      var mail=String((r.user&&r.user.email)||"").toLowerCase();
+      try{firebase.auth().signOut()}catch(e){}
+      if(!mail){err("Esa cuenta no tiene mail. Probá con otra o verificá en el stand.");return}
+      err("Comprobando…");
+      var h=await hashMail(mail),uid=FB.uid();
+      var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid)return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
+      if(!t.committed){err("Esa cuenta ya jugó. Si creés que es un error, verificá en el stand.");return}
+      setAcc({via:"google",mail:mail});ls("mail",mail);listo();
+    }).catch(function(e){
+      var c=(e&&e.code)||"",m=String((e&&e.message)||"");
+      if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){abrirNavegador();return}
+      err(/popup-closed|cancelled-popup/.test(c)?"Cerraste la ventana de Google. Tocá de nuevo.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o verificá en el stand.");
+    });
+  }
+
+  function codigo(){var a="23456789ABCDEFGHJKLMNPQRSTUVWXYZ",o="",b=new Uint8Array(8);crypto.getRandomValues(b);for(var i=0;i<8;i++)o+=a.charAt(b[i]%32);return o}
+  function stand(){
+    var g=FB.cfg().gen,p=null;try{p=JSON.parse(ls("ver")||"null")}catch(e){}
+    if(!p||String(p.gen)!==String(g)){p={gen:g,c:codigo()};ls("ver",JSON.stringify(p));}
+    var ref=firebase.database().ref("cfg/ver/"+p.c),n=($("nom").value||ls("name")||"").trim().slice(0,20);
+    var q=qrMat("ST3-VERIFICAR:"+p.c),k=q.getModuleCount(),m=4,s=k+2*m,d="",x,y;
+    for(y=0;y<k;y++)for(x=0;x<k;x++)if(q.isDark(y,x))d+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
+    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand. Cuando te habilite, esta pantalla sigue sola.</p>'+
+      '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
+      '<p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
+    btn("lg-v",function(){if(verOff){verOff();verOff=null}pantalla()});
+    ref.once("value").then(function(sn){if(!sn.val())return ref.set({u:FB.uid(),n:n,s:"wait",ts:firebase.database.ServerValue.TIMESTAMP})}).catch(function(){err("No se pudo pedir la verificación. Revisá tu internet.")});
+    var h=ref.child("s").on("value",function(sn){var v=sn.val();
+      if(v==="ok"){setAcc({via:"stand"});try{localStorage.removeItem("ver")}catch(e){}listo()}
+      else if(v==="no"){try{localStorage.removeItem("ver")}catch(e){}if(verOff){verOff();verOff=null}pantalla("El stand no aprobó la verificación.")}});
+    verOff=function(){ref.child("s").off("value",h)};
+  }
+
+  function abrirNavegador(){
+    var url=location.origin+location.pathname,android=/Android/i.test(UA);
+    caja('<h2>Abrí esta página en tu navegador</h2><p>La estás viendo dentro de otra app (Instagram, WhatsApp, TikTok…), y así no se puede jugar.</p>'+
+      (android?'<a class="bt y" href="intent://'+url.replace(/^https?:\/\//,"")+'#Intent;scheme=https;package=com.android.chrome;end">Abrir en Chrome</a>':'<p><b>Tocá los tres puntos «⋯» o el ícono de compartir y elegí «Abrir en el navegador».</b></p>')+
+      '<button class="o" id="lg-c">Copiar el link</button><p class="er" id="lg-er"></p><button class="x" id="lg-s">No puedo: verificar en el stand</button>');
+    btn("lg-c",function(){navigator.clipboard.writeText(url).then(function(){err("Link copiado. Pegalo en Chrome o Safari.")},function(){err(url)})});
+    btn("lg-s",function(){seguir=function(){};stand()});
+  }
+
+  var _start=window.start;
+  window.start=function(){
+    var n=$("nom").value.trim();
+    if(test||acc()||hasPlayed()||sinRed()||!n||malaPalabra(n))return _start();   // los avisos de nombre los da la función de siempre
+    seguir=_start;
+    if(INTERNO)abrirNavegador();else pantalla();
+  };
+  if(INTERNO&&!sinRed())setTimeout(function(){try{if(!test&&!acc()&&!hasPlayed())abrirNavegador()}catch(e){}},900);
+})();
 </script>
 </body>
 </html>
