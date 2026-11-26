@@ -2683,8 +2683,7 @@ async function mailNext(kind){
   var m=sel.filter(function(x){return !mailSent[x.uid]})[0];
   if(!m){if(confirm("Ya se abrió el mail de todos los marcados. ¿Empezar de nuevo?")){mailSent={};renderMails()}return}
   var to=mailOf(m.uid);if(!okMail(to)&&!isTel(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
-  var w=(kind==="gmail"||isTel(to))?window.open("","_blank"):null;   // la pestaña se abre ya, dentro del clic, para que el navegador no la bloquee
-  var link;try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
+  var w=(!isTel(to)&&MAIL_API)?null:((kind==="gmail"||isTel(to))?window.open("","_blank"):null);  var link;try{link=await rankPrizeLink(m)}catch(e){if(w)w.close();alert("No se pudo crear el QR del premio: "+(e&&e.message));return}
   if(!isTel(to)&&MAIL_API){var r2=await apiEnviar(m,link);if(r2.ok){if(w)w.close();mailSent[m.uid]=1;renderMails();toast("✓ Mail enviado a "+m.name+" desde la cuenta del stream");return}else toast("Sin envío automático ("+r2.msg+"): se abre Gmail")}
   await adjuntarQR(m,link);
   var su=$("mail-su").value,bd=fillTpl($("mail-bd").value,m,link);
