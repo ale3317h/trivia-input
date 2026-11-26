@@ -275,7 +275,7 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
       <div class="card" id="top-card" style="margin-top:16px">Cargando…</div>
       <div class="card" id="mail-card" style="margin-top:16px">
         <h2 style="margin:0 0 4px">📬 Avisos por mail <span class="small" id="mail-n"></span></h2>
-        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con el QR adjunto (si la persona no está en un top 3 definido, se abre Gmail y se descarga la imagen del QR para pegarla).</p>
+        <p class="small" style="margin-top:0">Ranking actual. Marcá con el tilde a quién avisarle y revisá su mail: si lo dejó al terminar el modo experto aparece solo, si no, escribilo. Cada persona recibe un mail propio con el link a su QR de premio, que dice en qué puesto quedó y es de un solo uso (se canjea escaneándolo en la pestaña Escanear). Al tocar ENVIAR el mail sale solo, desde la cuenta del stream y con el QR adjunto, siempre con la misma plantilla. El texto de abajo se usa solo para quienes dejaron celular (WhatsApp).</p>
         <div class="row" style="margin-bottom:6px"><button class="p" onclick="mailPick('top3')">TOP 3</button><button class="p" onclick="mailPick('top10')">TOP 10</button><button class="p" onclick="mailPick('all')">TODOS</button><button class="p" onclick="mailPick('none')">NINGUNO</button></div>
         <div id="mail-list" class="small">Cargando…</div>
         <input id="mail-su" value="🏆 ¡Felicidades! Quedaste en el top del ranking de la Trivia de Streaming Room T3" style="margin-top:10px">
@@ -285,7 +285,7 @@ Abrí este link y mostrá el QR en el stand para retirarlo (es de un solo uso):
 Si no podés abrir el link, usá la imagen del QR que va adjunta en este mail.
 ¡Gracias por jugar!</textarea>
         <p class="small" style="margin:4px 0 0">{nombre}, {puesto} y {link} se completan solos para cada persona.</p>
-        <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR POR GMAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
+        <div class="row"><button class="g" id="mail-go" onclick="mailNext('gmail')">ENVIAR MAIL</button><button class="p" onclick="mailCopy()">COPIAR MAILS</button></div>
         <div id="mail-st" class="small" style="margin-top:6px"></div>
       </div>
     </div>
@@ -2601,8 +2601,8 @@ function mailPick(k){
 function mailStatus(){
   var b=$("mail-go"),st=$("mail-st");if(!b||!st)return;
   var sel=MROWS.filter(function(m){return mailSel[m.uid]}),sent=sel.filter(function(m){return mailSent[m.uid]}).length;
-  b.textContent=sel.length&&sent<sel.length?"ENVIAR POR GMAIL ("+(sent+1)+" de "+sel.length+")":"ENVIAR POR GMAIL";
-  st.textContent=sel.length?"Marcados: "+sel.length+" · ya abiertos: "+sent+". Cada clic abre el mail de la siguiente persona marcada.":"";
+  b.textContent=sel.length&&sent<sel.length?"ENVIAR MAIL ("+(sent+1)+" de "+sel.length+")":"ENVIAR MAIL";
+  var nf=sel.filter(function(m){return mailFail[m.uid]}).length;st.textContent=sel.length?"Marcados: "+sel.length+" · ya enviados: "+sent+(nf?" · sin enviar: "+nf:"")+". Cada clic le manda el mail a la siguiente persona marcada.":"";
 }
 function fillTpl(t,m,link){return t.replace(/\{nombre\}/g,m.name).replace(/\{puesto\}/g,m.pos).replace(/\{link\}/g,link)}
 /* QR del premio como imagen PNG (mismo contenido que muestra premio.html): se descarga y se copia al portapapeles para adjuntarlo o pegarlo en el mail */
@@ -2644,7 +2644,7 @@ async function qrPremioBlob(name,pos,code){
 }
 /* Envío automático desde la cuenta del stream (Google Apps Script). El script no recibe ningún texto ni mail: lee el premio y el contacto de la base y manda siempre la misma plantilla, con el QR adjunto. */
 var MAIL_API="https://script.google.com/macros/s/AKfycbwnDclrTyUrK5BeZ_gG6oBZH4_EvmySNPoa96ctC-Cb351WO5YO7u_YIGNWteh9-IoU/exec";
-var API_ERR={datos:"datos incompletos",premio_inexistente:"ese premio no existe",no_es_premio_de_puesto:"no es un premio de puesto",premio_anulado:"el premio está anulado",no_esta_en_el_top_3:"todavía no está en un top 3 definido (tocá REHACER TOP 3)",contacto_es_celular:"dejó un celular, no un mail",sin_mail:"no tiene un Gmail guardado"};
+var API_ERR={datos:"datos incompletos",premio_inexistente:"ese premio no existe",no_es_premio_de_puesto:"no es un premio de puesto",premio_anulado:"el premio está anulado",no_esta_en_el_top_3:"todavía no está en un top 3 definido (tocá REHACER TOP 3)",contacto_es_celular:"dejó un celular, no un mail",sin_mail:"no tiene un Gmail guardado",ya_reclamado:"ya retiró ese premio"};
 async function apiEnviar(m,link){
   try{
     var u=new URL(link),g=u.searchParams.get("g"),code=u.searchParams.get("c"),id=String(code).slice(0,9);
@@ -2678,16 +2678,19 @@ async function rankPrizeLink(m){
   await d.ref("prizes/"+g+"/"+id).update({name:m.name,code:code,li:3,prize:pz,score:m.score|0,q:0,ts:Date.now(),uid:m.uid});
   return premioLink(g,code);
 }
+var mailFail={};   // a quién no se le pudo enviar: el siguiente clic pasa a la próxima persona
 async function mailNext(kind){
   var sel=MROWS.filter(function(m){return mailSel[m.uid]});
   if(!sel.length){alert("Marcá al menos una persona.");return}
-  var m=sel.filter(function(x){return !mailSent[x.uid]})[0];
-  if(!m){if(confirm("Ya se procesaron todos los marcados. ¿Empezar de nuevo?")){mailSent={};renderMails()}return}
+  var m=sel.filter(function(x){return !mailSent[x.uid]&&!mailFail[x.uid]})[0];
+  if(!m){
+    var nf=sel.filter(function(x){return mailFail[x.uid]}).length;
+    if(confirm(nf?"Quedaron "+nf+" sin enviar. ¿Reintentar esos?":"Ya se procesaron todos los marcados. ¿Empezar de nuevo?")){if(!nf)mailSent={};mailFail={};renderMails()}
+    return}
   var to=mailOf(m.uid),tel=isTel(to);
-  if(!tel&&!okMail(to)){alert("Falta un mail válido para #"+m.pos+" "+m.name+".");return}
+  if(!tel&&!okMail(to)){mailFail[m.uid]=1;renderMails();toast("✗ Falta un mail válido para #"+m.pos+" "+m.name);return}
   if(!tel&&!MAIL_API){toast("✗ Envío automático no configurado (falta MAIL_API)");return}
-  var esMovil=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  var w=(tel&&!esMovil)?window.open("","_blank"):null;
+  var w=tel?window.open("","_blank"):null;   // solo WhatsApp abre pestaña (dentro del clic, para que no la bloqueen)
   var link;
   try{link=await rankPrizeLink(m)}
   catch(e){if(w)w.close();toast("✗ No se pudo crear el QR del premio: "+(e&&e.message));return}
@@ -2695,8 +2698,8 @@ async function mailNext(kind){
     try{
       var r=await apiEnviar(m,link);
       if(r&&r.ok){mailSent[m.uid]=1;renderMails();toast("✓ Mail enviado a "+m.name+" desde la cuenta del stream")}
-      else toast("✗ No se pudo enviar a "+m.name+" ("+((r&&r.msg)||"error desconocido")+")");
-    }catch(e){toast("✗ Error al enviar a "+m.name+": "+(e&&e.message))}
+      else{mailFail[m.uid]=1;renderMails();toast("✗ No se pudo enviar a "+m.name+" ("+((r&&r.msg)||"error desconocido")+")")}
+    }catch(e){mailFail[m.uid]=1;renderMails();toast("✗ Error al enviar a "+m.name+": "+(e&&e.message))}
     return;
   }
   try{await adjuntarQR(m,link)}
@@ -2704,8 +2707,7 @@ async function mailNext(kind){
   var bd=fillTpl($("mail-bd").value,m,link);
   var wu="https://wa.me/"+telNum(to)+"?text="+encodeURIComponent(bd);
   mailSent[m.uid]=1;renderMails();
-  if(esMovil){setTimeout(function(){location.href=wu},700)}
-  else if(w){try{w.opener=null}catch(e){}w.location.href=wu}
+  if(w){try{w.opener=null}catch(e){}w.location.href=wu}
   else window.open(wu,"_blank");
 }
 
