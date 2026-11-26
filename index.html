@@ -2788,6 +2788,7 @@ init();
     "#lg .sep{width:100%;display:flex;align-items:center;gap:12px;color:#8576a6;font:600 12px 'Manrope',sans-serif}"+
     "#lg .sep::before,#lg .sep::after{content:'';flex:1;height:1px;background:#ffffff1f}"+
     "#lg .er{color:#ff9db0;font-weight:700}#lg .er:empty{display:none}"+
+    "#lg button[disabled]{cursor:progress;opacity:.92}#lg .rueda{width:20px;height:20px;flex:none;border-radius:50%;border:3px solid #00000022;border-top-color:#4285f4;animation:lgg .8s linear infinite}"+
     "#lg .nota{font-size:12px;color:#8576a6}"+
     "#lg .qr{width:min(100%,230px);background:#fff;border-radius:18px;padding:12px}#lg .qr svg{display:block;width:100%;height:auto}"+
     "#lg .cod{font:800 20px/1 ui-monospace,'JetBrains Mono',monospace;letter-spacing:.2em;color:#ffe14d;background:#ffe14d14;border:1px solid #ffe14d44;border-radius:10px;padding:10px 14px 10px 17px}"+
@@ -2816,23 +2817,31 @@ init();
   }
 
   async function hashMail(m){var b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("st3acc|"+m));return Array.from(new Uint8Array(b)).slice(0,16).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+  /* rueda girando en el botón mientras se abre la ventana de Google y se comprueba la cuenta */
+  function cargando(texto){
+    var b=$("lg-g");if(!b)return;
+    b.disabled=!!texto;b.setAttribute("aria-busy",texto?"true":"false");
+    b.innerHTML=texto?'<i class="rueda" aria-hidden="true"></i><span>'+texto+'</span>':G+'<span>Continuar con Google</span>';
+    var s=$("lg-s");if(s)s.disabled=!!texto;
+  }
   function google(){
     if(!(window.firebase&&firebase.auth)){err("No se pudo cargar el inicio de sesión. Revisá tu internet y recargá.");return}
     var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
-    err("");
+    err("");cargando("Abriendo Google…");
     firebase.auth().signInWithPopup(p).then(async function(r){
       var mail=String((r.user&&r.user.email)||"").toLowerCase();
       try{firebase.auth().signOut()}catch(e){}
-      if(!mail){err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
-      err("Comprobando…");
+      if(!mail){cargando("");err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
+      cargando("Comprobando…");
       var h=await hashMail(mail),uid=FB.uid();
       var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid)return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
-      if(!t.committed){err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
+      if(!t.committed){cargando("");err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
       setAcc({via:"google",mail:mail});ls("mail",mail);listo();
     }).catch(function(e){
+      cargando("");
       var c=(e&&e.code)||"",m=String((e&&e.message)||"");
       if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){abrirNavegador();return}
-      err(/popup-closed|cancelled-popup/.test(c)?"Cerraste la ventana de Google. Tocá de nuevo.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o pedí ayuda en el stand.");
+      err(/popup-closed|cancelled-popup/.test(c)?"La ventana de Google se cerró antes de terminar. Tocá «Continuar con Google» otra vez.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o pedí ayuda en el stand.");
     });
   }
 

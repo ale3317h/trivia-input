@@ -202,6 +202,8 @@ button.rv{padding:6px 10px;font-size:12px;margin:0}
 .cfm.psh .pz{margin:8px 0 0;grid-template-columns:auto 1fr}
 .cfm.psh .st{margin-left:0}
 .cfm.psh .sc{font:700 11px "JetBrains Mono","Courier New",monospace;letter-spacing:2px;color:var(--mut)}
+.rueda{display:inline-block;width:15px;height:15px;vertical-align:-2px;border-radius:50%;border:2.5px solid currentColor;border-top-color:transparent;animation:rueda .8s linear infinite}@keyframes rueda{to{transform:rotate(360deg)}}
+button[aria-busy="true"]{cursor:progress;opacity:.85}
 </style>
 <script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
 </head>
@@ -2599,6 +2601,7 @@ function mailPick(k){
   renderMails();
 }
 function mailStatus(){
+  if(mailOcupado)return;
   var b=$("mail-go"),st=$("mail-st");if(!b||!st)return;
   var sel=MROWS.filter(function(m){return mailSel[m.uid]}),sent=sel.filter(function(m){return mailSent[m.uid]}).length;
   b.textContent=sel.length&&sent<sel.length?"ENVIAR MAIL ("+(sent+1)+" de "+sel.length+")":"ENVIAR MAIL";
@@ -2680,6 +2683,12 @@ async function rankPrizeLink(m){
 }
 var mailFail={};   // a quién no se le pudo enviar: el siguiente clic pasa a la próxima persona
 async function mailNext(kind){
+  if(mailOcupado)return;mailOcupado=true;
+  var t=mailNextUno(kind),b=$("mail-go");
+  if(b){b.disabled=true;b.innerHTML=RUEDA+" ENVIANDO…"}
+  try{await t}finally{mailOcupado=false;if(b)b.disabled=false;mailStatus()}
+}
+async function mailNextUno(kind){
   var sel=MROWS.filter(function(m){return mailSel[m.uid]});
   if(!sel.length){alert("Marcá al menos una persona.");return}
   var m=sel.filter(function(x){return !mailSent[x.uid]&&!mailFail[x.uid]})[0];
@@ -2863,7 +2872,14 @@ async function top3Redo(){
   await top3Freeze(true);toast("Top 3 recalculado ✓")
 }
 function top3Due(){return FB.rankInfo().cerrado}
+/* rueda de carga en el botón mientras se envía: se ve que el toque funcionó y no se puede apretar dos veces */
+var TOPENV={},mailOcupado=false,RUEDA='<i class="rueda" aria-hidden="true"></i>';
 async function top3Send(uid,kind){
+  if(TOPENV[uid])return;TOPENV[uid]=1;
+  var t=top3SendUno(uid,kind);top3Paint();
+  try{await t}finally{delete TOPENV[uid];top3Paint()}
+}
+async function top3SendUno(uid,kind){
   var f=(RKFIN[top3Key()]||{}),i=(f.u||[]).findIndex(function(x){return x.uid===uid});if(i<0)return;
   var m={uid:uid,name:f.u[i].name,score:f.u[i].score,pos:i+1},to=mailOf(uid);
   if(!to){alert(JV.key?"No se pudo leer el contacto de "+m.name+".":"No hay contacto guardado para enviar.");return}
@@ -2889,7 +2905,7 @@ function top3Paint(){
     H+='<p class="small" style="margin:0 0 8px">Top 3 definido a las '+hm(fin.ts)+'. Cada botón manda el mail solo desde la cuenta del stream, con su puesto y la imagen del QR de premio (si dejó celular, abre WhatsApp).</p>';
     if(!JV.key)H+='<div class="small" style="color:var(--yel);margin-bottom:6px">Para enviar, poné la clave de los mails (pestaña Juego → VER MAILS).</div>';
     H+=(fin.u.length?fin.u.map(function(p,i){var s=(fin.sent||{})[p.uid],to=mailOf(p.uid);
-      return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts · '+(to?(isTel(to)?'📱 '+esc(to):'✉ '+esc(to)):'contacto cifrado')+(s?' · <span style="color:var(--grn)">✓ enviado '+hm(s)+'</span>':'')+'</div></div><div class="act"><button class="g" onclick="top3Send(\''+esc(p.uid)+'\')">'+(s?'REENVIAR':'ENVIAR')+'</button></div></div>'}).join(""):'<div class="small">Nadie cumplió las condiciones todavía (QR validado + contacto + modo experto).</div>');
+      return '<div class="pz"><div class="em md">'+["🥇","🥈","🥉"][i]+'</div><div><b>'+esc(p.name)+'</b><div class="small">'+p.score+' pts · '+(to?(isTel(to)?'📱 '+esc(to):'✉ '+esc(to)):'contacto cifrado')+(s?' · <span style="color:var(--grn)">✓ enviado '+hm(s)+'</span>':'')+'</div></div><div class="act">'+(TOPENV[p.uid]?'<button class="g" disabled aria-busy="true">'+RUEDA+' ENVIANDO…</button>':'<button class="g" onclick="top3Send(\''+esc(p.uid)+'\')">'+(s?'REENVIAR':'ENVIAR')+'</button>')+'</div></div>'}).join(""):'<div class="small">Nadie cumplió las condiciones todavía (QR validado + contacto + modo experto).</div>');
     if(fin.skip&&fin.skip.length)H+='<div class="small" style="color:var(--yel);margin-top:6px">⚠ Salteados por no tener contacto: '+fin.skip.map(function(u){var p=RKALL.filter(function(x){return x.uid===u})[0];return esc(p?p.name:u)}).join(", ")+'. Si lo cargás desde su ficha, tocá REHACER.</div>';
     H+='<div class="row" style="margin-top:8px"><button class="p" onclick="top3Redo()">🔁 REHACER TOP 3</button></div>';
   }else{
