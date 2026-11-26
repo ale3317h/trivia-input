@@ -8,7 +8,7 @@ git pull --ff-only -q
 D=$(mktemp -d)
 for pair in trivia:index admin:admin saluda:saluda ranking:ranking muestra:muestra; do
   n=${pair%%:*}; pg=${pair##*:}; mkdir -p "$D/$n"
-  git ls-files | grep -v -e '^README.md$' -e '^\.nojekyll$' -e '^AGENTS.md$' -e '^desplegar.sh$' | while read -r f; do
+  git ls-files | grep -v -e '^README.md$' -e '^\.nojekyll$' -e '^AGENTS.md$' -e '^desplegar.sh$' -e '^.gitattributes$' | while read -r f; do
     mkdir -p "$D/$n/$(dirname "$f")"; git show "HEAD:$f" > "$D/$n/$f"; done
   git show "HEAD:$pg.html" > "$D/$n/index.html"   # cada sitio abre su página en la raíz
 done
