@@ -2809,7 +2809,7 @@ init();
   function pantalla(msg){
     caja('<div class="ic">'+ICUSER+'</div><h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se juega <b>una sola vez</b> por persona.</p>'+
       '<button class="g" id="lg-g">'+G+'<span>Continuar con Google</span></button><div class="sep">o</div>'+
-      '<button class="o" id="lg-s">'+ICQR+'<span>Verificar en el stand</span></button><p class="nota">Sin Gmail el stand te habilita, pero sin modo experto.</p>'+
+      '<button class="o" id="lg-s">'+ICQR+'<span>No tengo Gmail</span></button><p class="nota">En el stand te hacen pasar (sin modo experto).</p>'+
       '<p class="er" id="lg-er">'+(msg||"")+'</p>'+(oblig?"":'<button class="x" id="lg-v">Volver</button>'));
     btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
     var ic=document.querySelector("#lg .ic"),tq=0;if(ic)ic.onclick=function(){if(++tq>=7){cerrar();$("pw").value="";$("pe").textContent="";$("adm").classList.remove("hide");$("pw").focus()}};   // 7 toques en el ícono: clave de producción (modo prueba)
@@ -2823,16 +2823,16 @@ init();
     firebase.auth().signInWithPopup(p).then(async function(r){
       var mail=String((r.user&&r.user.email)||"").toLowerCase();
       try{firebase.auth().signOut()}catch(e){}
-      if(!mail){err("Esa cuenta no tiene mail. Probá con otra o verificá en el stand.");return}
+      if(!mail){err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
       err("Comprobando…");
       var h=await hashMail(mail),uid=FB.uid();
       var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid)return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
-      if(!t.committed){err("Esa cuenta ya jugó. Si creés que es un error, verificá en el stand.");return}
+      if(!t.committed){err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
       setAcc({via:"google",mail:mail});ls("mail",mail);listo();
     }).catch(function(e){
       var c=(e&&e.code)||"",m=String((e&&e.message)||"");
       if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){abrirNavegador();return}
-      err(/popup-closed|cancelled-popup/.test(c)?"Cerraste la ventana de Google. Tocá de nuevo.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o verificá en el stand.");
+      err(/popup-closed|cancelled-popup/.test(c)?"Cerraste la ventana de Google. Tocá de nuevo.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o pedí ayuda en el stand.");
     });
   }
 
@@ -2843,9 +2843,9 @@ init();
     var ref=firebase.database().ref("cfg/ver/"+p.c),n=($("nom").value||ls("name")||"").trim().slice(0,20);
     var q=qrMat("ST3-VERIFICAR:"+p.c),k=q.getModuleCount(),m=4,s=k+2*m,d="",x,y;
     for(y=0;y<k;y++)for(x=0;x<k;x++)if(q.isDark(y,x))d+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
-    caja('<h2>Verificá en el stand</h2><p>Mostrale este QR a alguien del stand. Sin Gmail jugás hasta el nivel difícil.</p>'+
+    caja('<h2>Andá al stand</h2><p>Mostrales esta pantalla y <b>ellos te hacen pasar</b>. Vas a jugar hasta el nivel difícil.</p>'+
       '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" aria-label="QR de verificación"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
-      '<div class="esp"><i></i><span>Esperando que te habiliten…</span></div><p class="nota">Cuando te habiliten, esta pantalla sigue sola.</p><p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
+      '<div class="esp"><i></i><span>Esperando al stand…</span></div><p class="nota">No cierres la página: sigue sola.</p><p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
     btn("lg-v",function(){if(verOff){verOff();verOff=null}pantalla()});
     ref.once("value").then(function(sn){if(!sn.val())return ref.set({u:FB.uid(),n:n,s:"wait",ts:firebase.database.ServerValue.TIMESTAMP})}).catch(function(){err("No se pudo pedir la verificación. Revisá tu internet.")});
     var h=ref.child("s").on("value",function(sn){var v=sn.val();
@@ -2858,7 +2858,7 @@ init();
     var url=location.origin+location.pathname,android=/Android/i.test(UA);
     caja('<div class="ic">'+ICWEB+'</div><h2>Abrí esta página en tu navegador</h2><p>La estás viendo dentro de otra app (Instagram, WhatsApp, TikTok…), y así no se puede jugar.</p>'+
       (android?'<a class="bt y" href="intent://'+url.replace(/^https?:\/\//,"")+'#Intent;scheme=https;package=com.android.chrome;end">Abrir en Chrome</a>':'<p><b>Tocá los tres puntos «⋯» o el ícono de compartir y elegí «Abrir en el navegador».</b></p>')+
-      '<button class="o" id="lg-c">Copiar el link</button><p class="er" id="lg-er"></p><button class="x" id="lg-s">No puedo: verificar en el stand</button>');
+      '<button class="o" id="lg-c">Copiar el link</button><p class="er" id="lg-er"></p><button class="x" id="lg-s">No puedo: pedir ayuda en el stand</button>');
     btn("lg-c",function(){navigator.clipboard.writeText(url).then(function(){err("Link copiado. Pegalo en Chrome o Safari.")},function(){err(url)})});
     btn("lg-s",function(){seguir=function(){};stand()});
   }
