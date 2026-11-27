@@ -2853,17 +2853,27 @@ function mailSend(){
   }).catch(function(e){b.disabled=false;var den=/permission/i.test(e&&(e.code||e.message));
     m.textContent=den?"Por ahora no podemos guardar mails. Avisale a producción en el stand y te anotan ahí.":"No se pudo guardar. Revisá tu conexión y probá de nuevo.";m.className="red"});
 }
+/* Perdió antes del premio: el mensaje cambia según hasta dónde llegó, para que no sea un «lo siento» seco. */
+function consuelo(li){
+  var falta=Math.max(1,LV[li+1][1]-cq),resp=falta===1?"1 respuesta correcta":falta+" respuestas correctas";
+  if(li===1)return falta<=2
+    ?["🔥","¡CASI!","¡Te quedaste muy cerca! Solo te "+(falta===1?"faltó ":"faltaron ")+resp+" para ganar un premio. ¡Gracias por jugar!"]
+    :["👏","¡MUY BIEN!","Pasaste el nivel fácil y te faltaron "+resp+" para el premio. ¡Gracias por jugar!"];
+  return falta<=2
+    ?["💪","¡POR POCO!","Te "+(falta===1?"faltó ":"faltaron ")+resp+" para pasar al nivel medio. ¡Gracias por jugar!"]
+    :["🙌","¡BUEN INTENTO!","Esta vez no se dio, pero te animaste a jugar. ¡Gracias por participar!"];
+}
 async function end(win){
   stopT();liveSave("end",{win:!!win});if(win)score+=hp*100;contClear();
   var early=!win&&cq<totalQ();
   try{await Promise.race([ST3Sheet.load(),new Promise(function(r){setTimeout(r,2500)})])}catch(e){}   // stock al día antes de decidir el premio
   var li0=win?3:lvOf(cq),li=efLi(li0),prize=!!QPZ[li],agot=!!QPZ[li0]&&!prize;   // fácil y medio: sin premio; agot: ganó pero el turno se quedó sin stock
-  var good=prize;
+  var good=prize,animo=!prize&&!agot?consuelo(li0):null;
   if(good)playSonido("tada");
   $("end-c").className="endh "+(good?"ok":"bad");
-  $("end-t").innerHTML=agot?"<span class=\"emj\">😢</span> SIN STOCK":!prize?"<span class=\"emj\">😢</span> LO SIENTO":(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good?"yel":"red");
+  $("end-t").innerHTML=agot?"<span class=\"emj\">😢</span> SIN STOCK":!prize?"<span class=\"emj\">"+animo[0]+"</span> "+animo[1]:(win?"¡GANASTE!":(early?"¡FELICIDADES!":"GAME OVER"));$("end-t").className="big "+(good||animo?"yel":"red");
   $("end-pz").className="c "+(good?"yel":"mut");
-  $("end-pz").textContent=agot?"Lo siento, nos quedamos sin stock de este premio en este turno. ¡Gracias por jugar!":!prize?"Llegaste hasta la dificultad "+LV[li][0].toLowerCase()+": esta vez no ganaste premio. ¡Gracias por jugar!":early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
+  $("end-pz").textContent=agot?"Lo siento, nos quedamos sin stock de este premio en este turno. ¡Gracias por jugar!":!prize?animo[2]:early?"Llegaste hasta la dificultad "+LV[lvOf(cq)][0].toLowerCase():(win?"¡Respondiste todas las preguntas!":"Llegaste hasta el nivel experto");
   $("st-pts").textContent=0;$("st-q").textContent=win?cq:(cq+1);$("st-pos").textContent="–";
   $("end-badge").innerHTML="";
   $("end-p").textContent="";$("end-r").classList.toggle("hide",!test);
