@@ -581,6 +581,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 #s-req .rqg{flex:none}#s-req .rqg+.rqf{margin-top:auto}#s-req #rq+.rqt{margin-top:auto;padding-top:14px}
 #arranque{width:46px;height:46px;margin:38vh auto 0;border-radius:50%;border:4px solid #ffe14d33;border-top-color:#ffe14d;animation:ringspin .9s linear infinite}
 .qresp{border:2px dashed #ffe14d;border-radius:18px;padding:18px 14px;text-align:center;background:#ffe14d0d}.qresp .ic{font-size:2.6rem;line-height:1}.qresp h3{margin:8px 0 6px;color:#ffe14d;font:900 1.2rem var(--disp)}.qresp p{margin:0 0 12px;color:var(--mut)}
+#live .lejos{justify-content:center;text-align:center;color:#3de8ff;font-weight:700}
 .tk-nom{text-align:center;margin:10px 12px 8px}.tk-nom small{display:block;font:700 .68rem/1 var(--disp);letter-spacing:.2em;color:var(--mut);margin-bottom:5px}.tk-nom b{display:block;font:800 1.5rem/1.15 var(--sans);color:#fff;overflow-wrap:anywhere}
 </style>
 <script>if("serviceWorker" in navigator&&/^https?:/.test(location.protocol))addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})</script>
@@ -2294,15 +2295,23 @@ try{new ResizeObserver(scrollSoon).observe(document.querySelector(".wrap"))}catc
 async function showRank(){var cur=["s-name","s-end","s-prize"].filter(function(i){return !$(i).classList.contains("hide")})[0];if(cur)rankFrom=cur;delete $("pod2").dataset.a;show("s-rank");$("tb2").textContent="Cargando...";cache=await getList();loaded=true;podium("pod2");tbl("tb2");$("rk-note").textContent=FB.shared()?"En vivo · "+cache.length+(cache.length===1?" jugador":" jugadores"):"Sin conexión: ranking solo en este dispositivo"}
 /* Mientras su QR no se validó en el stand, la persona ve sus puntos pero no su posición ni aparece en el ranking de los demás. */
 function pdteMe(){return !test&&!!qrGet()&&!myClaimed}
+/* Lo que ve el propio jugador: se incluye siempre con sus puntos, aunque su QR todavía no esté validado (puesto «provisorio»).
+   Para los demás nada cambia: no aparece en el ranking hasta que un admin escanee su QR. */
 function merged(){
-  var l=cache.filter(function(x){return !isMe(x)});if(!pdteMe())l.push({name:name,score:curScore(),id:"cur"});
+  var l=cache.filter(function(x){return !isMe(x)});l.push({name:name,score:curScore(),id:"cur"});
   l.sort(function(a,b){return b.score-a.score});
   return{l:l,p:l.findIndex(function(x){return x.id==="cur"})};
+}
+/* qué tan lejos está del que va justo arriba */
+function distancia(m){
+  if(rkClosed())return "🔒 Ranking cerrado: estos puntos ya no suman";
+  if(m.p<=0)return "🔥 ¡Vas primero!";
+  var a=m.l[m.p-1];return "⬆️ Te faltan "+(a.score-m.l[m.p].score+1).toLocaleString("es-AR")+" pts para pasar a "+a.name+" (#"+m.p+")";
 }
 function live(){
   var m=merged(),s="";
   for(var i=0;i<3&&i<m.l.length;i++)s+="<div"+(m.l[i].id==="cur"?" class='yel'":"")+"><span>"+["🥇","🥈","🥉"][i]+" "+esc(m.l[i].name)+"</span><span>"+m.l[i].score+" pts</span></div>";
-  $("live").innerHTML=s+"<div class='you'><span>"+(m.p<0?"Tus puntos (su puesto se suma al validar tu QR)":"Vos: puesto #"+(m.p+1))+"</span><span>"+score+" pts</span></div>";
+  $("live").innerHTML=s+"<div class='you'><span>Vos: puesto #"+(m.p+1)+(pdteMe()?" (provisorio)":"")+"</span><span>"+score+" pts</span></div><div class='lejos'><span>"+esc(distancia(m))+"</span></div>";
 }
 
 var howI=0;
@@ -2686,7 +2695,7 @@ function claimBind(){
 function claimPaint(){
   try{qrShow("end-qr");qrShow("played-qr")}catch(e){}
   try{if(!$("s-name").classList.contains("hide"))renderStart()}catch(e){}
-  try{if(!$("s-end").classList.contains("hide")){var m=merged(),pd=pdteMe();$("st-pos").innerHTML=(rankVisible()&&!pd?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");$("st-pc").classList.toggle("hide",!rankVisible()||pd);if(myClaimed){$("end-p").textContent="✅ Premio reclamado: tu puesto en el ranking ya está validado.";$("end-p").classList.remove("hide")}}}catch(e){}
+  try{if(!$("s-end").classList.contains("hide")){var m=merged(),pd=pdteMe();$("st-pos").innerHTML=(rankVisible()?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");$("st-pc").classList.toggle("hide",!rankVisible());if(myClaimed){$("end-p").textContent="✅ Premio reclamado: tu puesto en el ranking ya está validado.";$("end-p").classList.remove("hide")}}}catch(e){}
   try{if(!$("qr-ov").classList.contains("hide"))qrOpen()}catch(e){}
 }
 (function(){var s=document.createElement("style");s.textContent=".cl{border:2px solid #3dff8a;border-radius:18px;padding:12px 14px;background:linear-gradient(180deg,#3dff8a22,#0000 80%);box-shadow:0 0 24px #3dff8a44}.cl .hd{display:flex;align-items:center;gap:12px;text-align:left}.cl .gift{font-size:52px;line-height:1}.cl .ok{display:inline-block;background:#3dff8a;color:#041;font:800 11px system-ui,sans-serif;letter-spacing:.08em;border-radius:99px;padding:3px 10px}.cl h3{margin:4px 0 0;font:800 18px/1.1 system-ui,sans-serif;color:#ffe14d}.cl .pos{display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 2px;padding-top:10px;border-top:1px dashed #3dff8a55}.cl .med{font-size:40px;line-height:1}.cl .who{font:800 15px/1.1 system-ui,sans-serif;color:#ffe14d;text-align:left;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px}.cl .top{font:900 28px/1 system-ui,sans-serif;color:#fff;text-align:left}.cl .pts{font:800 19px system-ui,sans-serif;color:#4df3ff;text-shadow:0 0 12px #4df3ff88;text-align:left}.cl .val{font:700 11px system-ui,sans-serif;color:#3dff8a;letter-spacing:.1em;text-align:center;margin-top:6px}";document.head.appendChild(s)})();
@@ -2861,7 +2870,7 @@ async function end(win){
   var m=merged();
   var pdte=pdteMe();
   $("st-pos").innerHTML=(rankVisible()&&m.p>=0?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
-  if(rkClosed()){$("end-p").textContent="🔒 Ranking cerrado: tu premio por nivel sigue valiendo, pero estos puntos ya no suman."+(pdte?" Igual, pasá por el stand con tu QR.":"");$("end-p").classList.remove("hide")}else if(pdte){$("end-p").textContent="Tus puntos ya están guardados, pero tu posición no cuenta ni te ven los demás en el ranking hasta que un admin valide tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible()||pdte);
+  if(rkClosed()){$("end-p").textContent="🔒 Ranking cerrado: tu premio por nivel sigue valiendo, pero estos puntos ya no suman."+(pdte?" Igual, pasá por el stand con tu QR.":"");$("end-p").classList.remove("hide")}else if(pdte){$("end-p").textContent=(rankVisible()?distancia(m)+". Tu puesto es provisorio: ":"Tus puntos ya están guardados: ")+"recién cuenta, y lo ven los demás, cuando un admin escanee tu QR en el stand. Mostrale el QR y listo.";$("end-p").classList.remove("hide")}$("st-pc").classList.toggle("hide",!rankVisible());
   $("end-rk").classList.toggle("hide",!rankVisible());
   // solo si terminó el experto y quedó en el top 3: preguntas de la muestra y del Gmail (no se pueden cerrar sin responder)
   var r=expertEnd?await xDecide():"ya";
@@ -2869,7 +2878,7 @@ async function end(win){
   if(r==="no"){
     var hs=hardScore();$("st-pts").textContent=hs;m=merged();
     $("st-pos").innerHTML=(rankVisible()&&m.p>=0?"#"+(m.p+1)+"<i> de "+m.l.length+"</i>":"–");
-    $("end-p").textContent="No dejaste tu Gmail: tu ranking cuenta solo hasta el nivel difícil ("+hs+" pts) y no participás por el premio especial. "+(pdte?"Tu posición aparece cuando un admin valide tu QR en el stand.":"");$("end-p").classList.remove("hide");
+    $("end-p").textContent="No dejaste tu Gmail: tu ranking cuenta solo hasta el nivel difícil ("+hs+" pts) y no participás por el premio especial. "+(pdte?"Tu puesto es provisorio hasta que un admin escanee tu QR en el stand.":"");$("end-p").classList.remove("hide");
   }
   if(good)confetti();
 }
