@@ -428,7 +428,7 @@ Si no podés abrir el link, usá la imagen del QR que te mandamos.
 <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
-<script src="fb.js?v=26"></script>
+<script src="fb.js?v=27"></script>
 <script src="sheet-config.js?v=1"></script>
 <script src="sheet.js?v=6"></script>
 <script src="qr-lib.js?v=1"></script>
@@ -3287,17 +3287,19 @@ function renderQs(){
       '<label>Pregunta</label><input data-f="q" data-i="'+i+'" value="'+esc(x.q)+'">'+
       '<label>Respuesta correcta</label><input data-f="ok" data-i="'+i+'" value="'+esc(x.ok)+'">'+
       '<label>Distractores (separados con |)</label><input data-f="bad" data-i="'+i+'" value="'+esc((x.bad||[]).join(" | "))+'">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" data-f="f" data-i="'+i+'"'+(x.f?" checked":"")+' style="width:18px;height:18px;flex:none;margin:0">Fácil (sale en fácil y medio; en experto salen todas)</label>'+
       '</div>';
   });
   $("qs").innerHTML=h;
 }
 function collect(){
-  var out=qs.map(function(x){return{q:x.q,ok:x.ok,bad:(x.bad||[]).slice()}});
+  var out=qs.map(function(x){return{q:x.q,ok:x.ok,bad:(x.bad||[]).slice(),f:!!x.f}});
   var ins=$("qs").querySelectorAll("input[data-f]");
   for(var i=0;i<ins.length;i++){
     var f=ins[i].dataset.f,k=+ins[i].dataset.i;
     if(!out[k])continue;
-    if(f==="bad")out[k].bad=ins[i].value.split("|").map(function(s){return s.trim()}).filter(Boolean);
+    if(f==="f")out[k].f=ins[i].checked;
+    else if(f==="bad")out[k].bad=ins[i].value.split("|").map(function(s){return s.trim()}).filter(Boolean);
     else out[k][f]=ins[i].value.trim();
   }
   return out;
@@ -3339,8 +3341,8 @@ function qsWatch(){var d=sdb();if(!d||qsWatching)return;qsWatching=true;
   d.ref("questions").on("value",function(x){
     if(qsBusy||qsAutoT)return;var a=document.activeElement;if(a&&$("qs")&&$("qs").contains(a))return;
     var v=x.val();if(!v)return;
-    var lst=Object.keys(v).sort().map(function(k){var o=v[k]||{};return{id:k,q:o.q||"",ok:o.ok||"",bad:o.bad||[]}}).filter(function(o){return o.q&&o.ok});
-    var mine=JSON.stringify(qsListas().map(function(o){return[o.q,o.ok,o.bad]})),theirs=JSON.stringify(lst.map(function(o){return[o.q,o.ok,o.bad]}));
+    var lst=Object.keys(v).sort().map(function(k){var o=v[k]||{};return{id:k,q:o.q||"",ok:o.ok||"",bad:o.bad||[],f:!!o.f}}).filter(function(o){return o.q&&o.ok});
+    var mine=JSON.stringify(qsListas().map(function(o){return[o.q,o.ok,o.bad,!!o.f]})),theirs=JSON.stringify(lst.map(function(o){return[o.q,o.ok,o.bad,!!o.f]}));
     if(mine!==theirs&&lst.length){qs=lst;try{lsS("adm_qs",lst)}catch(e){}renderQs()}
   },function(){})}
 function restoreQs(){
@@ -3366,7 +3368,7 @@ function readImport(inp){
     var list=arr.map(function(x){
       if(Array.isArray(x))return{q:String(x[0]||"").trim(),ok:String(x[1]||"").trim(),bad:(x[2]||[]).map(function(s){return String(s).trim()}).filter(Boolean)};
       x=x||{};
-      return{q:String(x.q||"").trim(),ok:String(x.ok||"").trim(),bad:(x.bad||[]).map(function(s){return String(s).trim()}).filter(Boolean)};
+      return{q:String(x.q||"").trim(),ok:String(x.ok||"").trim(),bad:(x.bad||[]).map(function(s){return String(s).trim()}).filter(Boolean),f:!!x.f};
     }).filter(function(x){return x.q&&x.ok&&x.bad.length});
     if(!list.length){alert("No encontré preguntas válidas en ese archivo.\nCada una necesita: pregunta, respuesta correcta y al menos 1 distractor.");return}
     var pocas=list.filter(function(x){return x.bad.length<5}).length;

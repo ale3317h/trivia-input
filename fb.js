@@ -151,7 +151,7 @@ var FB = (function () {
       if (v) {
         Object.keys(v).sort().forEach(function (k) {
           var x = v[k];
-          if (x && x.q && x.ok) out.push({ id: k, q: x.q, ok: x.ok, bad: x.bad || [] });
+          if (x && x.q && x.ok) out.push({ id: k, q: x.q, ok: x.ok, bad: x.bad || [], f: !!x.f });   // f = fácil
         });
       }
       return out.length ? out : fallback;
@@ -164,6 +164,7 @@ var FB = (function () {
     list.forEach(function (x, i) {
       var k = "q" + String(i + 1).padStart(3, "0");
       obj[k] = { q: x.q, ok: x.ok, bad: x.bad || [] };
+      if (x.f) obj[k].f = true;
     });
     return db.ref("questions").set(obj);
   }

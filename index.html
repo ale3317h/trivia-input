@@ -730,7 +730,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script>window.FB_IDLE_MS=180000;</script>
-<script src="fb.js?v=26"></script>
+<script src="fb.js?v=27"></script>
 <script src="sheet-config.js?v=1"></script>
 <script>window.ST3_POLL_MS=120000;window.ST3_ONLY_ACTIVE=true;window.ST3_RULETA_TAB=null;</script>
 <script src="sheet.js?v=6"></script>
@@ -2495,7 +2495,15 @@ function fitExp(){
 }
 var fitT=null;
 window.addEventListener("resize",function(){clearTimeout(fitT);fitT=setTimeout(function(){if(!$("s-game").classList.contains("hide"))fitExp()},200)});
+/* Fácil y medio usan las preguntas marcadas como fáciles; difícil, las demás. El experto usa todas las que quedan, hasta la última.
+   Se elige al momento (el nivel depende de las correctas); si de un tipo no quedan, sigue con las otras. */
+function elegirPorNivel(){
+  var l=lvOf(cq);if(l===3)return;
+  var facil=l<2;
+  for(var j=qi;j<order.length;j++)if(!!order[j].f===facil){var x=order[qi];order[qi]=order[j];order[j]=x;return}
+}
 function ask(rec){
+  if(!rec)elegirPorNivel();
   var d=order[qi],l=lvOf(cq),L=LV[l],n=L[3];locked=false;tictacPlayed=false;$("next").disabled=true;$("next").classList.add("off");$("next").textContent="SIGUIENTE →";
   TT=(l===3)?15000:T; // experto: 15 segundos fijos
   // Al entrar al nivel EXPERTO (pregunta 17) queda 1 sola vida.
