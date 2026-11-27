@@ -399,7 +399,10 @@ Si no podés abrir el link, usá la imagen del QR que te mandamos.
         <div class="fix"><button onclick="importQs()">IMPORTAR JSON</button></div>
       </div>
       <input id="impfile" type="file" accept=".json,application/json" style="display:none" onchange="readImport(this)">
-      <p class="small">Todas las preguntas son un solo banco: en cada partida se mezclan todas y el nivel (color y cantidad de opciones) lo decide <b>la posición</b> en la partida, no la pregunta. Así cualquier pregunta puede tocar en cualquier nivel. Poné 5 distractores para que puedan mostrarse con 6 opciones.</p>
+      <p class="small">Todas las preguntas son un solo banco: las marcadas como <b>Fácil</b> salen en los niveles fácil y medio, las demás en difícil, y en experto salen todas las que queden. Poné 5 distractores para que puedan mostrarse con 6 opciones.</p>
+      <label for="qbus">Buscar pregunta</label>
+      <input id="qbus" type="search" placeholder="Palabra de la pregunta, de una opción o su número" autocomplete="off" oninput="filtrarQs()">
+      <p class="small" id="qbus-n" role="status"></p>
       <div id="qs"></div>
     </div>
 
@@ -3291,6 +3294,18 @@ function renderQs(){
       '</div>';
   });
   $("qs").innerHTML=h;
+  filtrarQs();
+}
+/* El buscador solo esconde: se sigue guardando la lista completa. No distingue mayúsculas ni tildes; un número busca esa pregunta. */
+function sinTildes(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()}
+function filtrarQs(){
+  var t=sinTildes($("qbus").value).trim(),num=/^\d+$/.test(t)?+t:0,n=0,cajas=$("qs").children;
+  for(var i=0;i<cajas.length;i++){
+    var texto=Array.prototype.map.call(cajas[i].querySelectorAll('input:not([type="checkbox"])'),function(x){return x.value}).join(" ");
+    var ok=!t||(num&&i+1===num)||sinTildes(texto).indexOf(t)>=0;
+    cajas[i].classList.toggle("hide",!ok);if(ok)n++;
+  }
+  $("qbus-n").textContent=!t?"":n?(n===1?"1 pregunta encontrada":n+" preguntas encontradas"):"No hay preguntas con eso.";
 }
 function collect(){
   var out=qs.map(function(x){return{q:x.q,ok:x.ok,bad:(x.bad||[]).slice(),f:!!x.f}});
@@ -3311,7 +3326,7 @@ async function saveQs(){
   alert("Preguntas guardadas: "+list.length);
 }
 function addQ(){
-  qs=collect();qs.push({q:"",ok:"",bad:["","","","",""]});renderQs();
+  qs=collect();qs.push({q:"",ok:"",bad:["","","","",""]});$("qbus").value="";renderQs();
   window.scrollTo(0,document.body.scrollHeight);
 }
 /* Guardado automático: lo que se borra o se edita se sube solo a la base (todos los dispositivos lo ven). */
