@@ -616,8 +616,8 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <div class="dif"><p style="--c:#ff4d5e"><em>🎁</em><span><b>SI LLEGÁS AL DIFÍCIL:</b> te llevás un premio normal</span></p>
 <p style="--c:#b86bff"><em class="trio"><span id="trio">🎁</span></em><span><b>SI GANÁS EL JUEGO:</b> un premio grande</span></p>
 <p style="--c:#ffd21f"><em>🏆</em><span><b>SI QUEDÁS EN EL TOP 3:</b> ¡un premio especial!</span></p></div></div>
-<div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">15</b><small>seg</small></div></div>
-<p>Tenés <b id="how-ts">15</b> segundos para responder cada pregunta</p></div></div>
+<div class="slide sl-time"><div class="rqt hw">POR TIEMPO</div><div class="tm"><div class="clock"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="mk" cx="60" cy="60" r="57"/><circle class="trk" cx="60" cy="60" r="49"/><circle class="arc" id="how-arc" cx="60" cy="60" r="49"/></svg><div class="cn"><b id="how-t">20</b><small>seg</small></div></div>
+<p>Tenés <b id="how-ts">20</b> segundos para responder cada pregunta</p></div></div>
 </div></div>
 <div class="nav"><button class="p" id="how-b" onclick="howBack()">←</button><button id="how-n" onclick="howNext()">SIGUIENTE →</button></div>
 </section>
@@ -730,7 +730,7 @@ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 <script src="fb-config.js?v=18"></script>
 <script src="questions.js?v=18"></script>
 <script>window.FB_IDLE_MS=180000;</script>
-<script src="fb.js?v=25"></script>
+<script src="fb.js?v=26"></script>
 <script src="sheet-config.js?v=1"></script>
 <script>window.ST3_POLL_MS=120000;window.ST3_ONLY_ACTIVE=true;window.ST3_RULETA_TAB=null;</script>
 <script src="sheet.js?v=6"></script>
@@ -1937,10 +1937,10 @@ module.exports = QRCode;
 </script>
 <script>
 var D=[];
-var LV=[],T=15000,MAXHP=3,PWH=6118475695008877;
+var LV=[],T=20000,MAXHP=3,PWH=6118475695008877;
 function applyCfg(){
   var c=FB.cfg(),n1=c.n[0]|0,n2=c.n[1]|0,n3=c.n[2]|0;
-  T=c.t||15000;
+  T=c.t||20000;   // fácil, medio y difícil (se cambia desde el admin; el experto usa 15 fijos, ver ask)
   LV=[["FÁCIL",0,n1,2,"#3dff8a"],["MEDIO",n1,n1+n2,3,"#ffe14d"],["DIFÍCIL",n1+n2,n1+n2+n3,4,"#ff4d7d"],["EXPERTO",n1+n2+n3,9999,6,"#b86bff"]];
 }
 function hh(s){var h1=0xdeadbeef,h2=0x41c6ce57;for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return 4294967296*(2097151&h2)+(h1>>>0)}
@@ -2261,7 +2261,7 @@ function playerReset(){
   try{
     var q=JSON.parse(ls("qr")||"null");
     if(q&&pv[q.id]){localStorage.removeItem("qr");ls("qrv",q.id);ch=true}          // premio/QR anulado
-    if(px[FB.uid()]){["played","cont","juego","sc_pend","acc","ver","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
+    if(px[FB.uid()]){["played","cont","juego","sc_pend","acc","lgpend","ver","trivia_uid","qrv","xflow","mailNo","hard"].forEach(function(k){localStorage.removeItem(k)});ch=true}   // persona reiniciada: id nuevo y puede volver a jugar
   }catch(e){}
   if(!ch)return;
   if(!$("s-end").classList.contains("hide")||!$("s-rank").classList.contains("hide"))go();else renderStart();
@@ -2469,7 +2469,7 @@ function play(){
   order=buildOrder();
   if(!order.length){show("s-name");$("err").textContent="Las preguntas están incompletas. Avisale al admin.";return}
   qi=0;cq=0;lastGood=false;hp=MAXHP;score=0;racha=0;expertHp=false;
-  if(!test){ls("played",String(FB.cfg().gen));ls("tj",turnoNow());try{ls("tjd",FB.ahoraAR().dia)}catch(e){}ls("cnt","0");cntVal=0}
+  if(!test){ls("played",String(FB.cfg().gen));ls("tj",turnoNow());try{ls("tjd",FB.ahoraAR().dia)}catch(e){}ls("cnt","0");cntVal=0;if(window.marcarJugada)marcarJugada()}
   $("live").classList.toggle("hide",!rankVisible());
   liveSave("n");saveScore().then(refresh);lvBanner(0,function(){ask()});
 }
@@ -2527,7 +2527,7 @@ function ask(rec){
 function pick(b){
   if(locked)return;locked=true;stopT();
   var left=Math.max(0,TT-(Date.now()-t0));
-  if(b.dataset.ok==="1"){racha++;var g=Math.round((100+Math.round(left/100))*(lvOf(cq)+1)*mult());score+=g;flyPts(b,g);playSonido("correcto")}
+  if(b.dataset.ok==="1"){racha++;var g=Math.round((100+Math.round(left*15000/TT/100))*(lvOf(cq)+1)*mult());score+=g;flyPts(b,g);playSonido("correcto")}
   reveal(b);
 }
 function crack(){
@@ -2929,8 +2929,10 @@ init();
 (function(){
   var UA=navigator.userAgent||"";
   var INTERNO=/Instagram|FBAN|FBAV|FB_IAB|WhatsApp|musical_ly|TikTok|Bytedance|Snapchat|Line\/|Twitter|; wv\)/i.test(UA)||(/iPhone|iPad|iPod/.test(UA)&&/AppleWebKit/.test(UA)&&!/Safari/.test(UA));
-  function acc(){try{var a=JSON.parse(localStorage.getItem("acc")||"null");return a&&String(a.gen)===String(FB.cfg().gen)?a:null}catch(e){return null}}
-  function setAcc(a){a.gen=FB.cfg().gen;try{localStorage.setItem("acc",JSON.stringify(a))}catch(e){}}
+  var genReal=null,memAcc=null;   // genReal: ronda leída de la base (no la de fábrica ni una copia vieja) · memAcc: si el navegador no deja guardar
+  function gen(){return genReal!==null?genReal:FB.cfg().gen}
+  function acc(){var a=null;try{a=JSON.parse(localStorage.getItem("acc")||"null")}catch(e){}a=a||memAcc;return a&&String(a.gen)===String(gen())?a:null}
+  function setAcc(a){a.gen=gen();try{localStorage.setItem("acc",JSON.stringify(a));memAcc=null}catch(e){memAcc=a}}
   window.accInfo=acc;
   function sinRed(){return navigator.onLine===false||!FB.shared()}
   var css=document.createElement("style");
@@ -2980,6 +2982,7 @@ init();
       '<button class="o" id="lg-s">'+ICQR+'<span>No tengo Gmail</span></button><p class="nota">En el stand te hacen pasar (sin modo experto).</p>'+
       '<p class="er" id="lg-er">'+(msg||"")+'</p>'+(oblig?"":'<button class="x" id="lg-v">Volver</button>'));
     btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
+    escuchar();var pd=pendGet();if(pd&&!msg){if(comprobando)cargando("Comprobando…");else comprobar(pd)}
     var ic=document.querySelector("#lg .ic"),tq=0;if(ic)ic.onclick=function(){if(++tq>=7){cerrar();$("pw").value="";$("pe").textContent="";$("adm").classList.remove("hide");$("pw").focus()}};   // 7 toques en el ícono: clave de producción (modo prueba)
   }
 
@@ -2991,20 +2994,64 @@ init();
     b.innerHTML=texto?'<i class="rueda" aria-hidden="true"></i><span>'+texto+'</span>':G+'<span>Continuar con Google</span>';
     var s=$("lg-s");if(s)s.disabled=!!texto;
   }
+  /* La cuenta se toma apenas Google la entrega: por la ventana que se abrió o por la sesión que quedó guardada
+     (si el celular recargó la página mientras elegían la cuenta, la ventana ya no tiene a quién avisarle).
+     Queda anotada en el celular hasta terminar de comprobarla, así recargar no obliga a elegirla de nuevo. */
+  var comprobando=false,authOff=null;
+  function pendGet(){try{var p=JSON.parse(localStorage.getItem("lgpend")||"null");return p&&p.mail&&Date.now()-p.ts<900000?p:null}catch(e){return null}}
+  function pendDel(){try{localStorage.removeItem("lgpend")}catch(e){}}
+  function conUsuario(u){
+    var mail=String((u&&u.email)||"").toLowerCase();
+    if(!mail||comprobando)return;
+    var p={mail:mail,nombre:String((u&&u.displayName)||"").trim().split(/\s+/)[0].slice(0,20),ts:Date.now()};
+    try{localStorage.setItem("lgpend",JSON.stringify(p))}catch(e){}
+    try{firebase.auth().signOut()}catch(e){}
+    comprobar(p);
+  }
+  function escuchar(){   // además deja el inicio de sesión cargado antes de que toquen el botón
+    if(authOff||!(window.firebase&&firebase.auth))return;
+    try{authOff=firebase.auth().onAuthStateChanged(function(u){if(u&&$("lg"))conUsuario(u)})}catch(e){}
+  }
+  /* ¿Esta cuenta ya jugó desde otro celular o navegador? Solo haber iniciado sesión no cuenta: tiene que haber empezado a jugar. */
+  async function revisar(mail){
+    var db=firebase.database(),g=genReal!==null?genReal:(await db.ref("cfg/gen").once("value")).val()||FB.cfg().gen,uid=FB.uid(),px=function(){return FB.cfg().px||{}};
+    var ref=db.ref("cfg/acc/"+g+"/"+await hashMail(mail)),prev=(await ref.once("value")).val();
+    if(prev&&prev.u!==uid&&!px()[prev.u]&&(prev.j||(await db.ref("scores/"+g+"/"+prev.u).once("value")).exists()))return false;
+    var t=await ref.transaction(function(c){if(c&&c.u!==uid&&c.j&&!px()[c.u])return;var n={u:uid,ts:firebase.database.ServerValue.TIMESTAMP};if(c&&c.u===uid&&c.j)n.j=true;return n});
+    return t.committed;
+  }
+  function comprobar(p){
+    comprobando=true;cargando("Comprobando…");
+    var hecho=false,YA="Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.";
+    function entrar(){
+      if(hecho)return;hecho=true;clearTimeout(tope);comprobando=false;pendDel();
+      setAcc({via:"google",mail:p.mail,nombre:p.nombre});ls("mail",p.mail);if(p.nombre){ls("name",p.nombre);$("nom").value=p.nombre}
+      listo();try{reqPaint()}catch(e){}
+    }
+    var tope=setTimeout(entrar,7000);   // con la señal lenta no se la deja esperando: entra y la comprobación sigue atrás
+    revisar(p.mail).then(function(ok){
+      if(ok){entrar();return}
+      if(hecho){   // ya había pasado por la señal lenta: solo se la frena si todavía no empezó a jugar
+        if(!hasPlayed()&&!inPlay()){try{localStorage.removeItem("acc")}catch(e){}memAcc=null;oblig=true;pantalla(YA)}
+        return;
+      }
+      hecho=true;clearTimeout(tope);comprobando=false;pendDel();cargando("");err(YA);
+    }).catch(entrar);
+  }
+  /* al empezar a jugar la cuenta queda marcada: desde ahí no sirve para jugar en otro celular */
+  window.marcarJugada=function(){
+    var a=acc();if(!a||!a.mail)return;
+    hashMail(a.mail).then(function(x){return firebase.database().ref("cfg/acc/"+a.gen+"/"+x).update({u:FB.uid(),j:true})}).catch(function(){});
+  };
   function google(){
     if(!(window.firebase&&firebase.auth)){err("No se pudo cargar el inicio de sesión. Revisá tu internet y recargá.");return}
     var p=new firebase.auth.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
     err("");cargando("Abriendo Google…");
-    firebase.auth().signInWithPopup(p).then(async function(r){
-      var mail=String((r.user&&r.user.email)||"").toLowerCase();
-      try{firebase.auth().signOut()}catch(e){}
-      if(!mail){cargando("");err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
-      cargando("Comprobando…");
-      var h=await hashMail(mail),uid=FB.uid();
-      var t=await firebase.database().ref("cfg/acc/"+FB.cfg().gen+"/"+h).transaction(function(c){if(c&&c.u!==uid&&!((FB.cfg().px||{})[c.u]))return;return{u:uid,ts:firebase.database.ServerValue.TIMESTAMP}});
-      if(!t.committed){cargando("");err("Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.");return}
-      setAcc({via:"google",mail:mail,nombre:String((r.user&&r.user.displayName)||"").trim().split(/\s+/)[0].slice(0,20)});ls("mail",mail);var gn=acc()&&acc().nombre;if(gn){ls("name",gn);$("nom").value=gn}listo();try{reqPaint()}catch(e){}
+    firebase.auth().signInWithPopup(p).then(function(r){
+      if(!String((r.user&&r.user.email)||"")){cargando("");err("Esa cuenta no tiene mail. Probá con otra o pedí ayuda en el stand.");return}
+      conUsuario(r.user);
     }).catch(function(e){
+      if(comprobando||acc())return;   // la cuenta ya llegó por la sesión guardada
       cargando("");
       var c=(e&&e.code)||"",m=String((e&&e.message)||"");
       if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){abrirNavegador();return}
@@ -3050,14 +3097,15 @@ init();
   /* apenas se entra, y también después de «Reiniciar todo» o de reiniciar a una persona: primero identificarse, después los requisitos */
   function exigir(){
     var a=acc(),sinNombre=a&&a.via==="google"&&a.nombre===undefined;
-    if(test||(a&&!sinNombre)||hasPlayed()||sinRed()||$("lg"))return;
+    if(genReal===null||test||(a&&!sinNombre)||hasPlayed()||sinRed()||$("lg"))return;
     if(!$("adm").classList.contains("hide"))return;   // producción está poniendo la clave
     if(["s-game","s-prize","s-exp","s-end"].some(function(i){return !$(i).classList.contains("hide")}))return;   // nunca encima de una partida
     oblig=true;seguir=function(){oblig=false;try{reqSync();reqPaint();if(!$("s-how").classList.contains("hide"))comoJugar()}catch(e){}};
     if(INTERNO)abrirNavegador();else pantalla();
   }
   window.pedirLogin=exigir;
-  FB.readCfg().then(exigir).catch(function(){});
+  // recién se pide identificarse cuando se sabe en qué ronda está la base; si no, con la señal lenta se volvía a pedir
+  try{firebase.database().ref("cfg/gen").on("value",function(s){genReal=s.val()||FB.cfg().gen;FB.readCfg().then(exigir).catch(function(){})})}catch(e){FB.readCfg().then(exigir).catch(function(){})}
 })();
 </script>
 </body>
