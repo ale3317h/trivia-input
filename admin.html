@@ -3166,7 +3166,7 @@ async function verPedido(c){
   var v;try{v=(await d.ref("cfg/ver/"+c).once("value")).val()}catch(e){return badSheet("NO SE PUDO LEER",esc((e&&e.message)||""))}
   if(!v)return badSheet("PEDIDO NO ENCONTRADO","Pedile que vuelva a tocar «Verificar en el stand».");
   if(v.s==="ok")return showSheet("dup",'<div class="tt">YA ESTABA HABILITADO</div><div class="nm">'+esc(v.n||"Sin nombre")+'</div><button class="p" onclick="closeSheet()">SEGUIR ESCANEANDO</button>');
-  showSheet("pend",'<div class="tt">VERIFICAR SIN GMAIL</div><div class="big">🙋</div><div class="nm">'+esc(v.n||"Sin nombre")+'</div><p class="small">Habilitalo solo si la persona está acá, no tiene Gmail y todavía no jugó. Juega hasta el nivel difícil (sin modo experto).</p><button class="g" onclick="verResp(\''+c+'\',\'ok\')">HABILITAR PARA JUGAR</button><button class="p" onclick="verResp(\''+c+'\',\'no\')">NO HABILITAR</button>');
+  showSheet("pend",'<div class="tt">VERIFICAR SIN GMAIL</div><div class="big">🙋</div><div class="nm">'+esc(v.n||"Sin nombre")+'</div><p class="small">Habilitalo solo si la persona está acá, no tiene Gmail y todavía no jugó. Juega hasta el nivel difícil; para el modo experto su celular le pide entrar con Google.</p><button class="g" onclick="verResp(\''+c+'\',\'ok\')">HABILITAR PARA JUGAR</button><button class="p" onclick="verResp(\''+c+'\',\'no\')">NO HABILITAR</button>');
 }
 async function verResp(c,s){
   try{await sdb().ref("cfg/ver/"+c).update({s:s,t2:firebase.database.ServerValue.TIMESTAMP});

@@ -2227,8 +2227,8 @@ function renderStart(){
   claimBind();var rec=p&&qrGet()&&myClaimed;   // premio ya reclamado: el recuadro pasa a ser la pantalla visual de «reclamado»
   if(rec){claimBind();$("played").innerHTML=claimHTML(qrGet())+'<div class="c mut" style="margin-top:6px;font-size:12px">🔒 Solo se puede jugar una vez</div>';$("played").classList.remove("hide");$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
   else if(p){qrShow("played-qr");if(!qrSync.done){qrSync.done=1;qrSync()}}else{$("played-qr").classList.add("hide");$("played-qr").innerHTML=""}
-  $("contbtn").classList.toggle("hide",!(p&&hasCont()&&!noExperto()));
-  if(p&&hasCont()&&!rec&&!noExperto())$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
+  $("contbtn").classList.toggle("hide",!(p&&hasCont()));
+  if(p&&hasCont()&&!rec)$("played").innerHTML+="<br><br>Ya ganaste un <b>premio</b>: podés continuar para avanzar en el ranking.";
   try{rkCut()}catch(e){}try{xRedoPaint()}catch(e){}
   $("how-t").textContent=Math.round(T/1000);$("how-v").textContent=MAXHP;
 }
@@ -2613,27 +2613,21 @@ async function showPrize(){
   $("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"Igual podés seguir jugando para avanzar en el ranking.";
   $("pz-btn").classList.toggle("hide",!ok);
   if(ok)qrIssue(3,qi);
-  if(noExperto()){contClear();$("pz-p").textContent=ok?"Acercate al puesto del streaming y reclamá tu recompensa.":"¡Gracias por jugar!"}
   if(test){$("pz-p").textContent=AVISO_PRUEBA;$("pz-btn").classList.add("hide")}
-  pzPaint();show("s-prize");if(ok){playSonido("tada");confetti()}
+  show("s-prize");if(ok){playSonido("tada");confetti()}
 }
-/* Quien se verificó en el stand (sin Gmail) juega hasta el nivel difícil: el modo experto es solo para quien tiene mail, para poder avisarle si queda arriba */
-function noExperto(){var a=window.accInfo&&accInfo();return !test&&!!(a&&a.via==="stand")}
-function pzPaint(){
-  var c=document.querySelector("#s-prize .pz2");if(!c)return;
-  var n=$("pz-noexp");if(!n){n=document.createElement("div");n.id="pz-noexp";n.className="card c hide";n.innerHTML='<p><b>¡Llegaste al final de tu partida!</b></p><p class="mut">El modo experto es solo para quienes entran con Google, para poder avisarles si ganan.</p><button onclick="prizeExit()">LISTO</button>';c.parentNode.insertBefore(n,c.nextSibling)}
-  var no=noExperto();c.classList.toggle("hide",no);n.classList.toggle("hide",!no);
-}
+/* Quien se verificó en el stand (sin Gmail) ve el mismo cartel que todos; para entrar al modo experto tiene que acceder con Google él mismo */
+function faltaGoogle(){var a=window.accInfo&&accInfo();return !test&&!!(a&&a.via==="stand")}
 function prizeExit(){go()}
 function expIntro(){
   liveSave("ex");
   $("ex-t").textContent=15;$("ex-n").textContent=order.length;$("ex-from").textContent=cq+1;
   show("s-exp");
 }
-function prizeGo(){if(noExperto()){go();return}expIntro()}
-function startExpert(){if(noExperto()){go();return}contClear();$("live").classList.toggle("hide",!rankVisible());ask()}
+function prizeGo(){if(faltaGoogle()){pedirGoogle(expIntro);return}expIntro()}
+function startExpert(){if(faltaGoogle()){pedirGoogle(startExpert);return}contClear();$("live").classList.toggle("hide",!rankVisible());ask()}
 function resume(){
-  if(noExperto()){contClear();go();return}
+  if(faltaGoogle()){pedirGoogle(resume);return}
   var c=null;try{c=JSON.parse(ls("cont")||"null")}catch(e){}
   if(!c||!D.length){contClear();go();return}
   var map={};D.forEach(function(x){if(isValid(x))map[x.q]=x});
@@ -2987,7 +2981,8 @@ init();
   var ICUSER='<svg viewBox="0 0 24 24" fill="none" stroke="#ffe14d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-5.5 8-5.5s6.500 1.5 8 5.5"/></svg>';
   var ICWEB='<svg viewBox="0 0 24 24" fill="none" stroke="#ffe14d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>';
   document.head.appendChild(css);
-  var seguir=null,verOff=null,oblig=false;   // oblig: se muestra apenas se entra, antes de los requisitos, y no se puede cerrar
+  var seguir=null,verOff=null,oblig=false,mejora=null;   // mejora: qué hacer cuando quien entró por el stand accede con Google para el modo experto
+     // oblig: se muestra apenas se entra, antes de los requisitos, y no se puede cerrar
   function caja(html){var o=$("lg");if(!o){o=document.createElement("div");o.id="lg";o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");document.body.appendChild(o)}o.innerHTML='<div class="b">'+html+'</div>';return o}
   function cerrar(){var o=$("lg");if(o)o.remove();if(verOff){verOff();verOff=null}}
   function listo(){cerrar();var f=seguir;seguir=null;if(f)f()}
@@ -2995,9 +2990,17 @@ init();
   function btn(id,fn){var e=$(id);if(e)e.onclick=fn}
 
   function pantalla(msg){
+    if(mejora){
+      caja('<div class="ic">'+ICUSER+'</div><h2>Entrá con Google</h2><p>Para jugar el <b>modo experto</b> tenés que acceder con tu cuenta de Google. Tu puntaje se mantiene.</p>'+
+        '<button class="g" id="lg-g">'+G+'<span>Continuar con Google</span></button>'+
+        '<p class="er" id="lg-er">'+(msg||"")+'</p><button class="x" id="lg-v">Volver</button>');
+      btn("lg-g",google);btn("lg-v",function(){mejora=null;cerrar()});
+      escuchar();var pm=pendGet();if(pm&&!msg){if(comprobando)cargando("Comprobando…");else comprobar(pm)}
+      return;
+    }
     caja('<div class="ic">'+ICUSER+'</div><h2>Antes de jugar</h2><p>Entrá con tu cuenta para participar. Se juega <b>una sola vez</b> por persona.</p>'+
       '<button class="g" id="lg-g">'+G+'<span>Continuar con Google</span></button><div class="sep">o</div>'+
-      '<button class="o" id="lg-s">'+ICQR+'<span>No tengo Gmail</span></button><p class="nota">En el stand te hacen pasar (sin modo experto).</p>'+
+      '<button class="o" id="lg-s">'+ICQR+'<span>No tengo Gmail</span></button><p class="nota">En el stand te hacen pasar. Para el modo experto vas a necesitar Google.</p>'+
       '<p class="er" id="lg-er">'+(msg||"")+'</p>'+(oblig?"":'<button class="x" id="lg-v">Volver</button>'));
     btn("lg-g",google);btn("lg-s",stand);btn("lg-v",function(){seguir=null;cerrar()});
     escuchar();var pd=pendGet();if(pd&&!msg){if(comprobando)cargando("Comprobando…");else comprobar(pd)}
@@ -3040,13 +3043,18 @@ init();
   }
   function comprobar(p){
     comprobando=true;cargando("Comprobando…");
-    var hecho=false,YA="Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.";
+    var hecho=false,YA="Esa cuenta ya jugó. Si creés que es un error, preguntá en el stand.",up=mejora;
     function entrar(){
       if(hecho)return;hecho=true;clearTimeout(tope);comprobando=false;pendDel();
-      setAcc({via:"google",mail:p.mail,nombre:p.nombre});ls("mail",p.mail);if(p.nombre){ls("name",p.nombre);$("nom").value=p.nombre}
+      setAcc({via:"google",mail:p.mail,nombre:p.nombre});ls("mail",p.mail);
+      if(up){   // ya está jugando: se conserva su nombre y la cuenta queda marcada como usada
+        marcarJugada();if(mejora===up&&$("lg")){mejora=null;cerrar();up()}
+        return;
+      }
+      if(p.nombre){ls("name",p.nombre);$("nom").value=p.nombre}
       listo();try{reqPaint()}catch(e){}
     }
-    var tope=setTimeout(entrar,7000);   // con la señal lenta no se la deja esperando: entra y la comprobación sigue atrás
+    var tope=up?0:setTimeout(entrar,7000);   // con la señal lenta no se la deja esperando: entra y la comprobación sigue atrás
     revisar(p.mail).then(function(ok){
       if(ok){entrar();return}
       if(hecho){   // ya había pasado por la señal lenta: solo se la frena si todavía no empezó a jugar
@@ -3072,7 +3080,7 @@ init();
       if(comprobando||acc())return;   // la cuenta ya llegó por la sesión guardada
       cargando("");
       var c=(e&&e.code)||"",m=String((e&&e.message)||"");
-      if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){abrirNavegador();return}
+      if(/disallowed_useragent|web-storage-unsupported|operation-not-supported/i.test(c+m)){if(mejora){err("Desde este navegador no se puede usar Google. Pedí ayuda en el stand.");return}abrirNavegador();return}
       err(/popup-closed|cancelled-popup/.test(c)?"La ventana de Google se cerró antes de terminar. Tocá «Continuar con Google» otra vez.":/popup-blocked/.test(c)?"El navegador bloqueó la ventana. Permitila y tocá de nuevo.":/network/.test(c)?"Sin conexión. Probá de nuevo.":"No se pudo iniciar sesión. Probá de nuevo o pedí ayuda en el stand.");
     });
   }
@@ -3084,7 +3092,7 @@ init();
     var ref=firebase.database().ref("cfg/ver/"+p.c),n=($("nom").value||ls("name")||"").trim().slice(0,20);
     var q=qrMat("ST3-VERIFICAR:"+p.c),k=q.getModuleCount(),m=4,s=k+2*m,d="",x,y;
     for(y=0;y<k;y++)for(x=0;x<k;x++)if(q.isDark(y,x))d+="M"+(x+m)+" "+(y+m)+"h1v1h-1z";
-    caja('<h2>Andá al stand</h2><p>Mostrales esta pantalla y <b>ellos te hacen pasar</b>. Vas a jugar hasta el nivel difícil.</p>'+
+    caja('<h2>Andá al stand</h2><p>Mostrales esta pantalla y <b>ellos te hacen pasar</b>. Para el modo experto después vas a necesitar Google.</p>'+
       '<div class="qr"><svg viewBox="0 0 '+s+' '+s+'" shape-rendering="crispEdges" aria-label="QR de verificación"><rect width="'+s+'" height="'+s+'" fill="#fff"/><path d="'+d+'" fill="#000"/></svg></div><div class="cod">'+p.c+'</div>'+
       '<div class="esp"><i></i><span>Esperando al stand…</span></div><p class="nota">No cierres la página: sigue sola.</p><p class="er" id="lg-er"></p><button class="x" id="lg-v">Volver</button>');
     btn("lg-v",function(){if(verOff){verOff();verOff=null}pantalla()});
@@ -3122,6 +3130,7 @@ init();
     if(INTERNO)abrirNavegador();else pantalla();
   }
   window.pedirLogin=exigir;
+  window.pedirGoogle=function(despues){mejora=despues;pantalla()};
   // recién se pide identificarse cuando se sabe en qué ronda está la base; si no, con la señal lenta se volvía a pedir
   try{firebase.database().ref("cfg/gen").on("value",function(s){genReal=s.val()||FB.cfg().gen;FB.readCfg().then(exigir).catch(function(){})})}catch(e){FB.readCfg().then(exigir).catch(function(){})}
 })();
